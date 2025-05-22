@@ -26,6 +26,28 @@
       font-size: 1.6rem;
       font-weight: 700;
       user-select: none;
+      position: relative;
+    }
+    #auth-btns {
+      position: absolute;
+      right: 1rem;
+      top: 1rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+    button.auth-btn {
+      background: #726dff;
+      border: none;
+      color: white;
+      font-weight: 600;
+      padding: 0.3rem 0.8rem;
+      border-radius: 0.4rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background-color 0.2s ease;
+    }
+    button.auth-btn:hover {
+      background: #5c58e0;
     }
     #chat {
       flex: 1;
@@ -91,13 +113,25 @@
     }
     form {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       padding: 1rem;
       background: #2d2b45;
       gap: 0.5rem;
+      align-items: center;
     }
-    input[type="text"] {
-      flex: 1 1 100%;
+    #username {
+      flex: 1 1 auto;
+      padding: 0.6rem 1rem;
+      border-radius: 1rem;
+      border: none;
+      outline: none;
+      background: #44415e;
+      color: white;
+      font-size: 1rem;
+      user-select: none;
+    }
+    #message {
+      flex: 3 1 auto;
       padding: 0.6rem 1rem;
       border-radius: 1rem;
       border: none;
@@ -106,14 +140,8 @@
       color: white;
       font-size: 1rem;
     }
-    #username {
-      flex: 1 1 40%;
-    }
-    #message {
-      flex: 1 1 55%;
-    }
-    button {
-      flex: 1 1 100%;
+    button#send-btn {
+      flex: 0 0 auto;
       padding: 0.6rem 1rem;
       border-radius: 1rem;
       border: none;
@@ -124,32 +152,42 @@
       font-size: 1rem;
       transition: background-color 0.2s ease;
     }
-    button:hover {
+    button#send-btn:disabled {
+      background: #44415e;
+      cursor: not-allowed;
+    }
+    button#send-btn:hover:not(:disabled) {
       background: #5c58e0;
     }
 
-    /* Responsive adjustments */
-    @media (min-width: 480px) {
+    /* Responsive */
+    @media (max-width: 480px) {
       form {
-        flex-wrap: nowrap;
-      }
-      input[type="text"] {
-        flex: unset;
+        flex-wrap: wrap;
       }
       #username {
-        flex: 1 1 25%;
+        flex: 1 1 100%;
+        margin-bottom: 0.5rem;
+        user-select: none;
       }
       #message {
-        flex: 1 1 65%;
+        flex: 1 1 100%;
       }
-      button {
-        flex: 1 1 10%;
+      button#send-btn {
+        flex: 1 1 100%;
+        margin-top: 0.5rem;
       }
     }
   </style>
 </head>
 <body>
-  <header>Flakious Chat</header>
+  <header>
+    Flakious Chat
+    <div id="auth-btns">
+      <button id="sign-in" class="auth-btn">Sign In</button>
+      <button id="sign-out" class="auth-btn" style="display:none;">Sign Out</button>
+    </div>
+  </header>
   <div id="chat"></div>
 
   <div id="reply-preview" class="reply-preview" style="display:none;">
@@ -158,9 +196,9 @@
   </div>
 
   <form id="chat-form">
-    <input type="text" id="username" placeholder="Your name..." required autocomplete="name" />
-    <input type="text" id="message" placeholder="Type a message..." required autocomplete="off" />
-    <button type="submit">Send</button>
+    <input type="text" id="username" readonly placeholder="Sign in to chat" />
+    <input type="text" id="message" placeholder="Type a message..." disabled autocomplete="off" required />
+    <button id="send-btn" type="submit" disabled>Send</button>
   </form>
 
   <script type="module">
@@ -171,6 +209,14 @@
       push,
       onChildAdded
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
@@ -185,16 +231,21 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const messagesRef = ref(db, "messages");
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
     const chat = document.getElementById("chat");
     const form = document.getElementById("chat-form");
-    const nameInput = document.getElementById("username");
+    const usernameInput = document.getElementById("username");
     const messageInput = document.getElementById("message");
+    const sendBtn = document.getElementById("send-btn");
 
     const replyPreview = document.getElementById("reply-preview");
     const replyText = document.getElementById("reply-text");
     const cancelReplyBtn = document.getElementById("cancel-reply");
+
+    const signInBtn = document.getElementById("sign-in");
+    const signOutBtn = document.getElementById("sign-out");
 
     let replyTo = null;
 
@@ -202,16 +253,31 @@
       chat.scrollTop = chat.scrollHeight;
     };
 
-    // Handle new messages from Firebase
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function truncate(str, n) {
+      return str.length > n ? str.substr(0, n - 1) + "…" : str;
+    }
+
+    const messagesRef = ref(db, "messages");
+
     onChildAdded(messagesRef, (snapshot) => {
       const data = snapshot.val();
       const msgDiv = document.createElement("div");
       msgDiv.className = "message";
-      if (data.name === nameInput.value.trim()) {
+
+      // Mark message as own if it’s from current user
+      if (auth.currentUser && data.uid === auth.currentUser.uid) {
         msgDiv.classList.add("own");
       }
 
-      // Reply preview text
       let replyHTML = "";
       if (data.replyTo) {
         replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid #a3a0ff; padding-left: 6px; color:#ccc;">
@@ -225,15 +291,16 @@
         <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
       `;
 
-      // Clicking message sets reply
+      // Clicking a message sets up reply (except own messages)
       msgDiv.addEventListener("click", () => {
-        if (data.name === nameInput.value.trim()) return; // no reply to self (optional)
+        if (!auth.currentUser) return;
+        if (data.uid === auth.currentUser.uid) return; // no replying to your own messages
         replyTo = {
-          key: snapshot.key,
+          id: snapshot.key,
           name: data.name,
           message: data.message,
         };
-        replyText.textContent = `Replying to ${replyTo.name}: "${truncate(replyTo.message, 40)}"`;
+        replyText.textContent = `${replyTo.name}: ${truncate(replyTo.message, 50)}`;
         replyPreview.style.display = "flex";
         messageInput.focus();
       });
@@ -242,48 +309,83 @@
       scrollToBottom();
     });
 
-    // Cancel reply
     cancelReplyBtn.addEventListener("click", () => {
       replyTo = null;
       replyPreview.style.display = "none";
     });
 
-    // Escape HTML helper (for safety)
-    function escapeHtml(text) {
-      return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    // Truncate text helper
-    function truncate(str, n) {
-      return str.length > n ? str.substr(0, n - 1) + "…" : str;
-    }
-
-    // Handle form submit
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      const name = nameInput.value.trim();
-      const message = messageInput.value.trim();
-      if (!name || !message) return;
+      if (!auth.currentUser) return alert("You must be signed in to send messages.");
+      const msg = messageInput.value.trim();
+      if (!msg) return;
 
-      const messageObj = {
-        name,
-        message,
-        timestamp: Date.now()
+      // Build message payload
+      const newMsg = {
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || "Anonymous",
+        message: msg,
+        timestamp: Date.now(),
       };
+
       if (replyTo) {
-        messageObj.replyTo = replyTo;
+        newMsg.replyTo = replyTo;
       }
 
-      push(messagesRef, messageObj);
-      messageInput.value = "";
-      replyTo = null;
-      replyPreview.style.display = "none";
+      push(messagesRef, newMsg)
+        .then(() => {
+          messageInput.value = "";
+          replyTo = null;
+          replyPreview.style.display = "none";
+        })
+        .catch((err) => {
+          console.error("Error sending message:", err);
+        });
     });
+
+    signInBtn.addEventListener("click", () => {
+      signInWithPopup(auth, provider).catch((error) => {
+        console.error("Sign-in error:", error);
+      });
+    });
+
+    signOutBtn.addEventListener("click", () => {
+      signOut(auth).catch((error) => {
+        console.error("Sign-out error:", error);
+      });
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // Signed in
+        usernameInput.value = user.displayName || "Anonymous";
+        usernameInput.readOnly = true;
+        usernameInput.style.userSelect = "none";
+
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+
+        signInBtn.style.display = "none";
+        signOutBtn.style.display = "inline-block";
+
+        usernameInput.placeholder = "";
+      } else {
+        // Signed out
+        usernameInput.value = "";
+        usernameInput.placeholder = "Sign in to chat";
+        usernameInput.readOnly = true;
+
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
+
+        signInBtn.style.display = "inline-block";
+        signOutBtn.style.display = "none";
+
+        replyTo = null;
+        replyPreview.style.display = "none";
+      }
+    });
+
   </script>
 </body>
 </html>
