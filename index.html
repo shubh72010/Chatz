@@ -3,175 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ChatApp</title>
+  <title>Chatz</title>
   <style>
-    body { margin: 0; font-family: sans-serif; background: #121212; color: #fff; display: flex; flex-direction: column; height: 100vh; }
-    header { background: #1e1e1e; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
-    #chat-select { display: flex; gap: 1rem; padding: 0.5rem; background: #1b1b1b; }
-    #chat { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; }
-    .msg { background: #2b2b2b; padding: 0.5rem 1rem; border-radius: 1rem; max-width: 75%; }
-    .own { background: #4f46e5; align-self: flex-end; }
-    form { display: flex; gap: 0.5rem; padding: 1rem; background: #1e1e1e; }
-    input, select, button { padding: 0.6rem; border: none; border-radius: 1rem; background: #2c2c2c; color: white; }
-    button { background: #4f46e5; cursor: pointer; }
+    body { margin: 0; font-family: sans-serif; background: #121212; color: white; }
+    #login, #profileSetup, #chatApp { display: none; padding: 1rem; }
+    .hidden { display: none; }
+    button, input { margin: 0.3rem; padding: 0.5rem; border-radius: 0.5rem; border: none; }
+    #messages { max-height: 300px; overflow-y: auto; border: 1px solid #444; padding: 0.5rem; margin-bottom: 1rem; }
+    .message { padding: 0.4rem; margin: 0.3rem 0; border-radius: 0.4rem; background: #2b2b2b; }
+    .self { background: #4f46e5; align-self: flex-end; }
   </style>
 </head>
 <body>
 
-<header>
-  <div>Chatz</div>
-  <div>
-    <button id="sign-in">Sign In</button>
-    <button id="sign-out" style="display:none;">Sign Out</button>
-  </div>
-</header>
-
-<div id="chat-select">
-  <select id="chat-type">
-    <option value="group">Group</option>
-    <option value="dm">Direct Message</option>
-  </select>
-  <select id="chat-target">
-    <option value="general">general</option>
-  </select>
+<div id="login">
+  <h2>Welcome to Chatz</h2>
+  <button id="googleSignIn">Sign In with Google</button>
 </div>
 
-<div id="chat"></div>
+<div id="profileSetup">
+  <h2>Set up your profile</h2>
+  <input type="text" id="displayName" placeholder="Display Name" />
+  <button id="saveProfile">Save</button>
+</div>
 
-<form id="msg-form">
-  <input type="text" id="msg-input" placeholder="Message..." required />
-  <button type="submit">Send</button>
-</form>
+<div id="chatApp">
+  <h2>Hello, <span id="userName"></span>!</h2>
+  <button id="signOutBtn">Sign Out</button>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, addDoc, collection, query, orderBy, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+  <h3>Chat Rooms</h3>
+  <input type="text" id="newRoomName" placeholder="New Room Name" />
+  <button id="createRoomBtn">Create Room</button>
+  <div id="chatRooms"></div>
 
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  appId: "YOUR_APP_ID"
-};
+  <h3>Direct Messages</h3>
+  <input type="email" id="dmEmail" placeholder="Email for DM" />
+  <button id="startDMBtn">Start DM</button>
+  <div id="dmList"></div>
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+  <h3><span id="currentChatName">Select a chat</span></h3>
+  <div id="messages"></div>
+  <input type="text" id="messageInput" placeholder="Type a message..." />
+  <button id="sendMessageBtn">Send</button>
+</div>
 
-const signInBtn = document.getElementById("sign-in");
-const signOutBtn = document.getElementById("sign-out");
-const chatType = document.getElementById("chat-type");
-const chatTarget = document.getElementById("chat-target");
-const chatBox = document.getElementById("chat");
-const msgForm = document.getElementById("msg-form");
-const msgInput = document.getElementById("msg-input");
-
-let currentUser = null;
-let currentChatType = "group";
-let currentChatTarget = "general";
-let unsubscribe = null;
-
-function clearChat() {
-  chatBox.innerHTML = "";
-  if (unsubscribe) unsubscribe();
-}
-
-function loadMessages() {
-  clearChat();
-  const path = currentChatType === "group" ? `group_${currentChatTarget}` : `dm_${currentChatTarget}`;
-  const q = query(collection(db, "chats", path, "messages"), orderBy("ts"));
-
-  unsubscribe = onSnapshot(q, (snapshot) => {
-    chatBox.innerHTML = "";
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const msg = document.createElement("div");
-      msg.className = "msg" + (data.uid === currentUser.uid ? " own" : "");
-      msg.textContent = `${data.name}: ${data.text}`;
-      chatBox.appendChild(msg);
-    });
-    chatBox.scrollTop = chatBox.scrollHeight;
-  });
-}
-
-async function updateTargetOptions() {
-  chatTarget.innerHTML = "";
-  if (chatType.value === "group") {
-    ["general", "gaming", "random"].forEach(room => {
-      const opt = document.createElement("option");
-      opt.value = room;
-      opt.textContent = room;
-      chatTarget.appendChild(opt);
-    });
-  } else {
-    const usersSnap = await getDocs(collection(db, "users"));
-    usersSnap.forEach(docu => {
-      const data = docu.data();
-      if (data.uid !== currentUser.uid) {
-        const opt = document.createElement("option");
-        const chatID = [currentUser.uid, data.uid].sort().join("_");
-        opt.value = chatID;
-        opt.textContent = data.name;
-        chatTarget.appendChild(opt);
-      }
-    });
-  }
-}
-
-signInBtn.onclick = async () => {
-  const provider = new GoogleAuthProvider();
-  const result = await signInWithPopup(auth, provider);
-};
-
-signOutBtn.onclick = () => signOut(auth);
-
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    currentUser = user;
-    signInBtn.style.display = "none";
-    signOutBtn.style.display = "inline";
-
-    await setDoc(doc(db, "users", user.uid), {
-      uid: user.uid,
-      name: user.displayName
-    });
-
-    await updateTargetOptions();
-    loadMessages();
-  } else {
-    currentUser = null;
-    signInBtn.style.display = "inline";
-    signOutBtn.style.display = "none";
-    clearChat();
-  }
-});
-
-chatType.onchange = async () => {
-  currentChatType = chatType.value;
-  await updateTargetOptions();
-  currentChatTarget = chatTarget.value;
-  loadMessages();
-};
-
-chatTarget.onchange = () => {
-  currentChatTarget = chatTarget.value;
-  loadMessages();
-};
-
-msgForm.onsubmit = async (e) => {
-  e.preventDefault();
-  if (!msgInput.value.trim()) return;
-
-  const path = currentChatType === "group" ? `group_${currentChatTarget}` : `dm_${currentChatTarget}`;
-  await addDoc(collection(db, "chats", path, "messages"), {
-    name: currentUser.displayName,
-    text: msgInput.value.trim(),
-    uid: currentUser.uid,
-    ts: Date.now()
-  });
-  msgInput.value = "";
-};
-</script>
+<script type="module" src="chatLogic.js"></script>
 </body>
 </html>
