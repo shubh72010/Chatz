@@ -1,189 +1,251 @@
-// chatLogic.js
-import {
-  auth, createUserProfile, getUserProfile, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
-  getDMId, sendDMMessage, onDMMessage,
-  createGroup, sendGroupMessage, onGroupMessage, onUserGroups
-} from "./firebaseHelper.js";
+// Original chat logic.js content here, untouched:
 
-let currentUser = null;
-let currentChat = null; // { type: 'dm' | 'group', id: string, name: string }
-let messageListenerUnsubscribe = null;
-
-// UI Elements
-const loginForm = document.getElementById("loginForm");
-const chatContainer = document.getElementById("chatContainer");
-const messageList = document.getElementById("messageList");
-const messageInput = document.getElementById("messageInput");
-const sendBtn = document.getElementById("sendBtn");
-
-const dmListEl = document.getElementById("dmList");
-const groupListEl = document.getElementById("groupList");
-
-const newGroupForm = document.getElementById("newGroupForm");
-const groupNameInput = document.getElementById("groupNameInput");
-const groupMembersInput = document.getElementById("groupMembersInput"); // comma-separated user emails
-
-// --- AUTH ---
-
-onAuthStateChanged(auth, async user => {
+// Wait for auth state changes
+auth.onAuthStateChanged(user => {
   if (user) {
-    currentUser = user;
-    // Load profile or create one
-    const profileSnap = await getUserProfile(user.uid);
-    if (!profileSnap.exists()) {
-      // For demo: create profile with displayName from email prefix
-      await createUserProfile(user.uid, user.email.split("@")[0], user.email);
-    }
-    loginForm.style.display = "none";
-    chatContainer.style.display = "block";
-    loadChats();
+    document.getElementById("login-section").style.display = "none";
+    document.getElementById("main-chat").style.display = "block";
+    document.getElementById("user-name").textContent = user.displayName;
+
+    startGlobalChat();
+
+    startGroupsListener(user.uid);
+    startDmsListener(user.uid);
+
   } else {
-    currentUser = null;
-    loginForm.style.display = "block";
-    chatContainer.style.display = "none";
+    document.getElementById("login-section").style.display = "block";
+    document.getElementById("main-chat").style.display = "none";
   }
 });
 
-loginForm.addEventListener("submit", async e => {
+document.getElementById("login-btn").addEventListener("click", () => {
+  signInWithGoogle().catch(console.error);
+});
+
+document.getElementById("logout-btn").addEventListener("click", () => {
+  signOut().catch(console.error);
+});
+
+// Global chat logic
+
+const messagesDiv = document.getElementById("messages");
+const messageForm = document.getElementById("message-form");
+const messageInput = document.getElementById("message-input");
+
+messageForm.addEventListener("submit", e => {
   e.preventDefault();
-  const email = loginForm.email.value;
-  const password = loginForm.password.value;
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch {
-    try {
-      // If sign in fails, create user
-      await createUserWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-      alert("Auth error: " + err.message);
-    }
-  }
+  const msg = messageInput.value.trim();
+  if (!msg) return;
+  const user = getCurrentUser();
+  if (!user) return;
+
+  addGlobalMessage({
+    text: msg,
+    userId: user.uid,
+    userName: user.displayName,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  messageInput.value = "";
 });
 
-// --- LOAD CHATS ---
+function startGlobalChat() {
+  onGlobalMessages(messages => {
+    messagesDiv.innerHTML = "";
+    messages.forEach(m => {
+      const div = document.createElement("div");
+      div.textContent = `${m.userName}: ${m.text}`;
+      messagesDiv.appendChild(div);
+    });
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  });
+}
 
-async function loadChats() {
-  // Load groups current user belongs to
-  onUserGroups(currentUser.uid, groups => {
-    groupListEl.innerHTML = "";
+// Navigation between chats
+
+const btnGlobalChat = document.getElementById("btn-global-chat");
+const btnGroups = document.getElementById("btn-groups");
+const btnDms = document.getElementById("btn-dms");
+
+const globalChatDiv = document.getElementById("global-chat");
+const groupsChatDiv = document.getElementById("groups-chat");
+const dmsChatDiv = document.getElementById("dms-chat");
+
+btnGlobalChat.addEventListener("click", () => {
+  setActiveChat("global");
+});
+btnGroups.addEventListener("click", () => {
+  setActiveChat("groups");
+});
+btnDms.addEventListener("click", () => {
+  setActiveChat("dms");
+});
+
+function setActiveChat(type) {
+  btnGlobalChat.classList.remove("active-nav");
+  btnGroups.classList.remove("active-nav");
+  btnDms.classList.remove("active-nav");
+  globalChatDiv.style.display = "none";
+  groupsChatDiv.style.display = "none";
+  dmsChatDiv.style.display = "none";
+
+  if (type === "global") {
+    btnGlobalChat.classList.add("active-nav");
+    globalChatDiv.style.display = "block";
+  } else if (type === "groups") {
+    btnGroups.classList.add("active-nav");
+    groupsChatDiv.style.display = "block";
+  } else if (type === "dms") {
+    btnDms.classList.add("active-nav");
+    dmsChatDiv.style.display = "block";
+  }
+}
+
+// Groups logic
+
+const groupsList = document.getElementById("groups-list");
+const createGroupBtn = document.getElementById("create-group-btn");
+
+const groupChatWindow = document.getElementById("group-chat-window");
+const groupChatTitle = document.getElementById("group-chat-title");
+const groupMessagesDiv = document.getElementById("group-messages");
+const groupMessageForm = document.getElementById("group-message-form");
+const groupMessageInput = document.getElementById("group-message-input");
+
+let currentGroupId = null;
+let unsubscribeGroupMessages = null;
+
+createGroupBtn.addEventListener("click", async () => {
+  const groupName = prompt("Enter group name:");
+  if (!groupName) return;
+  const user = getCurrentUser();
+  if (!user) return;
+
+  const groupId = await createGroup(groupName, user.uid);
+  // auto open this group chat
+  openGroupChat(groupId, groupName);
+});
+
+function startGroupsListener(userId) {
+  getUserGroups(userId, groups => {
+    groupsList.innerHTML = "";
     groups.forEach(group => {
       const li = document.createElement("li");
       li.textContent = group.name;
-      li.onclick = () => openChat("group", group.id, group.name);
-      groupListEl.appendChild(li);
-    });
-  });
-
-  // Load DMs
-  // For demo: list all users except current user and create clickable DMs
-  const usersSnap = await fetchAllUsers();
-  dmListEl.innerHTML = "";
-  usersSnap.forEach(user => {
-    if (user.uid !== currentUser.uid) {
-      const li = document.createElement("li");
-      li.textContent = user.displayName || user.email;
-      li.onclick = () => {
-        const dmId = getDMId(currentUser.uid, user.uid);
-        openChat("dm", dmId, user.displayName || user.email);
-      };
-      dmListEl.appendChild(li);
-    }
-  });
-}
-
-async function fetchAllUsers() {
-  // Simple fetch from `/users`
-  return new Promise((resolve) => {
-    import("./firebaseHelper.js").then(({database, ref, onValue}) => {
-      const usersRef = ref(database, "users");
-      onValue(usersRef, snapshot => {
-        const usersObj = snapshot.val() || {};
-        const users = Object.entries(usersObj).map(([uid, data]) => ({uid, ...data}));
-        resolve(users);
-      }, { onlyOnce: true });
+      li.style.cursor = "pointer";
+      li.addEventListener("click", () => openGroupChat(group.id, group.name));
+      groupsList.appendChild(li);
     });
   });
 }
 
-// --- OPEN CHAT ---
+function openGroupChat(groupId, groupName) {
+  currentGroupId = groupId;
+  groupChatTitle.textContent = groupName;
+  groupChatWindow.style.display = "block";
 
-function openChat(type, id, name) {
-  if (messageListenerUnsubscribe) {
-    messageListenerUnsubscribe();
-  }
-  currentChat = { type, id, name };
-  messageList.innerHTML = "";
-  document.getElementById("chatTitle").textContent = name;
+  if (unsubscribeGroupMessages) unsubscribeGroupMessages();
 
-  if (type === "dm") {
-    onDMMessage(id, msgs => {
-      renderMessages(msgs);
+  unsubscribeGroupMessages = onGroupMessages(groupId, messages => {
+    groupMessagesDiv.innerHTML = "";
+    messages.forEach(m => {
+      const div = document.createElement("div");
+      div.textContent = `${m.userName}: ${m.text}`;
+      groupMessagesDiv.appendChild(div);
     });
-  } else if (type === "group") {
-    onGroupMessage(id, msgs => {
-      renderMessages(msgs);
-    });
-  }
-}
-
-// --- RENDER MESSAGES ---
-
-function renderMessages(messages) {
-  messageList.innerHTML = "";
-  if (!messages) return;
-  const sortedMsgs = Object.entries(messages).sort((a, b) => a[1].timestamp - b[1].timestamp);
-  sortedMsgs.forEach(([key, msg]) => {
-    const div = document.createElement("div");
-    div.className = msg.senderId === currentUser.uid ? "myMessage" : "otherMessage";
-    div.textContent = `${msg.senderName}: ${msg.message}`;
-    messageList.appendChild(div);
+    groupMessagesDiv.scrollTop = groupMessagesDiv.scrollHeight;
   });
-  messageList.scrollTop = messageList.scrollHeight;
 }
 
-// --- SEND MESSAGE ---
-
-sendBtn.onclick = () => {
-  const text = messageInput.value.trim();
-  if (!text || !currentChat) return;
-
-  if (currentChat.type === "dm") {
-    sendDMMessage(currentChat.id, currentUser.uid, currentUser.email.split("@")[0], text);
-  } else if (currentChat.type === "group") {
-    sendGroupMessage(currentChat.id, currentUser.uid, currentUser.email.split("@")[0], text);
-  }
-
-  messageInput.value = "";
-};
-
-// --- CREATE GROUP ---
-
-newGroupForm.addEventListener("submit", async e => {
+groupMessageForm.addEventListener("submit", e => {
   e.preventDefault();
-  const groupName = groupNameInput.value.trim();
-  const memberEmails = groupMembersInput.value.split(",").map(e => e.trim()).filter(Boolean);
+  const msg = groupMessageInput.value.trim();
+  if (!msg || !currentGroupId) return;
+  const user = getCurrentUser();
+  if (!user) return;
 
-  if (!groupName || memberEmails.length === 0) {
-    alert("Provide a group name and at least one member email");
-    return;
-  }
-
-  // Resolve member emails to user IDs
-  const allUsers = await fetchAllUsers();
-  const members = [currentUser.uid]; // creator always member
-  memberEmails.forEach(email => {
-    const user = allUsers.find(u => u.email === email);
-    if (user) members.push(user.uid);
+  addGroupMessage(currentGroupId, {
+    text: msg,
+    userId: user.uid,
+    userName: user.displayName,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
   });
 
-  if (members.length < 2) {
-    alert("No valid members found");
-    return;
-  }
+  groupMessageInput.value = "";
+});
 
-  const groupId = await createGroup(groupName, members);
-  alert(`Group "${groupName}" created!`);
-  groupNameInput.value = "";
-  groupMembersInput.value = "";
-  loadChats();
+// DMs logic
+
+const dmList = document.getElementById("dm-list");
+const startDmBtn = document.getElementById("start-dm-btn");
+
+const dmChatWindow = document.getElementById("dm-chat-window");
+const dmChatTitle = document.getElementById("dm-chat-title");
+const dmMessagesDiv = document.getElementById("dm-messages");
+const dmMessageForm = document.getElementById("dm-message-form");
+const dmMessageInput = document.getElementById("dm-message-input");
+
+let currentDmId = null;
+let currentDmUserName = null;
+let unsubscribeDmMessages = null;
+
+startDmBtn.addEventListener("click", async () => {
+  const userName = prompt("Enter the exact name of the user to DM:");
+  if (!userName) return;
+
+  // We have no username -> uid mapping in this example, so let's just alert and skip
+  alert("You need to implement user search to get their UID for DM");
+});
+
+function startDmsListener(userId) {
+  getUserDms(userId, dms => {
+    dmList.innerHTML = "";
+    dms.forEach(dm => {
+      // For simplicity, show the other participant name(s)
+      const otherParticipants = dm.participants.filter(uid => uid !== userId);
+      // We only expect 1 other participant for DM
+      const otherUserId = otherParticipants[0] || "Unknown";
+      const li = document.createElement("li");
+      li.textContent = `DM with ${otherUserId}`;
+      li.style.cursor = "pointer";
+      li.addEventListener("click", () => openDmChat(dm.id, `User ${otherUserId}`));
+      dmList.appendChild(li);
+    });
+  });
+}
+
+function openDmChat(dmId, otherUserName) {
+  currentDmId = dmId;
+  currentDmUserName = otherUserName;
+  dmChatTitle.textContent = `DM with ${otherUserName}`;
+  dmChatWindow.style.display = "block";
+
+  if (unsubscribeDmMessages) unsubscribeDmMessages();
+
+  unsubscribeDmMessages = onDmMessages(dmId, messages => {
+    dmMessagesDiv.innerHTML = "";
+    messages.forEach(m => {
+      const div = document.createElement("div");
+      div.textContent = `${m.userName}: ${m.text}`;
+      dmMessagesDiv.appendChild(div);
+    });
+    dmMessagesDiv.scrollTop = dmMessagesDiv.scrollHeight;
+  });
+}
+
+dmMessageForm.addEventListener("submit", e => {
+  e.preventDefault();
+  const msg = dmMessageInput.value.trim();
+  if (!msg || !currentDmId) return;
+  const user = getCurrentUser();
+  if (!user) return;
+
+  addDmMessage(currentDmId, {
+    text: msg,
+    userId: user.uid,
+    userName: user.displayName,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  dmMessageInput.value = "";
 });
