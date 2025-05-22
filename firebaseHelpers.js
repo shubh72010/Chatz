@@ -1,58 +1,118 @@
 // firebaseHelper.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signOut,
-  onAuthStateChanged,
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+  getDatabase, ref, set, push, onValue, update, get, child
+} from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 import {
-  getDatabase,
-  ref,
-  set,
-  push,
-  onChildAdded,
-  onValue,
-  get,
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+  createUserWithEmailAndPassword, signOut
+} from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
-// Your fixed Firebase config
+// Firebase config - replace with your own config
 const firebaseConfig = {
-  apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
-  authDomain: "chatz-45df4.firebaseapp.com",
-  databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
-  projectId: "chatz-45df4",
-  storageBucket: "chatz-45df4.appspot.com", // fixed storage bucket URL
-  messagingSenderId: "463847844545",
-  appId: "1:463847844545:web:5006247d061c3e0dc28240",
-  measurementId: "G-2VHETC9V8B",
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  databaseURL: "YOUR_DB_URL",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_BUCKET",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const database = getDatabase(app);
-const provider = new GoogleAuthProvider();
+const auth = getAuth(app);
 
-function signIn() {
-  return signInWithPopup(auth, provider);
+// --- USER PROFILE HELPERS ---
+function createUserProfile(uid, displayName, email) {
+  return set(ref(database, `users/${uid}`), {
+    displayName,
+    email,
+    createdAt: Date.now()
+  });
 }
 
-function signUserOut() {
-  return signOut(auth);
+function getUserProfile(uid) {
+  return get(ref(database, `users/${uid}`));
+}
+
+// --- DIRECT MESSAGES HELPERS ---
+
+// Generate unique DM ID based on user IDs sorted alphabetically to avoid duplicates
+function getDMId(uid1, uid2) {
+  return [uid1, uid2].sort().join("_");
+}
+
+// Send DM message
+function sendDMMessage(dmId, senderId, senderName, message) {
+  const messagesRef = ref(database, `dms/${dmId}/messages`);
+  return push(messagesRef, {
+    senderId,
+    senderName,
+    message,
+    timestamp: Date.now()
+  });
+}
+
+// Listen for DM messages
+function onDMMessage(dmId, callback) {
+  const messagesRef = ref(database, `dms/${dmId}/messages`);
+  onValue(messagesRef, snapshot => {
+    callback(snapshot.val());
+  });
+}
+
+// --- GROUP CHAT HELPERS ---
+
+// Create group chat with name and members (array of uids)
+function createGroup(name, members) {
+  const groupsRef = ref(database, "groups");
+  const newGroupRef = push(groupsRef);
+  return set(newGroupRef, {
+    name,
+    members,
+    createdAt: Date.now()
+  }).then(() => newGroupRef.key);
+}
+
+// Send group message
+function sendGroupMessage(groupId, senderId, senderName, message) {
+  const messagesRef = ref(database, `groups/${groupId}/messages`);
+  return push(messagesRef, {
+    senderId,
+    senderName,
+    message,
+    timestamp: Date.now()
+  });
+}
+
+// Listen for group messages
+function onGroupMessage(groupId, callback) {
+  const messagesRef = ref(database, `groups/${groupId}/messages`);
+  onValue(messagesRef, snapshot => {
+    callback(snapshot.val());
+  });
+}
+
+// Listen for user's groups
+function onUserGroups(uid, callback) {
+  const groupsRef = ref(database, "groups");
+  onValue(groupsRef, snapshot => {
+    const groups = snapshot.val() || {};
+    // Filter groups where uid is member
+    const userGroups = Object.entries(groups)
+      .filter(([id, group]) => group.members && group.members.includes(uid))
+      .map(([id, group]) => ({ id, ...group }));
+    callback(userGroups);
+  });
 }
 
 export {
-  auth,
-  database,
-  provider,
-  signIn,
-  signUserOut,
-  onAuthStateChanged,
-  ref,
-  set,
-  push,
-  onChildAdded,
-  onValue,
-  get,
+  auth, database,
+  createUserProfile, getUserProfile,
+  getDMId, sendDMMessage, onDMMessage,
+  createGroup, sendGroupMessage, onGroupMessage,
+  onUserGroups,
+  signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged
 };
