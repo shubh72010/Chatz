@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flay’s Public Chatroom</title>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+  /* Basic reset */
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  body {
+    background: #1e1e2f;
+    color: #ddd;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  header {
+    padding: 1rem;
+    background: #3c2f6c;
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #a17fff;
+    user-select: none;
+  }
+
+  #chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    background: #2a2540;
+  }
+
+  .message {
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    max-width: 75%;
+    word-wrap: break-word;
+    position: relative;
+  }
+
+  .message.self {
+    background: #7b5fff;
+    margin-left: auto;
+    color: white;
+  }
+
+  .message.other {
+    background: #554c91;
+  }
+
+  .message .username {
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+  }
+
+  .message .timestamp {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    position: absolute;
+    bottom: 4px;
+    right: 8px;
+  }
+
+  #input-form {
+    display: flex;
+    padding: 1rem;
+    background: #3c2f6c;
+  }
+
+  #message-input {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 20px;
+    font-size: 1rem;
+    outline: none;
+  }
+
+  #send-btn {
+    margin-left: 1rem;
+    background: #a17fff;
+    border: none;
+    border-radius: 20px;
+    padding: 0 1.5rem;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  #send-btn:hover:not(:disabled) {
+    background: #d0b6ff;
+  }
+
+  #send-btn:disabled {
+    background: #6a56a1;
+    cursor: not-allowed;
+  }
+
+  #typing-indicator {
+    height: 20px;
+    margin-left: 1rem;
+    color: #a17fff;
+    font-style: italic;
+    font-size: 0.9rem;
+    align-self: center;
+  }
+</style>
+</head>
+<body>
+  <header>Flay’s Public Chatroom</header>
+
+  <div id="chat-container" aria-live="polite" aria-atomic="false" aria-relevant="additions"></div>
+
+  <form id="input-form" autocomplete="off">
+    <input
+      id="message-input"
+      type="text"
+      placeholder="Type your message..."
+      aria-label="Message input"
+      required
+      maxlength="300"
+    />
+    <button id="send-btn" type="submit" disabled>Send</button>
+    <div id="typing-indicator"></div>
+  </form>
+
+  <script src="firebaseHelpers.js"></script>
+  <script src="chatLogic.js"></script>
+</body>
+</html>
