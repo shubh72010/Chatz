@@ -1,102 +1,104 @@
 // firebaseHelpers.js
 
-// Firebase config - replace with your own project config
+import { 
+  initializeApp 
+} from "firebase/app";
+
+import { 
+  getAuth, 
+  signInAnonymously, 
+  onAuthStateChanged 
+} from "firebase/auth";
+
+import { 
+  getDatabase, 
+  ref, 
+  push, 
+  set, 
+  onChildAdded, 
+  onValue, 
+  onDisconnect 
+} from "firebase/database";
+
+// Paste your firebaseConfig here:
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY_HERE",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+  authDomain: "chatz-45df4.firebaseapp.com",
+  projectId: "chatz-45df4",
+  storageBucket: "chatz-45df4.firebasestorage.app",
+  messagingSenderId: "463847844545",
+  appId: "1:463847844545:web:5006247d061c3e0dc28240",
+  measurementId: "G-2VHETC9V8B"
 };
 
-// Initialize Firebase app and database
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const database = firebase.database();
+// Init Firebase app, auth and DB
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const database = getDatabase(app);
 
-// Exported object to wrap Firebase helper functions
-const FirebaseHelpers = (() => {
-  let currentUser = null;
+let currentUser = null;
 
-  // Sign in anonymously (you can extend this later)
-  const signInAnonymously = async () => {
+const FirebaseHelpers = {
+  signInAnonymously: async () => {
     try {
-      const result = await auth.signInAnonymously();
-      currentUser = result.user;
-      console.log("Signed in anonymously as", currentUser.uid);
+      const userCredential = await signInAnonymously(auth);
+      currentUser = userCredential.user;
+      console.log("Signed in anonymously:", currentUser.uid);
       return currentUser;
     } catch (error) {
-      console.error("Firebase anonymous sign-in error:", error);
+      console.error("Anonymous sign-in error:", error);
       throw error;
     }
-  };
+  },
 
-  // Get current user
-  const getCurrentUser = () => currentUser;
-
-  // Listen for auth state changes
-  const onAuthStateChanged = (callback) => {
-    auth.onAuthStateChanged(user => {
+  onAuthStateChanged: (callback) => {
+    onAuthStateChanged(auth, (user) => {
       currentUser = user;
       callback(user);
     });
-  };
+  },
 
-  // Push message to the Realtime Database
-  const sendMessage = async (messageObj) => {
-    try {
-      const messagesRef = database.ref("messages");
-      const newMessageRef = messagesRef.push();
-      await newMessageRef.set(messageObj);
-    } catch (error) {
-      console.error("Error sending message:", error);
-      throw error;
-    }
-  };
+  sendMessage: async (messageObj) => {
+    if (!currentUser) throw new Error("Not signed in");
+    const messagesRef = ref(database, "messages");
+    const newMessageRef = push(messagesRef);
+    await set(newMessageRef, {
+      ...messageObj,
+      uid: currentUser.uid,
+      timestamp: Date.now(),
+    });
+  },
 
-  // Listen for new messages
-  const onNewMessage = (callback) => {
-    const messagesRef = database.ref("messages");
-    messagesRef.limitToLast(50).on("child_added", (snapshot) => {
+  onNewMessage: (callback) => {
+    const messagesRef = ref(database, "messages");
+    onChildAdded(messagesRef, (snapshot) => {
       const message = snapshot.val();
       message.key = snapshot.key;
       callback(message);
     });
-  };
+  },
 
-  // Update typing status for current user
-  const setTypingStatus = (isTyping) => {
+  setTypingStatus: (isTyping) => {
     if (!currentUser) return;
-    const typingRef = database.ref(`typingStatus/${currentUser.uid}`);
-    typingRef.set(isTyping).catch(console.error);
-  };
+    const typingRef = ref(database, `typingStatus/${currentUser.uid}`);
+    set(typingRef, isTyping).catch(console.error);
+  },
 
-  // Listen for typing status of others
-  const onTypingStatusChanged = (callback) => {
-    const typingRef = database.ref("typingStatus");
-    typingRef.on("value", (snapshot) => {
+  onTypingStatusChanged: (callback) => {
+    const typingRef = ref(database, "typingStatus");
+    onValue(typingRef, (snapshot) => {
       const typingUsers = snapshot.val() || {};
       callback(typingUsers);
     });
-  };
+  },
 
-  // Remove typing status when user disconnects
-  const setupTypingStatusCleanup = () => {
+  setupTypingStatusCleanup: () => {
     if (!currentUser) return;
-    const typingRef = database.ref(`typingStatus/${currentUser.uid}`);
-    typingRef.onDisconnect().remove();
-  };
+    const typingRef = ref(database, `typingStatus/${currentUser.uid}`);
+    onDisconnect(typingRef).remove().catch(console.error);
+  },
 
-  return {
-    signInAnonymously,
-    getCurrentUser,
-    onAuthStateChanged,
-    sendMessage,
-    onNewMessage,
-    setTypingStatus,
-    onTypingStatusChanged,
-    setupTypingStatusCleanup,
-  };
-})();
+  getCurrentUser: () => currentUser,
+};
+
+export default FirebaseHelpers;
