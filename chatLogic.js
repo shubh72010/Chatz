@@ -1,135 +1,173 @@
-(() => {
-  const chatContainer = document.getElementById("chat-container");
-  const inputForm = document.getElementById("input-form");
-  const messageInput = document.getElementById("message-input");
-  const sendBtn = document.getElementById("send-btn");
-  const typingIndicator = document.getElementById("typing-indicator");
+// chatLogic.js
+import {
+  auth, database, signIn, signUserOut,
+  onAuthStateChanged, ref, set, push, onChildAdded, onValue, get
+} from './firebaseHelper.js';
 
-  let currentUser = null;
-  let typingTimeout = null;
-  const TYPING_TIMER_LENGTH = 1500; // ms
+// UI elements
+const loginDiv = document.getElementById('login');
+const profileSetupDiv = document.getElementById('profileSetup');
+const chatAppDiv = document.getElementById('chatApp');
 
-  // Format timestamp nicely
-  const formatTimestamp = (ts) => {
-    const d = new Date(ts);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
+const googleSignInBtn = document.getElementById('googleSignIn');
+const signOutBtn = document.getElementById('signOutBtn');
 
-  // Render a message bubble
-  const renderMessage = (msg) => {
-    // Avoid rendering if no username or text
-    if (!msg.text || !msg.uid) return;
+const displayNameInput = document.getElementById('displayName');
+const saveProfileBtn = document.getElementById('saveProfile');
 
-    const div = document.createElement("div");
-    div.classList.add("message");
+const userNameSpan = document.getElementById('userName');
+const chatRoomsDiv = document.getElementById('chatRooms');
+const newRoomNameInput = document.getElementById('newRoomName');
+const createRoomBtn = document.getElementById('createRoomBtn');
 
-    // Different styles for self vs others
-    if (msg.uid === currentUser.uid) {
-      div.classList.add("self");
+const dmListDiv = document.getElementById('dmList');
+const dmEmailInput = document.getElementById('dmEmail');
+const startDMBtn = document.getElementById('startDMBtn');
+
+const messagesDiv = document.getElementById('messages');
+const messageInput = document.getElementById('messageInput');
+const sendMessageBtn = document.getElementById('sendMessageBtn');
+const currentChatNameSpan = document.getElementById('currentChatName');
+
+let currentUser = null;
+let currentChatId = null;
+let currentChatType = null; // "room" or "dm"
+
+// Helpers
+
+function clearMessages() {
+  messagesDiv.innerHTML = '';
+}
+
+function addMessageToUI(msgObj) {
+  const div = document.createElement('div');
+  div.classList.add('message');
+  if (msgObj.senderId === currentUser.uid) div.classList.add('self');
+  div.textContent = `${msgObj.senderName}: ${msgObj.message}`;
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function loadMessages(chatId) {
+  clearMessages();
+  const messagesRef = ref(database, `messages/${chatId}`);
+  onValue(messagesRef, (snapshot) => {
+    clearMessages();
+    snapshot.forEach(childSnap => {
+      addMessageToUI(childSnap.val());
+    });
+  });
+}
+
+function sendMessage() {
+  if (!currentChatId) return alert('Select a chat first');
+  const text = messageInput.value.trim();
+  if (!text) return;
+  const messagesRef = ref(database, `messages/${currentChatId}`);
+  push(messagesRef, {
+    senderId: currentUser.uid,
+    senderName: currentUser.displayName || "Anonymous",
+    message: text,
+    timestamp: Date.now()
+  });
+  messageInput.value = '';
+}
+
+// Authentication & Profile Setup
+
+function showLogin() {
+  loginDiv.style.display = 'block';
+  profileSetupDiv.style.display = 'none';
+  chatAppDiv.style.display = 'none';
+}
+
+function showProfileSetup() {
+  loginDiv.style.display = 'none';
+  profileSetupDiv.style.display = 'block';
+  chatAppDiv.style.display = 'none';
+}
+
+function showChatApp() {
+  loginDiv.style.display = 'none';
+  profileSetupDiv.style.display = 'none';
+  chatAppDiv.style.display = 'block';
+}
+
+function checkProfileSetup(user) {
+  const userRef = ref(database, `users/${user.uid}/displayName`);
+  get(userRef).then(snapshot => {
+    if (snapshot.exists()) {
+      currentUser.displayName = snapshot.val();
+      userNameSpan.textContent = currentUser.displayName;
+      showChatApp();
+      loadChatRooms();
+      loadDMs();
     } else {
-      div.classList.add("other");
-    }
-
-    const usernameEl = document.createElement("div");
-    usernameEl.className = "username";
-    usernameEl.textContent = msg.username || "Anon";
-
-    const textEl = document.createElement("div");
-    textEl.className = "text";
-    textEl.textContent = msg.text;
-
-    const timestampEl = document.createElement("div");
-    timestampEl.className = "timestamp";
-    timestampEl.textContent = formatTimestamp(msg.timestamp || Date.now());
-
-    div.appendChild(usernameEl);
-    div.appendChild(textEl);
-    div.appendChild(timestampEl);
-
-    chatContainer.appendChild(div);
-
-    // Scroll to bottom for new messages
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-  };
-
-  // Handle form submit
-  inputForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const text = messageInput.value.trim();
-    if (!text) return;
-
-    sendBtn.disabled = true;
-
-    const messageObj = {
-      text,
-      uid: currentUser.uid,
-      username: currentUser.isAnonymous ? "Anon" : currentUser.displayName || "User",
-      timestamp: Date.now(),
-    };
-
-    try {
-      await FirebaseHelpers.sendMessage(messageObj);
-      messageInput.value = "";
-      sendBtn.disabled = true;
-      setTyping(false);
-    } catch (err) {
-      console.error("Failed to send message:", err);
+      showProfileSetup();
     }
   });
+}
 
-  // Enable/disable send button on input change
-  messageInput.addEventListener("input", () => {
-    sendBtn.disabled = messageInput.value.trim().length === 0;
-    setTyping(true);
+// Load and display chat rooms
+
+function loadChatRooms() {
+  chatRoomsDiv.innerHTML = '';
+  const roomsRef = ref(database, 'rooms');
+  onValue(roomsRef, (snapshot) => {
+    chatRoomsDiv.innerHTML = '';
+    snapshot.forEach(roomSnap => {
+      const room = roomSnap.val();
+      const btn = document.createElement('button');
+      btn.textContent = room.name;
+      btn.onclick = () => {
+        currentChatId = roomSnap.key;
+        currentChatType = 'room';
+        currentChatNameSpan.textContent = `Room: ${room.name}`;
+        loadMessages(currentChatId);
+      };
+      chatRoomsDiv.appendChild(btn);
+    });
   });
+}
 
-  // Manage typing status with debounce
-  const setTyping = (isTyping) => {
-    FirebaseHelpers.setTypingStatus(isTyping);
-    if (typingTimeout) clearTimeout(typingTimeout);
-    if (isTyping) {
-      typingTimeout = setTimeout(() => {
-        FirebaseHelpers.setTypingStatus(false);
-      }, TYPING_TIMER_LENGTH);
-    }
-  };
+createRoomBtn.onclick = () => {
+  const name = newRoomNameInput.value.trim();
+  if (!name) return alert('Room name required');
+  const roomsRef = ref(database, 'rooms');
+  push(roomsRef, { name });
+  newRoomNameInput.value = '';
+};
 
-  // Show typing indicator if others typing
-  FirebaseHelpers.onTypingStatusChanged((typingUsers) => {
-    const othersTyping = Object.entries(typingUsers).filter(
-      ([uid, typing]) => uid !== currentUser.uid && typing
-    );
+// Direct Messages (DM)
 
-    if (othersTyping.length === 0) {
-      typingIndicator.textContent = "";
-    } else if (othersTyping.length === 1) {
-      typingIndicator.textContent = "Someone is typing...";
-    } else {
-      typingIndicator.textContent = "Multiple people are typing...";
-    }
+function loadDMs() {
+  dmListDiv.innerHTML = '';
+  const userChatsRef = ref(database, `userChats/${currentUser.uid}`);
+  onValue(userChatsRef, (snapshot) => {
+    dmListDiv.innerHTML = '';
+    snapshot.forEach(chatSnap => {
+      const chatId = chatSnap.key;
+      const chatName = chatSnap.val().name || 'DM';
+      const btn = document.createElement('button');
+      btn.textContent = chatName;
+      btn.onclick = () => {
+        currentChatId = chatId;
+        currentChatType = 'dm';
+        currentChatNameSpan.textContent = `DM: ${chatName}`;
+        loadMessages(currentChatId);
+      };
+      dmListDiv.appendChild(btn);
+    });
   });
+}
 
-  // Listen for new messages and render them
-  FirebaseHelpers.onNewMessage((msg) => {
-    renderMessage(msg);
-  });
-
-  // Setup initial auth and cleanup
-  FirebaseHelpers.onAuthStateChanged(async (user) => {
-    if (user) {
-      currentUser = user;
-      FirebaseHelpers.setupTypingStatusCleanup();
-      sendBtn.disabled = true;
-    } else {
-      // If signed out, sign in anonymously
-      await FirebaseHelpers.signInAnonymously();
-    }
-  });
-
-  // Kick things off by signing in if not already
-  (async () => {
-    if (!FirebaseHelpers.getCurrentUser()) {
-      await FirebaseHelpers.signInAnonymously();
-    }
-  })();
-})();
+function startDMByEmail(email) {
+  if (!email) return alert('Email required');
+  // Find user by email
+  const usersRef = ref(database, 'users');
+  get(usersRef).then(snapshot => {
+    let targetUserId = null;
+    snapshot.forEach(userSnap => {
+      if (userSnap.val().email === email) targetUserId = userSnap.key;
+    });
+    if (!targetUserId) return alert('User not found
