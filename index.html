@@ -1,605 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Chatz</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Chat App</title>
   <style>
-    body { 
-      margin: 0; 
-      font-family: 'Segoe UI', Roboto, sans-serif; 
-      background: #121212; 
-      color: white; 
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
       padding: 20px;
+      background-color: #f5f5f5;
     }
-    #login, #profileSetup, #chatApp { 
-      max-width: 800px; 
-      margin: 0 auto; 
-      padding: 1rem; 
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
     }
-    #login { display: block; } /* Show login by default */
-    #profileSetup, #chatApp { display: none; }
-    button, input { 
-      margin: 0.5rem 0; 
-      padding: 0.75rem; 
-      border-radius: 0.5rem; 
-      border: none; 
-      width: 100%;
-      box-sizing: border-box;
+    header {
+      background: #4285f4;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #auth-container, #profile-setup {
+      padding: 20px;
+      text-align: center;
     }
     button {
-      background: #4f46e5;
+      background: #4285f4;
       color: white;
-      font-weight: bold;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
       cursor: pointer;
+      font-size: 16px;
       transition: background 0.3s;
     }
     button:hover {
-      background: #4338ca;
+      background: #3367d6;
     }
     button:disabled {
-      background: #6b7280;
+      background: #cccccc;
       cursor: not-allowed;
     }
     input {
-      background: #2b2b2b;
-      color: white;
-      border: 1px solid #444;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      width: 100%;
+      margin-bottom: 10px;
+      font-size: 16px;
     }
-    #messages { 
-      height: 400px; 
-      overflow-y: auto; 
-      border: 1px solid #444; 
-      padding: 0.5rem; 
-      margin-bottom: 1rem; 
-      border-radius: 0.5rem;
-      background: #1e1e1e;
+    #chat-container {
+      display: none;
+      height: 600px;
     }
-    .message { 
-      padding: 0.8rem; 
-      margin: 0.5rem 0; 
-      border-radius: 0.8rem; 
-      background: #2b2b2b; 
-      max-width: 70%;
+    #sidebar {
+      width: 250px;
+      float: left;
+      height: 100%;
+      border-right: 1px solid #eee;
+      overflow-y: auto;
     }
-    .self { 
-      background: #4f46e5; 
-      margin-left: auto; 
-    }
-    .chat-section {
-      margin-bottom: 2rem;
-      padding: 1rem;
-      background: #1e1e1e;
-      border-radius: 0.5rem;
-    }
-    #chatRooms, #dmList {
+    #chat-area {
+      margin-left: 250px;
+      height: 100%;
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin: 1rem 0;
+      flex-direction: column;
+    }
+    #messages {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    #message-form {
+      padding: 15px;
+      border-top: 1px solid #eee;
+      display: flex;
+    }
+    #message-input {
+      flex-grow: 1;
+      margin-right: 10px;
     }
     .chat-room, .dm-item {
-      padding: 0.5rem 1rem;
-      background: #2b2b2b;
-      border-radius: 0.5rem;
+      padding: 10px;
       cursor: pointer;
+      border-bottom: 1px solid #eee;
     }
     .chat-room:hover, .dm-item:hover {
-      background: #4f46e5;
+      background: #f5f5f5;
     }
-    .loading {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255,255,255,.3);
-      border-radius: 50%;
-      border-top-color: white;
-      animation: spin 1s ease-in-out infinite;
+    .message {
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      background: #f5f5f5;
+      max-width: 70%;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .message.self {
+      margin-left: auto;
+      background: #e3f2fd;
+    }
+    .message-sender {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .message-time {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    #current-chat-name {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <header>
+      <h1>Firebase Chat App</h1>
+      <button id="sign-out-btn" style="display: none;">Sign Out</button>
+    </header>
 
-<div id="login">
-  <h2>Welcome to Chatz</h2>
-  <button id="googleSignIn">
-    <span id="signInText">Sign In with Google</span>
-    <span id="signInSpinner" class="loading" style="display: none;"></span>
-  </button>
-</div>
-
-<div id="profileSetup">
-  <h2>Set up your profile</h2>
-  <input type="text" id="displayName" placeholder="Display Name" required />
-  <button id="saveProfile">
-    <span id="saveProfileText">Save and Continue</span>
-    <span id="saveProfileSpinner" class="loading" style="display: none;"></span>
-  </button>
-</div>
-
-<div id="chatApp">
-  <div style="display: flex; justify-content: space-between; align-items: center;">
-    <h2>Hello, <span id="userName"></span>!</h2>
-    <button id="signOutBtn" style="width: auto; padding: 0.5rem 1rem;">
-      <span id="signOutText">Sign Out</span>
-      <span id="signOutSpinner" class="loading" style="display: none;"></span>
-    </button>
-  </div>
-
-  <div class="chat-section">
-    <h3>Chat Rooms</h3>
-    <div style="display: flex; gap: 0.5rem;">
-      <input type="text" id="newRoomName" placeholder="New Room Name" style="flex: 1;" />
-      <button id="createRoomBtn" style="width: auto;">
-        <span id="createRoomText">Create</span>
-        <span id="createRoomSpinner" class="loading" style="display: none;"></span>
-      </button>
+    <div id="auth-container">
+      <h2>Welcome to Chat App</h2>
+      <button id="google-signin-btn">Sign In with Google</button>
     </div>
-    <div id="chatRooms"></div>
-  </div>
 
-  <div class="chat-section">
-    <h3>Direct Messages</h3>
-    <div style="display: flex; gap: 0.5rem;">
-      <input type="email" id="dmEmail" placeholder="Email for DM" style="flex: 1;" />
-      <button id="startDMBtn" style="width: auto;">
-        <span id="startDMText">Start DM</span>
-        <span id="startDMSpinner" class="loading" style="display: none;"></span>
-      </button>
+    <div id="profile-setup" style="display: none;">
+      <h2>Complete Your Profile</h2>
+      <input type="text" id="display-name" placeholder="Enter your display name">
+      <button id="save-profile-btn">Save Profile</button>
     </div>
-    <div id="dmList"></div>
-  </div>
 
-  <div class="chat-section">
-    <h3><span id="currentChatName">Select a chat</span></h3>
-    <div id="messages"></div>
-    <div style="display: flex; gap: 0.5rem;">
-      <input type="text" id="messageInput" placeholder="Type a message..." style="flex: 1;" disabled />
-      <button id="sendMessageBtn" style="width: auto;" disabled>
-        <span id="sendMessageText">Send</span>
-        <span id="sendMessageSpinner" class="loading" style="display: none;"></span>
-      </button>
+    <div id="chat-container">
+      <div id="sidebar">
+        <div style="padding: 15px; border-bottom: 1px solid #eee;">
+          <h3>Chat Rooms</h3>
+          <div style="display: flex;">
+            <input type="text" id="new-room-name" placeholder="New room name">
+            <button id="create-room-btn">+</button>
+          </div>
+        </div>
+        <div id="rooms-list"></div>
+
+        <div style="padding: 15px; border-bottom: 1px solid #eee; border-top: 1px solid #eee;">
+          <h3>Direct Messages</h3>
+          <div style="display: flex;">
+            <input type="email" id="dm-email" placeholder="User's email">
+            <button id="start-dm-btn">+</button>
+          </div>
+        </div>
+        <div id="dms-list"></div>
+      </div>
+
+      <div id="chat-area">
+        <div id="current-chat-name">Select a chat to start messaging</div>
+        <div id="messages"></div>
+        <form id="message-form">
+          <input type="text" id="message-input" placeholder="Type your message..." disabled>
+          <button type="submit" id="send-btn" disabled>Send</button>
+        </form>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Add Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-<script>
-  // Your Firebase configuration
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-
-  // Initialize Firebase
-  const app = firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-  const provider = new firebase.auth.GoogleAuthProvider();
-
-  // DOM elements
-  const loginSection = document.getElementById('login');
-  const profileSetupSection = document.getElementById('profileSetup');
-  const chatAppSection = document.getElementById('chatApp');
-  const googleSignInBtn = document.getElementById('googleSignIn');
-  const saveProfileBtn = document.getElementById('saveProfile');
-  const signOutBtn = document.getElementById('signOutBtn');
-  const userNameDisplay = document.getElementById('userName');
-  const newRoomNameInput = document.getElementById('newRoomName');
-  const createRoomBtn = document.getElementById('createRoomBtn');
-  const chatRoomsContainer = document.getElementById('chatRooms');
-  const dmEmailInput = document.getElementById('dmEmail');
-  const startDMBtn = document.getElementById('startDMBtn');
-  const dmListContainer = document.getElementById('dmList');
-  const messagesContainer = document.getElementById('messages');
-  const messageInput = document.getElementById('messageInput');
-  const sendMessageBtn = document.getElementById('sendMessageBtn');
-  const currentChatNameDisplay = document.getElementById('currentChatName');
-  const displayNameInput = document.getElementById('displayName');
-
-  // Spinner elements
-  const signInText = document.getElementById('signInText');
-  const signInSpinner = document.getElementById('signInSpinner');
-  const saveProfileText = document.getElementById('saveProfileText');
-  const saveProfileSpinner = document.getElementById('saveProfileSpinner');
-  const signOutText = document.getElementById('signOutText');
-  const signOutSpinner = document.getElementById('signOutSpinner');
-  const createRoomText = document.getElementById('createRoomText');
-  const createRoomSpinner = document.getElementById('createRoomSpinner');
-  const startDMText = document.getElementById('startDMText');
-  const startDMSpinner = document.getElementById('startDMSpinner');
-  const sendMessageText = document.getElementById('sendMessageText');
-  const sendMessageSpinner = document.getElementById('sendMessageSpinner');
-
-  // State variables
-  let currentUser = null;
-  let currentChat = null;
-  let currentChatType = null; // 'room' or 'dm'
-  let unsubscribeMessages = null;
-
-  // Event Listeners
-  googleSignInBtn.addEventListener('click', signInWithGoogle);
-  saveProfileBtn.addEventListener('click', saveProfile);
-  signOutBtn.addEventListener('click', handleSignOut);
-  createRoomBtn.addEventListener('click', createRoom);
-  startDMBtn.addEventListener('click', startDM);
-  sendMessageBtn.addEventListener('click', sendMessage);
-
-  // Enter key to send message
-  messageInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      sendMessage();
-    }
-  });
-
-  // Initialize the app
-  function initApp() {
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        currentUser = user;
-        checkUserProfile(user);
-      } else {
-        // Not logged in
-        loginSection.style.display = 'block';
-        profileSetupSection.style.display = 'none';
-        chatAppSection.style.display = 'none';
-        currentUser = null;
-        currentChat = null;
-        currentChatType = null;
-        if (unsubscribeMessages) unsubscribeMessages();
-      }
-    });
-  }
-
-  // Check if user has completed profile setup
-  async function checkUserProfile(user) {
-    try {
-      const userDoc = await db.collection('users').doc(user.uid).get();
-      
-      if (userDoc.exists() && userDoc.data().displayName) {
-        // Profile exists, show chat app
-        userNameDisplay.textContent = userDoc.data().displayName;
-        loginSection.style.display = 'none';
-        profileSetupSection.style.display = 'none';
-        chatAppSection.style.display = 'block';
-        
-        // Load chats
-        loadChatRooms();
-        loadDMs();
-      } else {
-        // Profile not set up
-        loginSection.style.display = 'none';
-        profileSetupSection.style.display = 'block';
-        chatAppSection.style.display = 'none';
-        
-        // Set default display name to Google name if available
-        displayNameInput.value = user.displayName || '';
-      }
-    } catch (error) {
-      console.error('Error checking user profile:', error);
-      alert('Error checking user profile: ' + error.message);
-    }
-  }
-
-  // Sign in with Google
-  async function signInWithGoogle() {
-    try {
-      showSpinner(signInText, signInSpinner);
-      googleSignInBtn.disabled = true;
-      await auth.signInWithPopup(provider);
-    } catch (error) {
-      console.error('Error signing in:', error);
-      alert('Error signing in: ' + error.message);
-    } finally {
-      hideSpinner(signInText, signInSpinner);
-      googleSignInBtn.disabled = false;
-    }
-  }
-
-  // Save user profile
-  async function saveProfile() {
-    const displayName = displayNameInput.value.trim();
-    
-    if (!displayName) {
-      alert('Please enter a display name');
-      return;
-    }
-    
-    try {
-      showSpinner(saveProfileText, saveProfileSpinner);
-      saveProfileBtn.disabled = true;
-      
-      await db.collection('users').doc(currentUser.uid).set({
-        displayName,
-        email: currentUser.email,
-        uid: currentUser.uid,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      
-      userNameDisplay.textContent = displayName;
-      profileSetupSection.style.display = 'none';
-      chatAppSection.style.display = 'block';
-      
-      // Load chats after profile setup
-      loadChatRooms();
-      loadDMs();
-    } catch (error) {
-      console.error('Error saving profile:', error);
-      alert('Error saving profile: ' + error.message);
-    } finally {
-      hideSpinner(saveProfileText, saveProfileSpinner);
-      saveProfileBtn.disabled = false;
-    }
-  }
-
-  // Sign out
-  async function handleSignOut() {
-    try {
-      showSpinner(signOutText, signOutSpinner);
-      signOutBtn.disabled = true;
-      await auth.signOut();
-      currentChat = null;
-      currentChatType = null;
-      if (unsubscribeMessages) unsubscribeMessages();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    } finally {
-      hideSpinner(signOutText, signOutSpinner);
-      signOutBtn.disabled = false;
-    }
-  }
-
-  // Create a new chat room
-  async function createRoom() {
-    const roomName = newRoomNameInput.value.trim();
-    
-    if (!roomName) {
-      alert('Please enter a room name');
-      return;
-    }
-    
-    try {
-      showSpinner(createRoomText, createRoomSpinner);
-      createRoomBtn.disabled = true;
-      
-      await db.collection('rooms').add({
-        name: roomName,
-        createdBy: currentUser.uid,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        members: [currentUser.uid]
-      });
-      
-      newRoomNameInput.value = '';
-      loadChatRooms();
-    } catch (error) {
-      console.error('Error creating room:', error);
-      alert('Error creating room: ' + error.message);
-    } finally {
-      hideSpinner(createRoomText, createRoomSpinner);
-      createRoomBtn.disabled = false;
-    }
-  }
-
-  // Start a direct message
-  async function startDM() {
-    const email = dmEmailInput.value.trim();
-    
-    if (!email) {
-      alert('Please enter an email');
-      return;
-    }
-    
-    if (email === currentUser.email) {
-      alert('You cannot DM yourself');
-      return;
-    }
-    
-    try {
-      showSpinner(startDMText, startDMSpinner);
-      startDMBtn.disabled = true;
-      
-      // Find user by email
-      const querySnapshot = await db.collection('users').where('email', '==', email).get();
-      
-      if (querySnapshot.empty) {
-        alert('User not found');
-        return;
-      }
-      
-      const otherUser = querySnapshot.docs[0].data();
-      
-      // Create a unique DM ID (sorted uids to prevent duplicate DMs)
-      const dmId = [currentUser.uid, otherUser.uid].sort().join('_');
-      
-      // Check if DM already exists
-      const dmDoc = await db.collection('dms').doc(dmId).get();
-      
-      if (!dmDoc.exists()) {
-        // Create DM
-        await db.collection('dms').doc(dmId).set({
-          users: [currentUser.uid, otherUser.uid],
-          userNames: [userNameDisplay.textContent, otherUser.displayName],
-          userEmails: [currentUser.email, otherUser.email],
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-      
-      dmEmailInput.value = '';
-      loadDMs();
-      
-      // Open the DM
-      openChat(dmId, 'dm', `${otherUser.displayName} (DM)`);
-    } catch (error) {
-      console.error('Error starting DM:', error);
-      alert('Error starting DM: ' + error.message);
-    } finally {
-      hideSpinner(startDMText, startDMSpinner);
-      startDMBtn.disabled = false;
-    }
-  }
-
-  // Load chat rooms
-  async function loadChatRooms() {
-    try {
-      const querySnapshot = await db.collection('rooms')
-        .where('members', 'array-contains', currentUser.uid)
-        .get();
-      
-      chatRoomsContainer.innerHTML = '';
-      
-      querySnapshot.forEach((doc) => {
-        const room = doc.data();
-        const roomElement = document.createElement('div');
-        roomElement.className = 'chat-room';
-        roomElement.textContent = room.name;
-        roomElement.addEventListener('click', () => {
-          openChat(doc.id, 'room', room.name);
-        });
-        chatRoomsContainer.appendChild(roomElement);
-      });
-    } catch (error) {
-      console.error('Error loading rooms:', error);
-    }
-  }
-
-  // Load direct messages
-  async function loadDMs() {
-    try {
-      const querySnapshot = await db.collection('dms')
-        .where('users', 'array-contains', currentUser.uid)
-        .get();
-      
-      dmListContainer.innerHTML = '';
-      
-      querySnapshot.forEach((doc) => {
-        const dm = doc.data();
-        // Find the other user's name
-        const otherUserIndex = dm.users.findIndex(uid => uid !== currentUser.uid);
-        const dmName = dm.userNames[otherUserIndex];
-        
-        const dmElement = document.createElement('div');
-        dmElement.className = 'dm-item';
-        dmElement.textContent = `${dmName} (DM)`;
-        dmElement.addEventListener('click', () => {
-          openChat(doc.id, 'dm', `${dmName} (DM)`);
-        });
-        dmListContainer.appendChild(dmElement);
-      });
-    } catch (error) {
-      console.error('Error loading DMs:', error);
-    }
-  }
-
-  // Open a chat (room or DM)
-  function openChat(chatId, type, name) {
-    // Unsubscribe from previous chat messages
-    if (unsubscribeMessages) unsubscribeMessages();
-    
-    currentChat = chatId;
-    currentChatType = type;
-    currentChatNameDisplay.textContent = name;
-    messagesContainer.innerHTML = '';
-    messageInput.disabled = false;
-    sendMessageBtn.disabled = false;
-    
-    // Subscribe to new messages
-    unsubscribeMessages = db.collection(`${type}s`).doc(chatId)
-      .collection('messages')
-      .orderBy('timestamp')
-      .onSnapshot((snapshot) => {
-        messagesContainer.innerHTML = '';
-        snapshot.forEach((doc) => {
-          const message = doc.data();
-          displayMessage(message);
-        });
-        // Scroll to bottom
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      });
-  }
-
-  // Display a message in the chat
-  function displayMessage(message) {
-    const messageElement = document.createElement('div');
-    messageElement.className = `message ${message.senderId === currentUser.uid ? 'self' : ''}`;
-    
-    const senderName = message.senderId === currentUser.uid 
-      ? 'You' 
-      : message.senderName || 'Unknown';
-    
-    const time = message.timestamp?.toDate().toLocaleTimeString() || 'now';
-    
-    messageElement.innerHTML = `
-      <strong>${senderName}</strong>
-      <p>${message.text}</p>
-      <small>${time}</small>
-    `;
-    
-    messagesContainer.appendChild(messageElement);
-  }
-
-  // Send a message
-  async function sendMessage() {
-    const text = messageInput.value.trim();
-    
-    if (!text || !currentChat || !currentChatType) {
-      return;
-    }
-    
-    try {
-      showSpinner(sendMessageText, sendMessageSpinner);
-      sendMessageBtn.disabled = true;
-      messageInput.disabled = true;
-      
-      // Get user's display name
-      const userDoc = await db.collection('users').doc(currentUser.uid).get();
-      const displayName = userDoc.exists() ? userDoc.data().displayName : currentUser.displayName || 'Anonymous';
-      
-      // Add message to the chat
-      await db.collection(`${currentChatType}s`).doc(currentChat)
-        .collection('messages')
-        .add({
-          text,
-          senderId: currentUser.uid,
-          senderName: displayName,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      
-      messageInput.value = '';
-    } catch (error) {
-      console.error('Error sending message:', error);
-      alert('Error sending message: ' + error.message);
-    } finally {
-      hideSpinner(sendMessageText, sendMessageSpinner);
-      sendMessageBtn.disabled = false;
-      messageInput.disabled = false;
-      messageInput.focus();
-    }
-  }
-
-  // Helper functions for loading spinners
-  function showSpinner(textElement, spinnerElement) {
-    textElement.style.display = 'none';
-    spinnerElement.style.display = 'inline-block';
-  }
-
-  function hideSpinner(textElement, spinnerElement) {
-    textElement.style.display = 'inline';
-    spinnerElement.style.display = 'none';
-  }
-
-  // Initialize the application
-  initApp();
-</script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
