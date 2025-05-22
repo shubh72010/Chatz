@@ -170,4 +170,71 @@ function startDMByEmail(email) {
     snapshot.forEach(userSnap => {
       if (userSnap.val().email === email) targetUserId = userSnap.key;
     });
-    if (!targetUserId) return alert('User not found
+    if (!targetUserId) return alert('User not found');
+
+    // Create a unique DM chat ID combining two user IDs sorted
+    const chatUsers = [currentUser.uid, targetUserId].sort();
+    const dmChatId = chatUsers.join('_');
+
+    // Add chat metadata for both users under userChats
+    const updates = {};
+    updates[`userChats/${currentUser.uid}/${dmChatId}`] = { name: `DM with ${email}` };
+    updates[`userChats/${targetUserId}/${dmChatId}`] = { name: `DM with ${currentUser.displayName}` };
+    
+    set(ref(database), updates).then(() => {
+      currentChatId = dmChatId;
+      currentChatType = 'dm';
+      currentChatNameSpan.textContent = `DM: ${email}`;
+      loadMessages(currentChatId);
+      dmEmailInput.value = '';
+    });
+  });
+}
+
+startDMBtn.onclick = () => {
+  startDMByEmail(dmEmailInput.value.trim());
+};
+
+// Save profile
+
+saveProfileBtn.onclick = () => {
+  const name = displayNameInput.value.trim();
+  if (!name) return alert('Display name required');
+  set(ref(database, `users/${currentUser.uid}`), {
+    displayName: name,
+    email: currentUser.email
+  }).then(() => {
+    currentUser.displayName = name;
+    userNameSpan.textContent = name;
+    showChatApp();
+    loadChatRooms();
+    loadDMs();
+  });
+};
+
+// Send message
+
+sendMessageBtn.onclick = sendMessage;
+messageInput.addEventListener('keypress', e => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+// Auth state changes
+
+googleSignInBtn.onclick = () => {
+  signIn().catch(console.error);
+};
+
+signOutBtn.onclick = () => {
+  signUserOut().catch(console.error);
+};
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    currentUser = user;
+    checkProfileSetup(user);
+  } else {
+    currentUser = null;
+    showLogin();
+  }
+});
