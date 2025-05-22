@@ -1,5 +1,3 @@
-// chatLogic.js
-
 (() => {
   const chatContainer = document.getElementById("chat-container");
   const inputForm = document.getElementById("input-form");
@@ -7,6 +5,7 @@
   const sendBtn = document.getElementById("send-btn");
   const typingIndicator = document.getElementById("typing-indicator");
 
+  let currentUser = null;
   let typingTimeout = null;
   const TYPING_TIMER_LENGTH = 1500; // ms
 
@@ -18,14 +17,14 @@
 
   // Render a message bubble
   const renderMessage = (msg) => {
+    // Avoid rendering if no username or text
     if (!msg.text || !msg.uid) return;
-
-    const currentUser = FirebaseHelpers.getCurrentUser();
 
     const div = document.createElement("div");
     div.classList.add("message");
 
-    if (currentUser && msg.uid === currentUser.uid) {
+    // Different styles for self vs others
+    if (msg.uid === currentUser.uid) {
       div.classList.add("self");
     } else {
       div.classList.add("other");
@@ -48,19 +47,14 @@
     div.appendChild(timestampEl);
 
     chatContainer.appendChild(div);
+
+    // Scroll to bottom for new messages
     chatContainer.scrollTop = chatContainer.scrollHeight;
   };
 
   // Handle form submit
   inputForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-
-    const currentUser = FirebaseHelpers.getCurrentUser();
-    if (!currentUser) {
-      console.warn("No user signed in yet");
-      return;
-    }
-
     const text = messageInput.value.trim();
     if (!text) return;
 
@@ -80,14 +74,13 @@
       setTyping(false);
     } catch (err) {
       console.error("Failed to send message:", err);
-      sendBtn.disabled = false; // re-enable on fail
     }
   });
 
-  // Enable/disable send button and typing status on input
+  // Enable/disable send button on input change
   messageInput.addEventListener("input", () => {
     sendBtn.disabled = messageInput.value.trim().length === 0;
-    setTyping(messageInput.value.trim().length > 0);
+    setTyping(true);
   });
 
   // Manage typing status with debounce
@@ -103,9 +96,8 @@
 
   // Show typing indicator if others typing
   FirebaseHelpers.onTypingStatusChanged((typingUsers) => {
-    const currentUser = FirebaseHelpers.getCurrentUser();
     const othersTyping = Object.entries(typingUsers).filter(
-      ([uid, typing]) => uid !== (currentUser ? currentUser.uid : null) && typing
+      ([uid, typing]) => uid !== currentUser.uid && typing
     );
 
     if (othersTyping.length === 0) {
@@ -122,21 +114,22 @@
     renderMessage(msg);
   });
 
-  // Auth state change handler
+  // Setup initial auth and cleanup
   FirebaseHelpers.onAuthStateChanged(async (user) => {
     if (user) {
+      currentUser = user;
       FirebaseHelpers.setupTypingStatusCleanup();
-      sendBtn.disabled = true; // disable send until user types something
+      sendBtn.disabled = true;
     } else {
-      // Not signed in, sign in anonymously once
-      try {
-        await FirebaseHelpers.signInAnonymously();
-      } catch (err) {
-        console.error("Anonymous sign-in failed:", err);
-      }
+      // If signed out, sign in anonymously
+      await FirebaseHelpers.signInAnonymously();
     }
   });
 
-  // No manual sign-in call here, just wait for auth state change
-
+  // Kick things off by signing in if not already
+  (async () => {
+    if (!FirebaseHelpers.getCurrentUser()) {
+      await FirebaseHelpers.signInAnonymously();
+    }
+  })();
 })();
