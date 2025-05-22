@@ -1,10 +1,8 @@
-// chatLogic.js
 import {
   auth, database, signIn, signUserOut,
-  onAuthStateChanged, ref, set, push, onChildAdded, onValue, get
+  onAuthStateChanged, ref, set, push, onValue, get
 } from './firebaseHelper.js';
 
-// UI elements
 const loginDiv = document.getElementById('login');
 const profileSetupDiv = document.getElementById('profileSetup');
 const chatAppDiv = document.getElementById('chatApp');
@@ -31,9 +29,25 @@ const currentChatNameSpan = document.getElementById('currentChatName');
 
 let currentUser = null;
 let currentChatId = null;
-let currentChatType = null; // "room" or "dm"
+let currentChatType = null;
 
-// Helpers
+function showLogin() {
+  loginDiv.style.display = 'block';
+  profileSetupDiv.style.display = 'none';
+  chatAppDiv.style.display = 'none';
+}
+
+function showProfileSetup() {
+  loginDiv.style.display = 'none';
+  profileSetupDiv.style.display = 'block';
+  chatAppDiv.style.display = 'none';
+}
+
+function showChatApp() {
+  loginDiv.style.display = 'none';
+  profileSetupDiv.style.display = 'none';
+  chatAppDiv.style.display = 'block';
+}
 
 function clearMessages() {
   messagesDiv.innerHTML = '';
@@ -73,26 +87,6 @@ function sendMessage() {
   messageInput.value = '';
 }
 
-// Authentication & Profile Setup
-
-function showLogin() {
-  loginDiv.style.display = 'block';
-  profileSetupDiv.style.display = 'none';
-  chatAppDiv.style.display = 'none';
-}
-
-function showProfileSetup() {
-  loginDiv.style.display = 'none';
-  profileSetupDiv.style.display = 'block';
-  chatAppDiv.style.display = 'none';
-}
-
-function showChatApp() {
-  loginDiv.style.display = 'none';
-  profileSetupDiv.style.display = 'none';
-  chatAppDiv.style.display = 'block';
-}
-
 function checkProfileSetup(user) {
   const userRef = ref(database, `users/${user.uid}/displayName`);
   get(userRef).then(snapshot => {
@@ -107,8 +101,6 @@ function checkProfileSetup(user) {
     }
   });
 }
-
-// Load and display chat rooms
 
 function loadChatRooms() {
   chatRoomsDiv.innerHTML = '';
@@ -138,8 +130,6 @@ createRoomBtn.onclick = () => {
   newRoomNameInput.value = '';
 };
 
-// Direct Messages (DM)
-
 function loadDMs() {
   dmListDiv.innerHTML = '';
   const userChatsRef = ref(database, `userChats/${currentUser.uid}`);
@@ -163,7 +153,6 @@ function loadDMs() {
 
 function startDMByEmail(email) {
   if (!email) return alert('Email required');
-  // Find user by email
   const usersRef = ref(database, 'users');
   get(usersRef).then(snapshot => {
     let targetUserId = null;
@@ -172,11 +161,9 @@ function startDMByEmail(email) {
     });
     if (!targetUserId) return alert('User not found');
 
-    // Create a unique DM chat ID combining two user IDs sorted
     const chatUsers = [currentUser.uid, targetUserId].sort();
     const dmChatId = chatUsers.join('_');
 
-    // Add chat metadata for both users under userChats
     const updates = {};
     updates[`userChats/${currentUser.uid}/${dmChatId}`] = { name: `DM with ${email}` };
     updates[`userChats/${targetUserId}/${dmChatId}`] = { name: `DM with ${currentUser.displayName}` };
@@ -191,11 +178,7 @@ function startDMByEmail(email) {
   });
 }
 
-startDMBtn.onclick = () => {
-  startDMByEmail(dmEmailInput.value.trim());
-};
-
-// Save profile
+startDMBtn.onclick = () => startDMByEmail(dmEmailInput.value.trim());
 
 saveProfileBtn.onclick = () => {
   const name = displayNameInput.value.trim();
@@ -212,22 +195,13 @@ saveProfileBtn.onclick = () => {
   });
 };
 
-// Send message
-
 sendMessageBtn.onclick = sendMessage;
 messageInput.addEventListener('keypress', e => {
   if (e.key === 'Enter') sendMessage();
 });
 
-// Auth state changes
-
-googleSignInBtn.onclick = () => {
-  signIn().catch(console.error);
-};
-
-signOutBtn.onclick = () => {
-  signUserOut().catch(console.error);
-};
+googleSignInBtn.onclick = () => signIn().catch(console.error);
+signOutBtn.onclick = () => signUserOut().catch(console.error);
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
