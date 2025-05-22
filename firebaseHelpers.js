@@ -1,12 +1,12 @@
 // This is your original firebaseHelper.js content intact
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MSG_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+  authDomain: "chatz-45df4.firebaseapp.com",
+  projectId: "chatz-45df4",
+  storageBucket: "chatz-45df4.firebasestorage.app",
+  messagingSenderId: "463847844545",
+  appId: "1:463847844545:web:5006247d061c3e0dc28240"
 };
 
 firebase.initializeApp(firebaseConfig);
