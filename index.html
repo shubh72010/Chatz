@@ -5,13 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Chatz</title>
   <style>
-    body { margin: 0; font-family: sans-serif; background: #121212; color: white; }
-    #login, #profileSetup, #chatApp { display: none; padding: 1rem; }
-    .hidden { display: none; }
-    button, input { margin: 0.3rem; padding: 0.5rem; border-radius: 0.5rem; border: none; }
-    #messages { max-height: 300px; overflow-y: auto; border: 1px solid #444; padding: 0.5rem; margin-bottom: 1rem; }
-    .message { padding: 0.4rem; margin: 0.3rem 0; border-radius: 0.4rem; background: #2b2b2b; }
-    .self { background: #4f46e5; align-self: flex-end; }
+    body { 
+      margin: 0; 
+      font-family: 'Segoe UI', Roboto, sans-serif; 
+      background: #121212; 
+      color: white; 
+      padding: 20px;
+    }
+    #login, #profileSetup, #chatApp { 
+      max-width: 800px; 
+      margin: 0 auto; 
+      padding: 1rem; 
+    }
+    #login { display: block; } /* Show login by default */
+    #profileSetup, #chatApp { display: none; }
+    button, input { 
+      margin: 0.5rem 0; 
+      padding: 0.75rem; 
+      border-radius: 0.5rem; 
+      border: none; 
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      background: #4f46e5;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #4338ca;
+    }
+    input {
+      background: #2b2b2b;
+      color: white;
+      border: 1px solid #444;
+    }
+    #messages { 
+      height: 400px; 
+      overflow-y: auto; 
+      border: 1px solid #444; 
+      padding: 0.5rem; 
+      margin-bottom: 1rem; 
+      border-radius: 0.5rem;
+      background: #1e1e1e;
+    }
+    .message { 
+      padding: 0.8rem; 
+      margin: 0.5rem 0; 
+      border-radius: 0.8rem; 
+      background: #2b2b2b; 
+      max-width: 70%;
+    }
+    .self { 
+      background: #4f46e5; 
+      margin-left: auto; 
+    }
+    .chat-section {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: #1e1e1e;
+      border-radius: 0.5rem;
+    }
+    #chatRooms, #dmList {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .chat-room, .dm-item {
+      padding: 0.5rem 1rem;
+      background: #2b2b2b;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+    .chat-room:hover, .dm-item:hover {
+      background: #4f46e5;
+    }
   </style>
 </head>
 <body>
@@ -23,28 +94,42 @@
 
 <div id="profileSetup">
   <h2>Set up your profile</h2>
-  <input type="text" id="displayName" placeholder="Display Name" />
-  <button id="saveProfile">Save</button>
+  <input type="text" id="displayName" placeholder="Display Name" required />
+  <button id="saveProfile">Save and Continue</button>
 </div>
 
 <div id="chatApp">
-  <h2>Hello, <span id="userName"></span>!</h2>
-  <button id="signOutBtn">Sign Out</button>
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>Hello, <span id="userName"></span>!</h2>
+    <button id="signOutBtn" style="width: auto; padding: 0.5rem 1rem;">Sign Out</button>
+  </div>
 
-  <h3>Chat Rooms</h3>
-  <input type="text" id="newRoomName" placeholder="New Room Name" />
-  <button id="createRoomBtn">Create Room</button>
-  <div id="chatRooms"></div>
+  <div class="chat-section">
+    <h3>Chat Rooms</h3>
+    <div style="display: flex; gap: 0.5rem;">
+      <input type="text" id="newRoomName" placeholder="New Room Name" style="flex: 1;" />
+      <button id="createRoomBtn" style="width: auto;">Create</button>
+    </div>
+    <div id="chatRooms"></div>
+  </div>
 
-  <h3>Direct Messages</h3>
-  <input type="email" id="dmEmail" placeholder="Email for DM" />
-  <button id="startDMBtn">Start DM</button>
-  <div id="dmList"></div>
+  <div class="chat-section">
+    <h3>Direct Messages</h3>
+    <div style="display: flex; gap: 0.5rem;">
+      <input type="email" id="dmEmail" placeholder="Email for DM" style="flex: 1;" />
+      <button id="startDMBtn" style="width: auto;">Start DM</button>
+    </div>
+    <div id="dmList"></div>
+  </div>
 
-  <h3><span id="currentChatName">Select a chat</span></h3>
-  <div id="messages"></div>
-  <input type="text" id="messageInput" placeholder="Type a message..." />
-  <button id="sendMessageBtn">Send</button>
+  <div class="chat-section">
+    <h3><span id="currentChatName">Select a chat</span></h3>
+    <div id="messages"></div>
+    <div style="display: flex; gap: 0.5rem;">
+      <input type="text" id="messageInput" placeholder="Type a message..." style="flex: 1;" />
+      <button id="sendMessageBtn" style="width: auto;">Send</button>
+    </div>
+  </div>
 </div>
 
 <script type="module" src="chatLogic.js"></script>
