@@ -12,9 +12,10 @@
     .message { padding: 0.6rem 1rem; background: #3a375a; border-radius: 1rem; max-width: 80%; word-wrap: break-word; }
     .own { background: #5f5bc0; align-self: flex-end; }
     .meta { font-size: 0.7rem; opacity: 0.6; margin-top: 0.2rem; }
-    form { display: flex; padding: 1rem; background: #2d2b45; }
+    form { display: flex; padding: 1rem; background: #2d2b45; gap: 0.5rem; }
     input[type="text"] { flex: 1; padding: 0.6rem 1rem; border-radius: 1rem; border: none; outline: none; background: #44415e; color: white; }
-    button { padding: 0.6rem 1rem; margin-left: 0.5rem; border-radius: 1rem; border: none; background: #726dff; color: white; font-weight: bold; cursor: pointer; }
+    #username { max-width: 150px; }
+    button { padding: 0.6rem 1rem; border-radius: 1rem; border: none; background: #726dff; color: white; font-weight: bold; cursor: pointer; }
     button:hover { background: #5c58e0; }
   </style>
 </head>
@@ -51,6 +52,8 @@
     const nameInput = document.getElementById("username");
     const messageInput = document.getElementById("message");
 
+    let currentUsername = "";
+
     const scrollToBottom = () => {
       chat.scrollTop = chat.scrollHeight;
     };
@@ -59,7 +62,7 @@
       const data = snapshot.val();
       const msgDiv = document.createElement("div");
       msgDiv.className = "message";
-      if (data.name === nameInput.value.trim()) {
+      if (data.name === currentUsername) {
         msgDiv.classList.add("own");
       }
       msgDiv.innerHTML = `<strong>${data.name}</strong>: ${data.message}<div class="meta">${new Date(data.timestamp).toLocaleTimeString()}</div>`;
@@ -69,11 +72,17 @@
 
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      const name = nameInput.value.trim();
+
+      // Set current username once
+      if (!currentUsername) {
+        currentUsername = nameInput.value.trim();
+        nameInput.disabled = true;
+      }
+
       const message = messageInput.value.trim();
-      if (name && message) {
+      if (currentUsername && message) {
         push(messagesRef, {
-          name,
+          name: currentUsername,
           message,
           timestamp: Date.now()
         });
