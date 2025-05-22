@@ -1,5 +1,3 @@
-// firebaseHelpers.js
-
 import { 
   initializeApp 
 } from "firebase/app";
@@ -20,10 +18,11 @@ import {
   onDisconnect 
 } from "firebase/database";
 
-// Paste your firebaseConfig here:
+// Firebase config with databaseURL included
 const firebaseConfig = {
   apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
   authDomain: "chatz-45df4.firebaseapp.com",
+  databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",  // <--- Must have this!
   projectId: "chatz-45df4",
   storageBucket: "chatz-45df4.firebasestorage.app",
   messagingSenderId: "463847844545",
@@ -31,7 +30,7 @@ const firebaseConfig = {
   measurementId: "G-2VHETC9V8B"
 };
 
-// Init Firebase app, auth and DB
+// Initialize Firebase app, auth, and database
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const database = getDatabase(app);
