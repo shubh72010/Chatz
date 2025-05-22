@@ -1,266 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chat App with DM & Group</title>
-<style>
-  body { font-family: Arial, sans-serif; margin: 0; display: flex; height: 100vh; }
-  #sidebar { width: 300px; background: #222; color: white; display: flex; flex-direction: column; }
-  #tabs { display: flex; }
-  .tab { flex: 1; padding: 15px; cursor: pointer; text-align: center; background: #333; }
-  .tab.active { background: #555; }
-  #chatList { flex: 1; overflow-y: auto; }
-  .chatItem { padding: 10px; border-bottom: 1px solid #444; cursor: pointer; }
-  .chatItem:hover, .chatItem.active { background: #555; }
-  #main { flex: 1; display: flex; flex-direction: column; }
-  #header { background: #444; color: white; padding: 15px; }
-  #messages { flex: 1; overflow-y: auto; padding: 15px; background: #eee; }
-  .message { margin-bottom: 10px; padding: 10px; border-radius: 10px; max-width: 60%; }
-  .sent { background: #aee1f9; margin-left: auto; }
-  .received { background: #ddd; margin-right: auto; }
-  #inputArea { display: flex; padding: 10px; background: #ccc; }
-  #messageInput { flex: 1; padding: 10px; font-size: 1em; }
-  #sendBtn { padding: 10px 20px; }
-  #auth { padding: 10px; background: #222; color: white; text-align: center; }
-  #signInBtn, #signOutBtn { margin: 5px; padding: 8px 15px; cursor: pointer; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Realtime Chat with Groups and DMs</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
+
 <body>
-  <div id="sidebar">
-    <div id="auth">
-      <button id="signInBtn">Sign In Anon</button>
-      <button id="signOutBtn" style="display:none;">Sign Out</button>
-      <div id="userInfo"></div>
-    </div>
-    <div id="tabs">
-      <div class="tab active" id="tab-dm">DMs</div>
-      <div class="tab" id="tab-group">Groups</div>
-    </div>
-    <div id="chatList"></div>
+  <div id="login-section">
+    <button id="login-btn">Login with Google</button>
   </div>
 
-  <div id="main">
-    <div id="header">Select a chat</div>
-    <div id="messages"></div>
-    <div id="inputArea" style="display:none;">
-      <input type="text" id="messageInput" placeholder="Type your message..." />
-      <button id="sendBtn">Send</button>
+  <div id="main-chat" style="display:none;">
+    <div id="user-info">
+      <span id="user-name"></span>
+      <button id="logout-btn">Logout</button>
+    </div>
+
+    <!-- Add navigation for chats -->
+    <div id="chat-nav">
+      <button id="btn-global-chat" class="active-nav">Global Chat</button>
+      <button id="btn-groups">Groups</button>
+      <button id="btn-dms">Direct Messages</button>
+    </div>
+
+    <!-- Global chat area -->
+    <div id="global-chat" class="chat-container active-chat">
+      <div id="messages"></div>
+      <form id="message-form">
+        <input id="message-input" autocomplete="off" placeholder="Type your message here..." />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+
+    <!-- Groups chat area -->
+    <div id="groups-chat" class="chat-container" style="display:none;">
+      <div id="groups-list-container">
+        <h3>Your Groups</h3>
+        <ul id="groups-list"></ul>
+        <button id="create-group-btn">Create New Group</button>
+      </div>
+      <div id="group-chat-window" style="display:none;">
+        <h3 id="group-chat-title"></h3>
+        <div id="group-messages"></div>
+        <form id="group-message-form">
+          <input id="group-message-input" autocomplete="off" placeholder="Type group message..." />
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Direct messages area -->
+    <div id="dms-chat" class="chat-container" style="display:none;">
+      <div id="dm-list-container">
+        <h3>Your Direct Messages</h3>
+        <ul id="dm-list"></ul>
+        <button id="start-dm-btn">Start New DM</button>
+      </div>
+      <div id="dm-chat-window" style="display:none;">
+        <h3 id="dm-chat-title"></h3>
+        <div id="dm-messages"></div>
+        <form id="dm-message-form">
+          <input id="dm-message-input" autocomplete="off" placeholder="Type DM message..." />
+          <button type="submit">Send</button>
+        </form>
+      </div>
     </div>
   </div>
 
-<script type="module">
-// Firebase imports
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-import { getDatabase, ref, onValue, push, off } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
-import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-
-// Your Firebase config here (replace with yours)
-const firebaseConfig = {
-  apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
-  authDomain: "chatz-45df4.firebaseapp.com",
-  databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
-  projectId: "chatz-45df4",
-  storageBucket: "chatz-45df4.firebasestorage.app",
-  messagingSenderId: "463847844545",
-  appId: "1:463847844545:web:5006247d061c3e0dc28240",
-  measurementId: "G-2VHETC9V8B"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const auth = getAuth(app);
-
-// DOM refs
-const signInBtn = document.getElementById('signInBtn');
-const signOutBtn = document.getElementById('signOutBtn');
-const userInfo = document.getElementById('userInfo');
-const tabDm = document.getElementById('tab-dm');
-const tabGroup = document.getElementById('tab-group');
-const chatListEl = document.getElementById('chatList');
-const headerEl = document.getElementById('header');
-const messagesEl = document.getElementById('messages');
-const inputArea = document.getElementById('inputArea');
-const messageInput = document.getElementById('messageInput');
-const sendBtn = document.getElementById('sendBtn');
-
-let currentUser = null;
-let currentChatId = null;  // either DM partner uid or group id
-let currentChatType = 'dm'; // 'dm' or 'group'
-let messagesListener = null;
-
-// Auth handlers
-signInBtn.onclick = () => signInAnonymously(auth);
-signOutBtn.onclick = () => signOut(auth);
-
-onAuthStateChanged(auth, user => {
-  if (user) {
-    currentUser = user;
-    signInBtn.style.display = 'none';
-    signOutBtn.style.display = 'inline-block';
-    userInfo.textContent = `User: ${user.uid}`;
-    loadChatList();
-  } else {
-    currentUser = null;
-    signInBtn.style.display = 'inline-block';
-    signOutBtn.style.display = 'none';
-    userInfo.textContent = '';
-    chatListEl.innerHTML = '';
-    messagesEl.innerHTML = '';
-    headerEl.textContent = 'Select a chat';
-    inputArea.style.display = 'none';
-  }
-});
-
-// Tabs switching
-tabDm.onclick = () => switchTab('dm');
-tabGroup.onclick = () => switchTab('group');
-
-function switchTab(type) {
-  currentChatType = type;
-  tabDm.classList.toggle('active', type === 'dm');
-  tabGroup.classList.toggle('active', type === 'group');
-  currentChatId = null;
-  headerEl.textContent = 'Select a chat';
-  messagesEl.innerHTML = '';
-  inputArea.style.display = 'none';
-  loadChatList();
-}
-
-// Load chats list based on tab
-function loadChatList() {
-  chatListEl.innerHTML = 'Loading...';
-  if (!currentUser) return;
-
-  let listRef;
-
-  if (currentChatType === 'dm') {
-    // For demo: list all users except current user (fake DM list)
-    // In real app, you'd maintain a DM list per user
-    const usersRef = ref(db, 'users');
-    onValue(usersRef, snapshot => {
-      const users = snapshot.val() || {};
-      chatListEl.innerHTML = '';
-      Object.keys(users).forEach(uid => {
-        if (uid === currentUser.uid) return;
-        const div = document.createElement('div');
-        div.className = 'chatItem';
-        div.textContent = `DM with ${uid}`;
-        div.onclick = () => openChat(uid, 'dm');
-        chatListEl.appendChild(div);
-      });
-    });
-  } else {
-    // Group chats - list all groups user is in
-    const groupsRef = ref(db, `userGroups/${currentUser.uid}`);
-    onValue(groupsRef, snapshot => {
-      const groups = snapshot.val() || {};
-      chatListEl.innerHTML = '';
-      Object.keys(groups).forEach(groupId => {
-        const div = document.createElement('div');
-        div.className = 'chatItem';
-        div.textContent = groups[groupId].name || groupId;
-        div.onclick = () => openChat(groupId, 'group');
-        chatListEl.appendChild(div);
-      });
-    });
-  }
-}
-
-// Open chat window
-function openChat(chatId, chatType) {
-  if (messagesListener) off(messagesListener);
-  currentChatId = chatId;
-  currentChatType = chatType;
-  headerEl.textContent = chatType === 'dm' ? `Chat with ${chatId}` : `Group: ${chatId}`;
-  messagesEl.innerHTML = '';
-  inputArea.style.display = 'flex';
-
-  const path = chatType === 'dm' 
-    ? `messages/dm/${getDmChatKey(currentUser.uid, chatId)}` 
-    : `messages/group/${chatId}`;
-
-  const messagesRef = ref(db, path);
-
-  if (messagesListener) off(messagesListener);
-  messagesListener = onValue(messagesRef, snapshot => {
-    const data = snapshot.val() || {};
-    renderMessages(data);
-  });
-}
-
-// Utility: consistent DM chat key
-function getDmChatKey(uid1, uid2) {
-  return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
-}
-
-// Render chat messages
-function renderMessages(messages) {
-  messagesEl.innerHTML = '';
-  const sorted = Object.values(messages).sort((a, b) => a.timestamp - b.timestamp);
-  sorted.forEach(msg => {
-    const div = document.createElement('div');
-    div.className = 'message ' + (msg.sender === currentUser.uid ? 'sent' : 'received');
-    div.textContent = msg.text + ` (${new Date(msg.timestamp).toLocaleTimeString()})`;
-    messagesEl.appendChild(div);
-  });
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
-
-// Send message
-sendBtn.onclick = sendMessage;
-messageInput.onkeydown = e => {
-  if (e.key === 'Enter') sendMessage();
-};
-
-function sendMessage() {
-  const text = messageInput.value.trim();
-  if (!text || !currentChatId) return;
-
-  const msgObj = {
-    sender: currentUser.uid,
-    text,
-    timestamp: Date.now()
-  };
-
-  let path;
-
-  if (currentChatType === 'dm') {
-    path = `messages/dm/${getDmChatKey(currentUser.uid, currentChatId)}`;
-  } else {
-    path = `messages/group/${currentChatId}`;
-  }
-
-  const messagesRef = ref(db, path);
-
-  push(messagesRef, msgObj)
-    .then(() => {
-      messageInput.value = '';
-    })
-    .catch(err => {
-      alert('Error sending message: ' + err.message);
-    });
-}
-
-// For demo, add current user to /users node and some groups
-onAuthStateChanged(auth, user => {
-  if (user) {
-    const userRef = ref(db, `users/${user.uid}`);
-    push(userRef).catch(console.error);
-
-    // Simulate userGroups
-    const groupsRef = ref(db, `userGroups/${user.uid}`);
-    // Only set once, comment out later
-    // set(groupsRef, {
-    //   group1: { name: "Group Alpha" },
-    //   group2: { name: "Group Beta" }
-    // });
-  }
-});
-
-// Load initial tab
-switchTab('dm');
-</script>
+  <script src="firebaseHelper.js"></script>
+  <script src="chat logic.js"></script>
 </body>
+
 </html>
