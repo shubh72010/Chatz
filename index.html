@@ -2,24 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Flakious Chat App</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chatz | by Flakious</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0; padding: 0;
+    }
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #1e1e2f;
-      color: #fff;
+      color: #f5f5f5;
       display: flex;
       flex-direction: column;
       height: 100vh;
+      max-width: 600px;
+      margin: 0 auto;
     }
     header {
       background: #302d4c;
       padding: 1rem;
       text-align: center;
-      font-size: 1.5rem;
-      font-weight: bold;
+      font-size: 1.6rem;
+      font-weight: 700;
+      user-select: none;
     }
     #chat {
       flex: 1;
@@ -28,24 +34,60 @@
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
+      scroll-behavior: smooth;
+      background: #252438;
     }
     .message {
       padding: 0.6rem 1rem;
-      border-radius: 1rem;
-      max-width: 75%;
-      word-wrap: break-word;
       background: #3a375a;
-      align-self: flex-start;
+      border-radius: 1rem;
+      max-width: 80%;
+      word-wrap: break-word;
+      cursor: pointer;
       position: relative;
+      transition: background-color 0.15s ease;
+    }
+    .message:hover {
+      background: #4b4781;
     }
     .own {
-      background: #5f5bc0;
+      background: #726dff;
       align-self: flex-end;
     }
     .meta {
       font-size: 0.7rem;
       opacity: 0.6;
       margin-top: 0.2rem;
+      user-select: none;
+    }
+    .reply-preview {
+      background: #554fa6;
+      padding: 0.5rem 1rem;
+      margin: 0 1rem 0.5rem 1rem;
+      border-left: 3px solid #a3a0ff;
+      font-size: 0.85rem;
+      color: #dcdcff;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 0.5rem;
+    }
+    .reply-preview span {
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 80%;
+    }
+    .reply-preview button {
+      background: transparent;
+      border: none;
+      color: #dcdcff;
+      font-size: 1.2rem;
+      cursor: pointer;
+      font-weight: bold;
+      user-select: none;
     }
     form {
       display: flex;
@@ -62,12 +104,13 @@
       outline: none;
       background: #44415e;
       color: white;
-    }
-    #receiver {
-      flex: 1 1 45%;
+      font-size: 1rem;
     }
     #username {
-      flex: 1 1 45%;
+      flex: 1 1 40%;
+    }
+    #message {
+      flex: 1 1 55%;
     }
     button {
       flex: 1 1 100%;
@@ -78,23 +121,29 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.2s ease;
     }
     button:hover {
       background: #5c58e0;
     }
 
-    @media (min-width: 600px) {
+    /* Responsive adjustments */
+    @media (min-width: 480px) {
       form {
         flex-wrap: nowrap;
       }
       input[type="text"] {
-        flex: 2;
+        flex: unset;
       }
-      #username, #receiver {
-        flex: 1;
+      #username {
+        flex: 1 1 25%;
+      }
+      #message {
+        flex: 1 1 65%;
       }
       button {
-        flex: 0;
+        flex: 1 1 10%;
       }
     }
   </style>
@@ -102,16 +151,26 @@
 <body>
   <header>Flakious Chat</header>
   <div id="chat"></div>
+
+  <div id="reply-preview" class="reply-preview" style="display:none;">
+    <span id="reply-text"></span>
+    <button id="cancel-reply" title="Cancel reply">&times;</button>
+  </div>
+
   <form id="chat-form">
-    <input type="text" id="username" placeholder="Your name..." required />
-    <input type="text" id="receiver" placeholder="Receiver name..." required />
-    <input type="text" id="message" placeholder="Type a message..." required autocomplete="off"/>
+    <input type="text" id="username" placeholder="Your name..." required autocomplete="name" />
+    <input type="text" id="message" placeholder="Type a message..." required autocomplete="off" />
     <button type="submit">Send</button>
   </form>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      onChildAdded
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
@@ -126,64 +185,105 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const messagesRef = ref(db, "messages");
 
     const chat = document.getElementById("chat");
     const form = document.getElementById("chat-form");
     const nameInput = document.getElementById("username");
-    const receiverInput = document.getElementById("receiver");
     const messageInput = document.getElementById("message");
 
-    function getChatId(user1, user2) {
-      return [user1, user2].sort().join("_");
-    }
+    const replyPreview = document.getElementById("reply-preview");
+    const replyText = document.getElementById("reply-text");
+    const cancelReplyBtn = document.getElementById("cancel-reply");
 
-    function scrollToBottom() {
+    let replyTo = null;
+
+    const scrollToBottom = () => {
       chat.scrollTop = chat.scrollHeight;
+    };
+
+    // Handle new messages from Firebase
+    onChildAdded(messagesRef, (snapshot) => {
+      const data = snapshot.val();
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "message";
+      if (data.name === nameInput.value.trim()) {
+        msgDiv.classList.add("own");
+      }
+
+      // Reply preview text
+      let replyHTML = "";
+      if (data.replyTo) {
+        replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid #a3a0ff; padding-left: 6px; color:#ccc;">
+          Reply to: <strong>${escapeHtml(data.replyTo.name)}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
+        </div>`;
+      }
+
+      msgDiv.innerHTML = `
+        ${replyHTML}
+        <strong>${escapeHtml(data.name)}</strong>: ${escapeHtml(data.message)}
+        <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+      `;
+
+      // Clicking message sets reply
+      msgDiv.addEventListener("click", () => {
+        if (data.name === nameInput.value.trim()) return; // no reply to self (optional)
+        replyTo = {
+          key: snapshot.key,
+          name: data.name,
+          message: data.message,
+        };
+        replyText.textContent = `Replying to ${replyTo.name}: "${truncate(replyTo.message, 40)}"`;
+        replyPreview.style.display = "flex";
+        messageInput.focus();
+      });
+
+      chat.appendChild(msgDiv);
+      scrollToBottom();
+    });
+
+    // Cancel reply
+    cancelReplyBtn.addEventListener("click", () => {
+      replyTo = null;
+      replyPreview.style.display = "none";
+    });
+
+    // Escape HTML helper (for safety)
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
+    // Truncate text helper
+    function truncate(str, n) {
+      return str.length > n ? str.substr(0, n - 1) + "…" : str;
+    }
+
+    // Handle form submit
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const name = nameInput.value.trim();
-      const receiver = receiverInput.value.trim();
       const message = messageInput.value.trim();
-      if (!name || !receiver || !message) return;
+      if (!name || !message) return;
 
-      const chatId = getChatId(name, receiver);
-      const messagesRef = ref(db, `chats/${chatId}`);
-
-      push(messagesRef, {
+      const messageObj = {
         name,
         message,
         timestamp: Date.now()
-      });
+      };
+      if (replyTo) {
+        messageObj.replyTo = replyTo;
+      }
 
+      push(messagesRef, messageObj);
       messageInput.value = "";
+      replyTo = null;
+      replyPreview.style.display = "none";
     });
-
-    function loadMessages() {
-      chat.innerHTML = ""; // clear old
-      const name = nameInput.value.trim();
-      const receiver = receiverInput.value.trim();
-      if (!name || !receiver) return;
-
-      const chatId = getChatId(name, receiver);
-      const messagesRef = ref(db, `chats/${chatId}`);
-
-      onChildAdded(messagesRef, (snapshot) => {
-        const data = snapshot.val();
-        const msgDiv = document.createElement("div");
-        msgDiv.className = "message";
-        if (data.name === name) {
-          msgDiv.classList.add("own");
-        }
-        msgDiv.innerHTML = `<strong>${data.name}</strong>: ${data.message}<div class="meta">${new Date(data.timestamp).toLocaleTimeString()}</div>`;
-        chat.appendChild(msgDiv);
-        scrollToBottom();
-      });
-    }
-
-    nameInput.addEventListener("input", loadMessages);
-    receiverInput.addEventListener("input", loadMessages);
   </script>
 </body>
 </html>
