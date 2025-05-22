@@ -1,240 +1,189 @@
 // chatLogic.js
 import {
-  auth, database, signIn, signUserOut,
-  onAuthStateChanged, ref, set, push, onChildAdded, onValue, get
-} from './firebaseHelper.js';
-
-// UI elements
-const loginDiv = document.getElementById('login');
-const profileSetupDiv = document.getElementById('profileSetup');
-const chatAppDiv = document.getElementById('chatApp');
-
-const googleSignInBtn = document.getElementById('googleSignIn');
-const signOutBtn = document.getElementById('signOutBtn');
-
-const displayNameInput = document.getElementById('displayName');
-const saveProfileBtn = document.getElementById('saveProfile');
-
-const userNameSpan = document.getElementById('userName');
-const chatRoomsDiv = document.getElementById('chatRooms');
-const newRoomNameInput = document.getElementById('newRoomName');
-const createRoomBtn = document.getElementById('createRoomBtn');
-
-const dmListDiv = document.getElementById('dmList');
-const dmEmailInput = document.getElementById('dmEmail');
-const startDMBtn = document.getElementById('startDMBtn');
-
-const messagesDiv = document.getElementById('messages');
-const messageInput = document.getElementById('messageInput');
-const sendMessageBtn = document.getElementById('sendMessageBtn');
-const currentChatNameSpan = document.getElementById('currentChatName');
+  auth, createUserProfile, getUserProfile, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
+  getDMId, sendDMMessage, onDMMessage,
+  createGroup, sendGroupMessage, onGroupMessage, onUserGroups
+} from "./firebaseHelper.js";
 
 let currentUser = null;
-let currentChatId = null;
-let currentChatType = null; // "room" or "dm"
+let currentChat = null; // { type: 'dm' | 'group', id: string, name: string }
+let messageListenerUnsubscribe = null;
 
-// Helpers
+// UI Elements
+const loginForm = document.getElementById("loginForm");
+const chatContainer = document.getElementById("chatContainer");
+const messageList = document.getElementById("messageList");
+const messageInput = document.getElementById("messageInput");
+const sendBtn = document.getElementById("sendBtn");
 
-function clearMessages() {
-  messagesDiv.innerHTML = '';
-}
+const dmListEl = document.getElementById("dmList");
+const groupListEl = document.getElementById("groupList");
 
-function addMessageToUI(msgObj) {
-  const div = document.createElement('div');
-  div.classList.add('message');
-  if (msgObj.senderId === currentUser.uid) div.classList.add('self');
-  div.textContent = `${msgObj.senderName}: ${msgObj.message}`;
-  messagesDiv.appendChild(div);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
+const newGroupForm = document.getElementById("newGroupForm");
+const groupNameInput = document.getElementById("groupNameInput");
+const groupMembersInput = document.getElementById("groupMembersInput"); // comma-separated user emails
 
-function loadMessages(chatId) {
-  clearMessages();
-  const messagesRef = ref(database, `messages/${chatId}`);
-  onValue(messagesRef, (snapshot) => {
-    clearMessages();
-    snapshot.forEach(childSnap => {
-      addMessageToUI(childSnap.val());
+// --- AUTH ---
+
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    currentUser = user;
+    // Load profile or create one
+    const profileSnap = await getUserProfile(user.uid);
+    if (!profileSnap.exists()) {
+      // For demo: create profile with displayName from email prefix
+      await createUserProfile(user.uid, user.email.split("@")[0], user.email);
+    }
+    loginForm.style.display = "none";
+    chatContainer.style.display = "block";
+    loadChats();
+  } else {
+    currentUser = null;
+    loginForm.style.display = "block";
+    chatContainer.style.display = "none";
+  }
+});
+
+loginForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = loginForm.email.value;
+  const password = loginForm.password.value;
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch {
+    try {
+      // If sign in fails, create user
+      await createUserWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      alert("Auth error: " + err.message);
+    }
+  }
+});
+
+// --- LOAD CHATS ---
+
+async function loadChats() {
+  // Load groups current user belongs to
+  onUserGroups(currentUser.uid, groups => {
+    groupListEl.innerHTML = "";
+    groups.forEach(group => {
+      const li = document.createElement("li");
+      li.textContent = group.name;
+      li.onclick = () => openChat("group", group.id, group.name);
+      groupListEl.appendChild(li);
     });
   });
-}
 
-function sendMessage() {
-  if (!currentChatId) return alert('Select a chat first');
-  const text = messageInput.value.trim();
-  if (!text) return;
-  const messagesRef = ref(database, `messages/${currentChatId}`);
-  push(messagesRef, {
-    senderId: currentUser.uid,
-    senderName: currentUser.displayName || "Anonymous",
-    message: text,
-    timestamp: Date.now()
-  });
-  messageInput.value = '';
-}
-
-// Authentication & Profile Setup
-
-function showLogin() {
-  loginDiv.style.display = 'block';
-  profileSetupDiv.style.display = 'none';
-  chatAppDiv.style.display = 'none';
-}
-
-function showProfileSetup() {
-  loginDiv.style.display = 'none';
-  profileSetupDiv.style.display = 'block';
-  chatAppDiv.style.display = 'none';
-}
-
-function showChatApp() {
-  loginDiv.style.display = 'none';
-  profileSetupDiv.style.display = 'none';
-  chatAppDiv.style.display = 'block';
-}
-
-function checkProfileSetup(user) {
-  const userRef = ref(database, `users/${user.uid}/displayName`);
-  get(userRef).then(snapshot => {
-    if (snapshot.exists()) {
-      currentUser.displayName = snapshot.val();
-      userNameSpan.textContent = currentUser.displayName;
-      showChatApp();
-      loadChatRooms();
-      loadDMs();
-    } else {
-      showProfileSetup();
+  // Load DMs
+  // For demo: list all users except current user and create clickable DMs
+  const usersSnap = await fetchAllUsers();
+  dmListEl.innerHTML = "";
+  usersSnap.forEach(user => {
+    if (user.uid !== currentUser.uid) {
+      const li = document.createElement("li");
+      li.textContent = user.displayName || user.email;
+      li.onclick = () => {
+        const dmId = getDMId(currentUser.uid, user.uid);
+        openChat("dm", dmId, user.displayName || user.email);
+      };
+      dmListEl.appendChild(li);
     }
   });
 }
 
-// Load and display chat rooms
-
-function loadChatRooms() {
-  chatRoomsDiv.innerHTML = '';
-  const roomsRef = ref(database, 'rooms');
-  onValue(roomsRef, (snapshot) => {
-    chatRoomsDiv.innerHTML = '';
-    snapshot.forEach(roomSnap => {
-      const room = roomSnap.val();
-      const btn = document.createElement('button');
-      btn.textContent = room.name;
-      btn.onclick = () => {
-        currentChatId = roomSnap.key;
-        currentChatType = 'room';
-        currentChatNameSpan.textContent = `Room: ${room.name}`;
-        loadMessages(currentChatId);
-      };
-      chatRoomsDiv.appendChild(btn);
+async function fetchAllUsers() {
+  // Simple fetch from `/users`
+  return new Promise((resolve) => {
+    import("./firebaseHelper.js").then(({database, ref, onValue}) => {
+      const usersRef = ref(database, "users");
+      onValue(usersRef, snapshot => {
+        const usersObj = snapshot.val() || {};
+        const users = Object.entries(usersObj).map(([uid, data]) => ({uid, ...data}));
+        resolve(users);
+      }, { onlyOnce: true });
     });
   });
 }
 
-createRoomBtn.onclick = () => {
-  const name = newRoomNameInput.value.trim();
-  if (!name) return alert('Room name required');
-  const roomsRef = ref(database, 'rooms');
-  push(roomsRef, { name });
-  newRoomNameInput.value = '';
-};
+// --- OPEN CHAT ---
 
-// Direct Messages (DM)
-
-function loadDMs() {
-  dmListDiv.innerHTML = '';
-  const userChatsRef = ref(database, `userChats/${currentUser.uid}`);
-  onValue(userChatsRef, (snapshot) => {
-    dmListDiv.innerHTML = '';
-    snapshot.forEach(chatSnap => {
-      const chatId = chatSnap.key;
-      const chatName = chatSnap.val().name || 'DM';
-      const btn = document.createElement('button');
-      btn.textContent = chatName;
-      btn.onclick = () => {
-        currentChatId = chatId;
-        currentChatType = 'dm';
-        currentChatNameSpan.textContent = `DM: ${chatName}`;
-        loadMessages(currentChatId);
-      };
-      dmListDiv.appendChild(btn);
-    });
-  });
-}
-
-function startDMByEmail(email) {
-  if (!email) return alert('Email required');
-  // Find user by email
-  const usersRef = ref(database, 'users');
-  get(usersRef).then(snapshot => {
-    let targetUserId = null;
-    snapshot.forEach(userSnap => {
-      if (userSnap.val().email === email) targetUserId = userSnap.key;
-    });
-    if (!targetUserId) return alert('User not found');
-
-    // Create a unique DM chat ID combining two user IDs sorted
-    const chatUsers = [currentUser.uid, targetUserId].sort();
-    const dmChatId = chatUsers.join('_');
-
-    // Add chat metadata for both users under userChats
-    const updates = {};
-    updates[`userChats/${currentUser.uid}/${dmChatId}`] = { name: `DM with ${email}` };
-    updates[`userChats/${targetUserId}/${dmChatId}`] = { name: `DM with ${currentUser.displayName}` };
-    
-    set(ref(database), updates).then(() => {
-      currentChatId = dmChatId;
-      currentChatType = 'dm';
-      currentChatNameSpan.textContent = `DM: ${email}`;
-      loadMessages(currentChatId);
-      dmEmailInput.value = '';
-    });
-  });
-}
-
-startDMBtn.onclick = () => {
-  startDMByEmail(dmEmailInput.value.trim());
-};
-
-// Save profile
-
-saveProfileBtn.onclick = () => {
-  const name = displayNameInput.value.trim();
-  if (!name) return alert('Display name required');
-  set(ref(database, `users/${currentUser.uid}`), {
-    displayName: name,
-    email: currentUser.email
-  }).then(() => {
-    currentUser.displayName = name;
-    userNameSpan.textContent = name;
-    showChatApp();
-    loadChatRooms();
-    loadDMs();
-  });
-};
-
-// Send message
-
-sendMessageBtn.onclick = sendMessage;
-messageInput.addEventListener('keypress', e => {
-  if (e.key === 'Enter') sendMessage();
-});
-
-// Auth state changes
-
-googleSignInBtn.onclick = () => {
-  signIn().catch(console.error);
-};
-
-signOutBtn.onclick = () => {
-  signUserOut().catch(console.error);
-};
-
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    currentUser = user;
-    checkProfileSetup(user);
-  } else {
-    currentUser = null;
-    showLogin();
+function openChat(type, id, name) {
+  if (messageListenerUnsubscribe) {
+    messageListenerUnsubscribe();
   }
+  currentChat = { type, id, name };
+  messageList.innerHTML = "";
+  document.getElementById("chatTitle").textContent = name;
+
+  if (type === "dm") {
+    onDMMessage(id, msgs => {
+      renderMessages(msgs);
+    });
+  } else if (type === "group") {
+    onGroupMessage(id, msgs => {
+      renderMessages(msgs);
+    });
+  }
+}
+
+// --- RENDER MESSAGES ---
+
+function renderMessages(messages) {
+  messageList.innerHTML = "";
+  if (!messages) return;
+  const sortedMsgs = Object.entries(messages).sort((a, b) => a[1].timestamp - b[1].timestamp);
+  sortedMsgs.forEach(([key, msg]) => {
+    const div = document.createElement("div");
+    div.className = msg.senderId === currentUser.uid ? "myMessage" : "otherMessage";
+    div.textContent = `${msg.senderName}: ${msg.message}`;
+    messageList.appendChild(div);
+  });
+  messageList.scrollTop = messageList.scrollHeight;
+}
+
+// --- SEND MESSAGE ---
+
+sendBtn.onclick = () => {
+  const text = messageInput.value.trim();
+  if (!text || !currentChat) return;
+
+  if (currentChat.type === "dm") {
+    sendDMMessage(currentChat.id, currentUser.uid, currentUser.email.split("@")[0], text);
+  } else if (currentChat.type === "group") {
+    sendGroupMessage(currentChat.id, currentUser.uid, currentUser.email.split("@")[0], text);
+  }
+
+  messageInput.value = "";
+};
+
+// --- CREATE GROUP ---
+
+newGroupForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  const groupName = groupNameInput.value.trim();
+  const memberEmails = groupMembersInput.value.split(",").map(e => e.trim()).filter(Boolean);
+
+  if (!groupName || memberEmails.length === 0) {
+    alert("Provide a group name and at least one member email");
+    return;
+  }
+
+  // Resolve member emails to user IDs
+  const allUsers = await fetchAllUsers();
+  const members = [currentUser.uid]; // creator always member
+  memberEmails.forEach(email => {
+    const user = allUsers.find(u => u.email === email);
+    if (user) members.push(user.uid);
+  });
+
+  if (members.length < 2) {
+    alert("No valid members found");
+    return;
+  }
+
+  const groupId = await createGroup(groupName, members);
+  alert(`Group "${groupName}" created!`);
+  groupNameInput.value = "";
+  groupMembersInput.value = "";
+  loadChats();
 });
