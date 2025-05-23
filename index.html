@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -158,35 +159,237 @@
     button#send-btn:hover:not(:disabled) {
       background: #5c58e0;
     }
+
+    /* Responsive */
     @media (max-width: 480px) {
       form {
         flex-wrap: wrap;
       }
-      #username, #message, button#send-btn {
+      #username {
         flex: 1 1 100%;
         margin-bottom: 0.5rem;
+        user-select: none;
+      }
+      #message {
+        flex: 1 1 100%;
+      }
+      button#send-btn {
+        flex: 1 1 100%;
+        margin-top: 0.5rem;
       }
     }
   </style>
 </head>
 <body>
   <header>
-    <div id="user-info" style="position: absolute; left: 1rem; top: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-      <img id="user-pic" src="" alt="Profile" style="width: 32px; height: 32px; border-radius: 50%; display: none;" />
-      <span id="user-name" style="font-size: 0.9rem; font-weight: 600; display: none;"></span>
-    </div>
+<div id="user-info" style="position: absolute; left: 1rem; top: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+  <img id="user-pic" src="" alt="Profile" style="width: 32px; height: 32px; border-radius: 50%; display: none;" />
+  <span id="user-name" style="font-size: 0.9rem; font-weight: 600; display: none;"></span>
+</div>
     Chat
     <div id="auth-btns">
       <button id="sign-in" class="auth-btn">Sign In</button>
       <button id="sign-out" class="auth-btn" style="display:none;">Sign Out</button>
     </div>
   </header>
-  <div id="chat"></div>  <div id="reply-preview" class="reply-preview" style="display:none;">
+  <div id="chat"></div>
+
+  <div id="reply-preview" class="reply-preview" style="display:none;">
     <span id="reply-text"></span>
     <button id="cancel-reply" title="Cancel reply">&times;</button>
-  </div>  <form id="chat-form">
+  </div>
+
+  <form id="chat-form">
     <input type="text" id="username" readonly placeholder="Sign in to chat" />
     <input type="text" id="message" placeholder="Type a message..." disabled autocomplete="off" required />
     <button id="send-btn" type="submit" disabled>Send</button>
-  </form>  <script type="module" src="script.js"></script></body>
+  </form>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      onChildAdded
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+      authDomain: "chatz-45df4.firebaseapp.com",
+      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
+      projectId: "chatz-45df4",
+      storageBucket: "chatz-45df4.appspot.com",
+      messagingSenderId: "463847844545",
+      appId: "1:463847844545:web:5006247d061c3e0dc28240",
+      measurementId: "G-2VHETC9V8B"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("chat-form");
+    const usernameInput = document.getElementById("username");
+    const messageInput = document.getElementById("message");
+    const sendBtn = document.getElementById("send-btn");
+
+    const replyPreview = document.getElementById("reply-preview");
+    const replyText = document.getElementById("reply-text");
+    const cancelReplyBtn = document.getElementById("cancel-reply");
+
+    const signInBtn = document.getElementById("sign-in");
+    const signOutBtn = document.getElementById("sign-out");
+
+    let replyTo = null;
+
+    const scrollToBottom = () => {
+      chat.scrollTop = chat.scrollHeight;
+    };
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function truncate(str, n) {
+      return str.length > n ? str.substr(0, n - 1) + "…" : str;
+    }
+
+    const messagesRef = ref(db, "messages");
+
+    onChildAdded(messagesRef, (snapshot) => {
+      const data = snapshot.val();
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "message";
+
+      // Mark message as own if it’s from current user
+      if (auth.currentUser && data.uid === auth.currentUser.uid) {
+        msgDiv.classList.add("own");
+      }
+
+      let replyHTML = "";
+      if (data.replyTo) {
+        replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid #a3a0ff; padding-left: 6px; color:#ccc;">
+          Reply to: <strong>${escapeHtml(data.replyTo.name)}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
+        </div>`;
+      }
+
+      msgDiv.innerHTML = `
+        ${replyHTML}
+        <strong>${escapeHtml(data.name)}</strong>: ${escapeHtml(data.message)}
+        <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+      `;
+
+      // Clicking a message sets up reply (except own messages)
+      msgDiv.addEventListener("click", () => {
+        if (!auth.currentUser) return;
+        if (data.uid === auth.currentUser.uid) return; // no replying to your own messages
+        replyTo = {
+          id: snapshot.key,
+          name: data.name,
+          message: data.message,
+        };
+        replyText.textContent = `${replyTo.name}: ${truncate(replyTo.message, 50)}`;
+        replyPreview.style.display = "flex";
+        messageInput.focus();
+      });
+
+      chat.appendChild(msgDiv);
+      scrollToBottom();
+    });
+
+    cancelReplyBtn.addEventListener("click", () => {
+      replyTo = null;
+      replyPreview.style.display = "none";
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!auth.currentUser) return alert("You must be signed in to send messages.");
+      const msg = messageInput.value.trim();
+      if (!msg) return;
+
+      // Build message payload
+      const newMsg = {
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || "Anonymous",
+        message: msg,
+        timestamp: Date.now(),
+      };
+
+      if (replyTo) {
+        newMsg.replyTo = replyTo;
+      }
+
+      push(messagesRef, newMsg)
+        .then(() => {
+          messageInput.value = "";
+          replyTo = null;
+          replyPreview.style.display = "none";
+        })
+        .catch((err) => {
+          console.error("Error sending message:", err);
+        });
+    });
+
+    signInBtn.addEventListener("click", () => {
+      signInWithPopup(auth, provider).catch((error) => {
+        console.error("Sign-in error:", error);
+      });
+    });
+
+    signOutBtn.addEventListener("click", () => {
+      signOut(auth).catch((error) => {
+        console.error("Sign-out error:", error);
+      });
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // Signed in
+        usernameInput.value = user.displayName || "Anonymous";
+        usernameInput.readOnly = true;
+        usernameInput.style.userSelect = "none";
+
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+
+        signInBtn.style.display = "none";
+        signOutBtn.style.display = "inline-block";
+
+        usernameInput.placeholder = "";
+      } else {
+        // Signed out
+        usernameInput.value = "";
+        usernameInput.placeholder = "Sign in to chat";
+        usernameInput.readOnly = true;
+
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
+
+        signInBtn.style.display = "inline-block";
+        signOutBtn.style.display = "none";
+
+        replyTo = null;
+        replyPreview.style.display = "none";
+      }
+    });
+
+  </script>
+</body>
 </html>
