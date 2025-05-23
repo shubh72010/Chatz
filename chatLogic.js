@@ -1,240 +1,213 @@
 // chatLogic.js
+
 import {
-  auth, database, signIn, signUserOut,
-  onAuthStateChanged, ref, set, push, onChildAdded, onValue, get
-} from './firebaseHelper.js';
+  auth,
+  db,
+  provider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  doc,
+  setDoc,
+  getDoc,
+  where,
+} from "./firebaseHelpers.js";
 
-// UI elements
-const loginDiv = document.getElementById('login');
-const profileSetupDiv = document.getElementById('profileSetup');
-const chatAppDiv = document.getElementById('chatApp');
-
-const googleSignInBtn = document.getElementById('googleSignIn');
-const signOutBtn = document.getElementById('signOutBtn');
-
-const displayNameInput = document.getElementById('displayName');
-const saveProfileBtn = document.getElementById('saveProfile');
-
-const userNameSpan = document.getElementById('userName');
-const chatRoomsDiv = document.getElementById('chatRooms');
-const newRoomNameInput = document.getElementById('newRoomName');
-const createRoomBtn = document.getElementById('createRoomBtn');
-
-const dmListDiv = document.getElementById('dmList');
-const dmEmailInput = document.getElementById('dmEmail');
-const startDMBtn = document.getElementById('startDMBtn');
-
-const messagesDiv = document.getElementById('messages');
-const messageInput = document.getElementById('messageInput');
-const sendMessageBtn = document.getElementById('sendMessageBtn');
-const currentChatNameSpan = document.getElementById('currentChatName');
+// DOM elements
+const signInBtn = document.getElementById("google-signin-btn");
+const authContainer = document.getElementById("auth-container");
+const userListEl = document.getElementById("user-list");
+const globalChatToggle = document.getElementById("global-chat-toggle");
+const chatHeader = document.getElementById("chat-header");
+const chatMessages = document.getElementById("chat-messages");
+const chatForm = document.getElementById("chat-form");
+const chatInput = document.getElementById("chat-input");
+const sendBtn = document.getElementById("send-btn");
 
 let currentUser = null;
-let currentChatId = null;
-let currentChatType = null; // "room" or "dm"
+let currentChatUser = null; // null = global chat
+let unsubscribeMessages = null;
 
-// Helpers
+// SIGN IN / SIGN OUT HANDLERS
 
-function clearMessages() {
-  messagesDiv.innerHTML = '';
-}
-
-function addMessageToUI(msgObj) {
-  const div = document.createElement('div');
-  div.classList.add('message');
-  if (msgObj.senderId === currentUser.uid) div.classList.add('self');
-  div.textContent = `${msgObj.senderName}: ${msgObj.message}`;
-  messagesDiv.appendChild(div);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
-function loadMessages(chatId) {
-  clearMessages();
-  const messagesRef = ref(database, `messages/${chatId}`);
-  onValue(messagesRef, (snapshot) => {
-    clearMessages();
-    snapshot.forEach(childSnap => {
-      addMessageToUI(childSnap.val());
-    });
-  });
-}
-
-function sendMessage() {
-  if (!currentChatId) return alert('Select a chat first');
-  const text = messageInput.value.trim();
-  if (!text) return;
-  const messagesRef = ref(database, `messages/${currentChatId}`);
-  push(messagesRef, {
-    senderId: currentUser.uid,
-    senderName: currentUser.displayName || "Anonymous",
-    message: text,
-    timestamp: Date.now()
-  });
-  messageInput.value = '';
-}
-
-// Authentication & Profile Setup
-
-function showLogin() {
-  loginDiv.style.display = 'block';
-  profileSetupDiv.style.display = 'none';
-  chatAppDiv.style.display = 'none';
-}
-
-function showProfileSetup() {
-  loginDiv.style.display = 'none';
-  profileSetupDiv.style.display = 'block';
-  chatAppDiv.style.display = 'none';
-}
-
-function showChatApp() {
-  loginDiv.style.display = 'none';
-  profileSetupDiv.style.display = 'none';
-  chatAppDiv.style.display = 'block';
-}
-
-function checkProfileSetup(user) {
-  const userRef = ref(database, `users/${user.uid}/displayName`);
-  get(userRef).then(snapshot => {
-    if (snapshot.exists()) {
-      currentUser.displayName = snapshot.val();
-      userNameSpan.textContent = currentUser.displayName;
-      showChatApp();
-      loadChatRooms();
-      loadDMs();
-    } else {
-      showProfileSetup();
+signInBtn.addEventListener("click", async () => {
+  if (!currentUser) {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      alert("Google sign-in failed: " + error.message);
     }
-  });
-}
-
-// Load and display chat rooms
-
-function loadChatRooms() {
-  chatRoomsDiv.innerHTML = '';
-  const roomsRef = ref(database, 'rooms');
-  onValue(roomsRef, (snapshot) => {
-    chatRoomsDiv.innerHTML = '';
-    snapshot.forEach(roomSnap => {
-      const room = roomSnap.val();
-      const btn = document.createElement('button');
-      btn.textContent = room.name;
-      btn.onclick = () => {
-        currentChatId = roomSnap.key;
-        currentChatType = 'room';
-        currentChatNameSpan.textContent = `Room: ${room.name}`;
-        loadMessages(currentChatId);
-      };
-      chatRoomsDiv.appendChild(btn);
-    });
-  });
-}
-
-createRoomBtn.onclick = () => {
-  const name = newRoomNameInput.value.trim();
-  if (!name) return alert('Room name required');
-  const roomsRef = ref(database, 'rooms');
-  push(roomsRef, { name });
-  newRoomNameInput.value = '';
-};
-
-// Direct Messages (DM)
-
-function loadDMs() {
-  dmListDiv.innerHTML = '';
-  const userChatsRef = ref(database, `userChats/${currentUser.uid}`);
-  onValue(userChatsRef, (snapshot) => {
-    dmListDiv.innerHTML = '';
-    snapshot.forEach(chatSnap => {
-      const chatId = chatSnap.key;
-      const chatName = chatSnap.val().name || 'DM';
-      const btn = document.createElement('button');
-      btn.textContent = chatName;
-      btn.onclick = () => {
-        currentChatId = chatId;
-        currentChatType = 'dm';
-        currentChatNameSpan.textContent = `DM: ${chatName}`;
-        loadMessages(currentChatId);
-      };
-      dmListDiv.appendChild(btn);
-    });
-  });
-}
-
-function startDMByEmail(email) {
-  if (!email) return alert('Email required');
-  // Find user by email
-  const usersRef = ref(database, 'users');
-  get(usersRef).then(snapshot => {
-    let targetUserId = null;
-    snapshot.forEach(userSnap => {
-      if (userSnap.val().email === email) targetUserId = userSnap.key;
-    });
-    if (!targetUserId) return alert('User not found');
-
-    // Create a unique DM chat ID combining two user IDs sorted
-    const chatUsers = [currentUser.uid, targetUserId].sort();
-    const dmChatId = chatUsers.join('_');
-
-    // Add chat metadata for both users under userChats
-    const updates = {};
-    updates[`userChats/${currentUser.uid}/${dmChatId}`] = { name: `DM with ${email}` };
-    updates[`userChats/${targetUserId}/${dmChatId}`] = { name: `DM with ${currentUser.displayName}` };
-
-    set(ref(database), updates).then(() => {
-      currentChatId = dmChatId;
-      currentChatType = 'dm';
-      currentChatNameSpan.textContent = `DM: ${email}`;
-      loadMessages(currentChatId);
-      dmEmailInput.value = '';
-    });
-  });
-}
-
-startDMBtn.onclick = () => {
-  startDMByEmail(dmEmailInput.value.trim());
-};
-
-// Save profile
-
-saveProfileBtn.onclick = () => {
-  const name = displayNameInput.value.trim();
-  if (!name) return alert('Display name required');
-  set(ref(database, `users/${currentUser.uid}`), {
-    displayName: name,
-    email: currentUser.email
-  }).then(() => {
-    currentUser.displayName = name;
-    userNameSpan.textContent = name;
-    showChatApp();
-    loadChatRooms();
-    loadDMs();
-  });
-};
-
-// Send message
-
-sendMessageBtn.onclick = sendMessage;
-messageInput.addEventListener('keypress', e => {
-  if (e.key === 'Enter') sendMessage();
+  } else {
+    await signOut(auth);
+  }
 });
 
-// Auth state changes
+// AUTH STATE CHANGE
 
-googleSignInBtn.onclick = () => {
-  signIn().catch(console.error);
-};
-
-signOutBtn.onclick = () => {
-  signUserOut().catch(console.error);
-};
-
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
   if (user) {
-    currentUser = user;
-    checkProfileSetup(user);
+    signInBtn.textContent = "Sign Out";
+    chatInput.disabled = false;
+    sendBtn.disabled = false;
+    loadUsers();
+    openGlobalChat();
   } else {
-    currentUser = null;
-    showLogin();
+    signInBtn.textContent = "Sign In with Google";
+    chatInput.disabled = true;
+    sendBtn.disabled = true;
+    userListEl.innerHTML = "<h2>Users</h2>";
+    chatMessages.innerHTML = "";
+    chatHeader.textContent = "Select a user or Global Chat";
+  }
+});
+
+// LOAD USERS LIST (all users except current user)
+
+async function loadUsers() {
+  const usersCol = collection(db, "users");
+
+  // Listen to all users in real-time
+  onSnapshot(usersCol, (snapshot) => {
+    userListEl.innerHTML = "<h2>Users</h2>";
+    snapshot.forEach((docSnap) => {
+      const user = docSnap.data();
+      if (user.uid === currentUser.uid) return; // skip self
+
+      const userEl = document.createElement("div");
+      userEl.classList.add("user-item");
+      userEl.textContent = user.displayName || "Unnamed";
+      userEl.dataset.uid = user.uid;
+      userEl.addEventListener("click", () => openDM(user.uid, user.displayName));
+      userListEl.appendChild(userEl);
+    });
+  });
+
+  // Add or update current user in 'users' collection for discovery
+  await setDoc(doc(db, "users", currentUser.uid), {
+    uid: currentUser.uid,
+    displayName: currentUser.displayName,
+    email: currentUser.email,
+  });
+}
+
+// OPEN GLOBAL CHAT
+
+function openGlobalChat() {
+  currentChatUser = null;
+  chatHeader.textContent = "Global Chat";
+  setActiveUserInList(null);
+  subscribeMessages("global");
+}
+
+// OPEN DIRECT MESSAGE
+
+function openDM(uid, displayName) {
+  currentChatUser = uid;
+  chatHeader.textContent = `Chat with ${displayName}`;
+  setActiveUserInList(uid);
+  subscribeMessages(getDMRoomId(currentUser.uid, uid));
+}
+
+// SET ACTIVE USER STYLE
+
+function setActiveUserInList(uid) {
+  document.querySelectorAll(".user-item").forEach((el) => {
+    if (el.dataset.uid === uid) {
+      el.classList.add("active");
+    } else {
+      el.classList.remove("active");
+    }
+  });
+
+  if (uid === null) {
+    globalChatToggle.classList.add("active");
+  } else {
+    globalChatToggle.classList.remove("active");
+  }
+}
+
+// GLOBAL CHAT BUTTON CLICK
+
+globalChatToggle.addEventListener("click", openGlobalChat);
+
+// GENERATE ROOM ID FOR DM (consistent for both users)
+
+function getDMRoomId(uid1, uid2) {
+  return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+}
+
+// SUBSCRIBE TO MESSAGES FOR ROOM
+
+function subscribeMessages(roomId) {
+  if (unsubscribeMessages) unsubscribeMessages();
+
+  chatMessages.innerHTML = "<p style='color:#999; text-align:center;'>Loading messages...</p>";
+
+  const messagesCol = collection(db, "messages");
+  const q = query(
+    messagesCol,
+    where("roomId", "==", roomId),
+    orderBy("createdAt", "asc")
+  );
+
+  unsubscribeMessages = onSnapshot(q, (snapshot) => {
+    chatMessages.innerHTML = "";
+    if (snapshot.empty) {
+      chatMessages.innerHTML = "<p style='color:#999; text-align:center;'>No messages yet.</p>";
+      return;
+    }
+    snapshot.forEach((docSnap) => {
+      const message = docSnap.data();
+      appendMessage(message);
+    });
+
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  });
+}
+
+// APPEND MESSAGE TO CHAT
+
+function appendMessage(message) {
+  const div = document.createElement("div");
+  div.classList.add("message");
+
+  if (message.sender === currentUser.uid) {
+    div.classList.add("sent");
+  } else {
+    div.classList.add("received");
+  }
+
+  div.textContent = message.text;
+  chatMessages.appendChild(div);
+}
+
+// SEND MESSAGE
+
+chatForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const text = chatInput.value.trim();
+  if (!text) return;
+
+  const roomId = currentChatUser
+    ? getDMRoomId(currentUser.uid, currentChatUser)
+    : "global";
+
+  try {
+    await addDoc(collection(db, "messages"), {
+      roomId,
+      sender: currentUser.uid,
+      text,
+      createdAt: new Date(),
+    });
+    chatInput.value = "";
+  } catch (error) {
+    alert("Failed to send message: " + error.message);
   }
 });
