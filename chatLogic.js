@@ -1,13 +1,26 @@
+// chatLogic.js
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
 import {
-  getDatabase, ref, push, onChildAdded, onValue, set, update, get, child, off
-} from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-import {
-  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+import {
+  getDatabase,
+  ref,
+  push,
+  set,
+  get,
+  onValue,
+  onChildAdded,
+  off
+} from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
+// --- Firebase Config ---
 const firebaseConfig = {
-  // ... your config ...
   apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
   authDomain: "chatz-45df4.firebaseapp.com",
   databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
@@ -19,10 +32,11 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
+const db = getDatabase(app);
 
+// --- DOM ---
 const chat = document.getElementById("chat");
 const form = document.getElementById("chat-form");
 const usernameInput = document.getElementById("username");
@@ -33,18 +47,18 @@ const replyText = document.getElementById("reply-text");
 const cancelReplyBtn = document.getElementById("cancel-reply");
 const signInBtn = document.getElementById("sign-in");
 const signOutBtn = document.getElementById("sign-out");
-
 const friendsList = document.getElementById("friends-list");
 const usersList = document.getElementById("users-list");
 const groupsList = document.getElementById("groups-list");
+const myGroupsList = document.getElementById("my-groups-list");
 const createGroupBtn = document.getElementById("create-group-btn");
 const publicChatBtn = document.getElementById("public-chat");
 
 let replyTo = null;
-let chatContext = { type: "public" }; // {type: "public"} | {type:"dm", uid} | {type:"group", groupId}
+let chatContext = { type: "public" };
 let chatListener = null;
 
-// --- Utility functions ---
+// --- Utility ---
 function escapeHtml(text) {
   return text.replace(/&/g, "&amp;")
              .replace(/</g, "&lt;")
@@ -58,15 +72,13 @@ function truncate(str, n) {
 function scrollToBottom() {
   chat.scrollTop = chat.scrollHeight;
 }
-
-// --- UI helpers ---
 function clearChat() {
   chat.innerHTML = "";
 }
 function setChatContext(ctx) {
   chatContext = ctx;
   clearChat();
-  if (chatListener) off(chatListener.ref, "child_added", chatListener.cb);
+  if (chatListener && chatListener.ref) off(chatListener.ref, "child_added", chatListener.cb);
   loadMessages();
 }
 function setSidebarSelected(type, id) {
@@ -80,13 +92,10 @@ function setSidebarSelected(type, id) {
     if (li) li.classList.add('selected');
   }
 }
-
-// --- Firebase helpers ---
 function getChatRef() {
   if (chatContext.type === "public") {
     return ref(db, "messages");
   } else if (chatContext.type === "dm") {
-    // DMs are stored under /dms/{uid1_uid2}/
     const uid1 = auth.currentUser.uid;
     const uid2 = chatContext.uid;
     const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
@@ -95,8 +104,6 @@ function getChatRef() {
     return ref(db, `groups/${chatContext.groupId}/messages`);
   }
 }
-
-// --- Load messages for current context ---
 function loadMessages() {
   clearChat();
   const chatRef = getChatRef();
@@ -109,7 +116,7 @@ function loadMessages() {
       if (auth.currentUser && data.uid === auth.currentUser.uid) msgDiv.classList.add("own");
       let replyHTML = "";
       if (data.replyTo) {
-        replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid #a3a0ff; padding-left: 6px; color:#ccc;">
+        replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--main); padding-left: 6px; color:#fff;">
           Reply to: <strong>${escapeHtml(data.replyTo.name)}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
         </div>`;
       }
@@ -132,58 +139,118 @@ function loadMessages() {
   };
 }
 
-// --- Sidebar population ---
+// --- User Action Menu ---
+let userMenu = null;
+function showUserMenu(li, uid, isFriend) {
+  if (userMenu) userMenu.remove();
+
+  userMenu = document.createElement("div");
+  userMenu.style.position = "absolute";
+  userMenu.style.background = "var(--sidebar-bg)";
+  userMenu.style.color = "var(--text)";
+  userMenu.style.border = "1px solid var(--main)";
+  userMenu.style.borderRadius = "8px";
+  userMenu.style.boxShadow = "0 4px 16px #0004";
+  userMenu.style.padding = "0.5rem 0";
+  userMenu.style.zIndex = 1000;
+  userMenu.style.minWidth = "150px";
+  userMenu.style.fontSize = "1rem";
+  userMenu.style.left = (li.getBoundingClientRect().left + window.scrollX) + "px";
+  userMenu.style.top = (li.getBoundingClientRect().bottom + window.scrollY) + "px";
+
+  // DM Option
+  const dmBtn = document.createElement("button");
+  dmBtn.textContent = "Direct Message";
+  dmBtn.style.display = "block";
+  dmBtn.style.width = "100%";
+  dmBtn.style.background = "none";
+  dmBtn.style.border = "none";
+  dmBtn.style.color = "inherit";
+  dmBtn.style.padding = "0.5rem 1rem";
+  dmBtn.style.textAlign = "left";
+  dmBtn.style.cursor = "pointer";
+  dmBtn.onmouseover = () => dmBtn.style.background = "var(--main)";
+  dmBtn.onmouseout = () => dmBtn.style.background = "none";
+  dmBtn.onclick = () => {
+    setChatContext({ type: "dm", uid });
+    setSidebarSelected("dm", uid);
+    userMenu.remove();
+    userMenu = null;
+  };
+  userMenu.appendChild(dmBtn);
+
+  // Friend Option
+  const friendBtn = document.createElement("button");
+  friendBtn.textContent = isFriend ? "Remove Friend" : "Add Friend";
+  friendBtn.style.display = "block";
+  friendBtn.style.width = "100%";
+  friendBtn.style.background = "none";
+  friendBtn.style.border = "none";
+  friendBtn.style.color = isFriend ? "var(--danger)" : "var(--accent)";
+  friendBtn.style.padding = "0.5rem 1rem";
+  friendBtn.style.textAlign = "left";
+  friendBtn.style.cursor = "pointer";
+  friendBtn.onmouseover = () => friendBtn.style.background = "var(--main)";
+  friendBtn.onmouseout = () => friendBtn.style.background = "none";
+  friendBtn.onclick = () => {
+    const myUid = auth.currentUser.uid;
+    if (isFriend) {
+      set(ref(db, `friends/${myUid}/${uid}`), null);
+      set(ref(db, `friends/${uid}/${myUid}`), null);
+    } else {
+      set(ref(db, `friends/${myUid}/${uid}`), true);
+      set(ref(db, `friends/${uid}/${myUid}`), true);
+    }
+    userMenu.remove();
+    userMenu = null;
+  };
+  userMenu.appendChild(friendBtn);
+
+  setTimeout(() => {
+    document.addEventListener("mousedown", hideUserMenu, { once: true });
+  }, 10);
+
+  document.body.appendChild(userMenu);
+}
+function hideUserMenu(e) {
+  if (userMenu && (!e || !userMenu.contains(e.target))) {
+    userMenu.remove();
+    userMenu = null;
+  }
+}
+
+// --- Sidebar population with user menu and created groups ---
 function updateUsersAndFriends() {
   usersList.innerHTML = "";
   friendsList.innerHTML = "";
   onValue(ref(db, "users"), (snap) => {
     const users = snap.val() || {};
     const myUid = auth.currentUser ? auth.currentUser.uid : null;
-    Object.entries(users).forEach(([uid, user]) => {
-      if (myUid && uid === myUid) return; // skip self
-      const li = document.createElement("li");
-      li.textContent = user.displayName || "Anonymous";
-      li.setAttribute("data-uid", uid);
-      // Add Friend/Remove Friend button
-      if (auth.currentUser) {
-        get(ref(db, `friends/${myUid}/${uid}`)).then(fSnap => {
-          if (fSnap.exists()) {
-            // Already friends
-            li.innerHTML += `<button title="Remove Friend">−</button>`;
-            friendsList.appendChild(li.cloneNode(true));
-          } else {
-            li.innerHTML += `<button title="Add Friend">+</button>`;
-          }
-          usersList.appendChild(li);
-        });
-      } else {
+    get(ref(db, `friends/${myUid}`)).then(friendSnap => {
+      const friends = friendSnap.exists() ? Object.keys(friendSnap.val()) : [];
+      // USERS LIST
+      Object.entries(users).forEach(([uid, user]) => {
+        if (myUid && uid === myUid) return;
+        const li = document.createElement("li");
+        li.textContent = user.displayName || "Anonymous";
+        li.setAttribute("data-uid", uid);
+        li.onclick = (e) => {
+          e.preventDefault();
+          showUserMenu(li, uid, friends.includes(uid));
+        };
         usersList.appendChild(li);
-      }
-    });
-    // Add click events after DOM update
-    usersList.querySelectorAll("li").forEach(li => {
-      li.addEventListener("click", (e) => {
-        if (e.target.tagName === "BUTTON") {
-          // Add/remove friend
-          const uid = li.getAttribute("data-uid");
-          if (e.target.textContent === "+") {
-            set(ref(db, `friends/${myUid}/${uid}`), true);
-            set(ref(db, `friends/${uid}/${myUid}`), true);
-          } else {
-            set(ref(db, `friends/${myUid}/${uid}`), null);
-            set(ref(db, `friends/${uid}/${myUid}`), null);
-          }
-        } else {
-          // Start DM
-          setChatContext({ type: "dm", uid: li.getAttribute("data-uid") });
-          setSidebarSelected("dm", li.getAttribute("data-uid"));
-        }
       });
-    });
-    friendsList.querySelectorAll("li").forEach(li => {
-      li.addEventListener("click", () => {
-        setChatContext({ type: "dm", uid: li.getAttribute("data-uid") });
-        setSidebarSelected("dm", li.getAttribute("data-uid"));
+      // FRIENDS LIST
+      friends.forEach(friendUid => {
+        if (!users[friendUid]) return;
+        const li = document.createElement("li");
+        li.textContent = users[friendUid].displayName || "Anonymous";
+        li.setAttribute("data-uid", friendUid);
+        li.onclick = () => {
+          setChatContext({ type: "dm", uid: friendUid });
+          setSidebarSelected("dm", friendUid);
+        };
+        friendsList.appendChild(li);
       });
     });
   });
@@ -191,19 +258,24 @@ function updateUsersAndFriends() {
 
 function updateGroups() {
   groupsList.innerHTML = "";
+  myGroupsList.innerHTML = "";
   onValue(ref(db, "groups"), (snap) => {
     const groups = snap.val() || {};
+    const myUid = auth.currentUser ? auth.currentUser.uid : null;
     Object.entries(groups).forEach(([groupId, group]) => {
       const li = document.createElement("li");
       li.textContent = group.name;
       li.setAttribute("data-groupid", groupId);
+      li.onclick = () => {
+        setChatContext({ type: "group", groupId });
+        setSidebarSelected("group", groupId);
+      };
       groupsList.appendChild(li);
-    });
-    groupsList.querySelectorAll("li").forEach(li => {
-      li.addEventListener("click", () => {
-        setChatContext({ type: "group", groupId: li.getAttribute("data-groupid") });
-        setSidebarSelected("group", li.getAttribute("data-groupid"));
-      });
+      if (myUid && group.createdBy === myUid) {
+        const myLi = li.cloneNode(true);
+        myLi.onclick = li.onclick;
+        myGroupsList.appendChild(myLi);
+      }
     });
   });
 }
@@ -213,7 +285,7 @@ createGroupBtn.addEventListener("click", () => {
   if (!auth.currentUser) return alert("Sign in to create groups.");
   const name = prompt("Enter group name:");
   if (!name) return;
-  const groupRef = push(ref(db, "groups"), {
+  push(ref(db, "groups"), {
     name,
     createdBy: auth.currentUser.uid,
     createdAt: Date.now()
@@ -277,7 +349,6 @@ onAuthStateChanged(auth, (user) => {
     signInBtn.style.display = "none";
     signOutBtn.style.display = "inline-block";
     usernameInput.placeholder = "";
-    // Save user info
     set(ref(db, `users/${user.uid}`), {
       displayName: user.displayName || "Anonymous",
       photoURL: user.photoURL || ""
@@ -300,5 +371,6 @@ onAuthStateChanged(auth, (user) => {
     usersList.innerHTML = "";
     friendsList.innerHTML = "";
     groupsList.innerHTML = "";
+    myGroupsList.innerHTML = "";
   }
 });
