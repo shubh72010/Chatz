@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz | by Flakious</title>
-  <!-- Google Fonts for modern look -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -138,7 +137,11 @@
       font-size: 1.3rem;
       cursor: pointer;
       transition: color 0.3s;
+      margin-left: 0.5rem;
     }
+    .sidebar-list button.friend-btn { color: var(--accent); }
+    .sidebar-list button.friend-btn.remove { color: var(--danger); }
+    .sidebar-list button.group-leave-btn { color: var(--danger); }
     .sidebar-list button:hover { color: var(--danger); }
     #create-group-btn {
       margin-top: 0.5rem;
@@ -347,7 +350,6 @@
     </main>
   </div>
   <script type="module">
-    // Firebase imports (v11.8.1)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
       getAuth,
@@ -367,7 +369,6 @@
       off
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-    // --- Firebase Config ---
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
       authDomain: "chatz-45df4.firebaseapp.com",
@@ -379,13 +380,11 @@
       measurementId: "G-2VHETC9V8B"
     };
 
-    // --- Initialize Firebase ---
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
     const db = getDatabase(app);
 
-    // --- DOM ---
     const chat = document.getElementById("chat");
     const form = document.getElementById("chat-form");
     const usernameInput = document.getElementById("username");
@@ -403,10 +402,9 @@
     const publicChatBtn = document.getElementById("public-chat");
 
     let replyTo = null;
-    let chatContext = { type: "public" }; // {type: "public"} | {type:"dm", uid} | {type:"group", groupId}
+    let chatContext = { type: "public" };
     let chatListener = null;
 
-    // --- Utility ---
     function escapeHtml(text) {
       return text.replace(/&/g, "&amp;")
                  .replace(/</g, "&lt;")
@@ -452,7 +450,6 @@
         return ref(db, `groups/${chatContext.groupId}/messages`);
       }
     }
-    // --- Load messages for current context ---
     function loadMessages() {
       clearChat();
       const chatRef = getChatRef();
@@ -487,67 +484,65 @@
         })
       };
     }
-    // --- Sidebar population ---
+
+    // --- Sidebar population with proper buttons ---
     function updateUsersAndFriends() {
       usersList.innerHTML = "";
       friendsList.innerHTML = "";
       onValue(ref(db, "users"), (snap) => {
         const users = snap.val() || {};
         const myUid = auth.currentUser ? auth.currentUser.uid : null;
-        // First, gather friend UIDs
         get(ref(db, `friends/${myUid}`)).then(friendSnap => {
           const friends = friendSnap.exists() ? Object.keys(friendSnap.val()) : [];
-          // Populate users list
+          // USERS LIST
           Object.entries(users).forEach(([uid, user]) => {
-            if (myUid && uid === myUid) return; // skip self
+            if (myUid && uid === myUid) return;
             const li = document.createElement("li");
             li.textContent = user.displayName || "Anonymous";
             li.setAttribute("data-uid", uid);
-            // Add Friend/Remove Friend button
             if (auth.currentUser) {
               if (friends.includes(uid)) {
-                li.innerHTML += `<button title="Remove Friend">−</button>`;
+                const btn = document.createElement("button");
+                btn.textContent = "−";
+                btn.title = "Remove Friend";
+                btn.className = "friend-btn remove";
+                btn.onclick = (e) => {
+                  e.stopPropagation();
+                  set(ref(db, `friends/${myUid}/${uid}`), null);
+                  set(ref(db, `friends/${uid}/${myUid}`), null);
+                };
+                li.appendChild(btn);
               } else {
-                li.innerHTML += `<button title="Add Friend">+</button>`;
+                const btn = document.createElement("button");
+                btn.textContent = "+";
+                btn.title = "Add Friend";
+                btn.className = "friend-btn";
+                btn.onclick = (e) => {
+                  e.stopPropagation();
+                  set(ref(db, `friends/${myUid}/${uid}`), true);
+                  set(ref(db, `friends/${uid}/${myUid}`), true);
+                };
+                li.appendChild(btn);
               }
             }
+            li.onclick = (e) => {
+              if (e.target.tagName === "BUTTON") return;
+              setChatContext({ type: "dm", uid });
+              setSidebarSelected("dm", uid);
+            };
             usersList.appendChild(li);
           });
-          // Populate friends list
+          // FRIENDS LIST
           friends.forEach(friendUid => {
             if (!users[friendUid]) return;
             const li = document.createElement("li");
             li.textContent = users[friendUid].displayName || "Anonymous";
             li.setAttribute("data-uid", friendUid);
+            li.onclick = () => {
+              setChatContext({ type: "dm", uid: friendUid });
+              setSidebarSelected("dm", friendUid);
+            };
             friendsList.appendChild(li);
-          });
-
-          // Attach event listeners for users list
-          usersList.querySelectorAll("li").forEach(li => {
-            li.addEventListener("click", (e) => {
-              const uid = li.getAttribute("data-uid");
-              if (e.target.tagName === "BUTTON") {
-                e.stopPropagation();
-                if (e.target.textContent === "+") {
-                  set(ref(db, `friends/${myUid}/${uid}`), true);
-                  set(ref(db, `friends/${uid}/${myUid}`), true);
-                } else {
-                  set(ref(db, `friends/${myUid}/${uid}`), null);
-                  set(ref(db, `friends/${uid}/${myUid}`), null);
-                }
-              } else {
-                setChatContext({ type: "dm", uid });
-                setSidebarSelected("dm", uid);
-              }
-            });
-          });
-          // Attach event listeners for friends list
-          friendsList.querySelectorAll("li").forEach(li => {
-            li.addEventListener("click", () => {
-              const uid = li.getAttribute("data-uid");
-              setChatContext({ type: "dm", uid });
-              setSidebarSelected("dm", uid);
-            });
           });
         });
       });
@@ -560,17 +555,14 @@
           const li = document.createElement("li");
           li.textContent = group.name;
           li.setAttribute("data-groupid", groupId);
+          li.onclick = () => {
+            setChatContext({ type: "group", groupId });
+            setSidebarSelected("group", groupId);
+          };
           groupsList.appendChild(li);
-        });
-        groupsList.querySelectorAll("li").forEach(li => {
-          li.addEventListener("click", () => {
-            setChatContext({ type: "group", groupId: li.getAttribute("data-groupid") });
-            setSidebarSelected("group", li.getAttribute("data-groupid"));
-          });
         });
       });
     }
-    // --- Group creation ---
     createGroupBtn.addEventListener("click", () => {
       if (!auth.currentUser) return alert("Sign in to create groups.");
       const name = prompt("Enter group name:");
@@ -581,19 +573,16 @@
         createdAt: Date.now()
       });
     });
-    // --- Public chat click ---
     publicChatBtn.addEventListener("click", () => {
       setChatContext({ type: "public" });
       setSidebarSelected("public");
     });
-    // --- Reply cancel ---
     cancelReplyBtn.addEventListener("click", () => {
       replyTo = null;
       replyPreview.style.display = "none";
     });
-        // --- Send message ---
     form.addEventListener("submit", (e) => {
-      e.preventDefault();
+            e.preventDefault();
       if (!auth.currentUser) return alert("You must be signed in to send messages.");
       const msg = messageInput.value.trim();
       if (!msg) return;
@@ -614,7 +603,6 @@
           console.error("Error sending message:", err);
         });
     });
-    // --- Auth ---
     signInBtn.addEventListener("click", () => {
       signInWithPopup(auth, provider).catch((error) => {
         console.error("Sign-in error:", error);
@@ -635,7 +623,6 @@
         signInBtn.style.display = "none";
         signOutBtn.style.display = "inline-block";
         usernameInput.placeholder = "";
-        // Save user info
         set(ref(db, `users/${user.uid}`), {
           displayName: user.displayName || "Anonymous",
           photoURL: user.photoURL || ""
@@ -663,4 +650,3 @@
   </script>
 </body>
 </html>
-
