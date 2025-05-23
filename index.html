@@ -508,10 +508,10 @@
       userMenu.style.zIndex = 1000;
       userMenu.style.minWidth = "150px";
       userMenu.style.fontSize = "1rem";
-      userMenu.style.left = (li.getBoundingClientRect().left + window.scrollX) + "px";
-      userMenu.style.top = (li.getBoundingClientRect().bottom + window.scrollY) + "px";
+      const rect = li.getBoundingClientRect();
+      userMenu.style.left = (rect.left + window.scrollX) + "px";
+      userMenu.style.top = (rect.bottom + window.scrollY) + "px";
 
-      // DM Option
       const dmBtn = document.createElement("button");
       dmBtn.textContent = "Direct Message";
       dmBtn.style.display = "block";
@@ -525,15 +525,14 @@
       dmBtn.onmouseover = () => dmBtn.style.background = "var(--main)";
       dmBtn.onmouseout = () => dmBtn.style.background = "none";
       dmBtn.onclick = (e) => {
+        e.stopPropagation();
         setChatContext({ type: "dm", uid });
         setSidebarSelected("dm", uid);
-        userMenu.remove();
+        if (userMenu) userMenu.remove();
         userMenu = null;
-        e.stopPropagation();
       };
       userMenu.appendChild(dmBtn);
 
-      // Friend Option
       const friendBtn = document.createElement("button");
       friendBtn.textContent = isFriend ? "Remove Friend" : "Add Friend";
       friendBtn.style.display = "block";
@@ -547,6 +546,7 @@
       friendBtn.onmouseover = () => friendBtn.style.background = "var(--main)";
       friendBtn.onmouseout = () => friendBtn.style.background = "none";
       friendBtn.onclick = (e) => {
+        e.stopPropagation();
         const myUid = auth.currentUser.uid;
         if (isFriend) {
           set(ref(db, `friends/${myUid}/${uid}`), null);
@@ -555,15 +555,16 @@
           set(ref(db, `friends/${myUid}/${uid}`), true);
           set(ref(db, `friends/${uid}/${myUid}`), true);
         }
-        userMenu.remove();
+        if (userMenu) userMenu.remove();
         userMenu = null;
-        e.stopPropagation();
       };
       userMenu.appendChild(friendBtn);
 
+      userMenu.addEventListener("pointerdown", (e) => e.stopPropagation());
+
       setTimeout(() => {
-        document.addEventListener("mousedown", hideUserMenu, { once: true });
-      }, 10);
+        document.addEventListener("pointerdown", hideUserMenu, { once: true });
+      }, 0);
 
       document.body.appendChild(userMenu);
     }
@@ -574,7 +575,6 @@
       }
     }
 
-    // --- Sidebar population with user menu and created groups ---
     function updateUsersAndFriends() {
       usersList.innerHTML = "";
       friendsList.innerHTML = "";
@@ -583,7 +583,6 @@
         const myUid = auth.currentUser ? auth.currentUser.uid : null;
         get(ref(db, `friends/${myUid}`)).then(friendSnap => {
           const friends = friendSnap.exists() ? Object.keys(friendSnap.val()) : [];
-          // USERS LIST
           Object.entries(users).forEach(([uid, user]) => {
             if (myUid && uid === myUid) return;
             const li = document.createElement("li");
@@ -595,15 +594,127 @@
             };
             usersList.appendChild(li);
           });
-          // FRIENDS LIST
-friends.forEach(friendUid => {
-  if (!users[friendUid]) return;
-  const li = document.createElement("li");
-  li.textContent = users[friendUid].displayName || "Anonymous";
-  li.setAttribute("data-uid", friendUid);
-  li.onclick = () => {
-    setChatContext({ type: "dm", uid: friendUid });
-    setSidebarSelected("dm", friendUid);
-  };
-  friendsList.appendChild(li);
+          friends.forEach(friendUid => {
+            if (!users[friendUid]) return;
+            const li = document.createElement("li");
+            li.textContent = users[friendUid].displayName || "Anonymous";
+li.setAttribute("data-uid", friendUid);
+li.onclick = () => {
+  setChatContext({ type: "dm", uid: friendUid });
+  setSidebarSelected("dm", friendUid);
+};
+friendsList.appendChild(li);
 });
+});
+}
+function updateGroups() {
+  groupsList.innerHTML = "";
+  myGroupsList.innerHTML = "";
+  onValue(ref(db, "groups"), (snap) => {
+    const groups = snap.val() || {};
+    const myUid = auth.currentUser ? auth.currentUser.uid : null;
+    Object.entries(groups).forEach(([groupId, group]) => {
+      const li = document.createElement("li");
+      li.textContent = group.name;
+      li.setAttribute("data-groupid", groupId);
+      li.onclick = () => {
+        setChatContext({ type: "group", groupId });
+        setSidebarSelected("group", groupId);
+      };
+      groupsList.appendChild(li);
+      if (myUid && group.createdBy === myUid) {
+        const myLi = li.cloneNode(true);
+        myLi.onclick = li.onclick;
+        myGroupsList.appendChild(myLi);
+      }
+    });
+  });
+}
+createGroupBtn.addEventListener("click", () => {
+  if (!auth.currentUser) return alert("Sign in to create groups.");
+  const name = prompt("Enter group name:");
+  if (!name) return;
+  push(ref(db, "groups"), {
+    name,
+    createdBy: auth.currentUser.uid,
+    createdAt: Date.now()
+  });
+});
+publicChatBtn.addEventListener("click", () => {
+  setChatContext({ type: "public" });
+  setSidebarSelected("public");
+});
+cancelReplyBtn.addEventListener("click", () => {
+  replyTo = null;
+  replyPreview.style.display = "none";
+});
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (!auth.currentUser) return alert("You must be signed in to send messages.");
+  const msg = messageInput.value.trim();
+  if (!msg) return;
+  const newMsg = {
+    uid: auth.currentUser.uid,
+    name: auth.currentUser.displayName || "Anonymous",
+    message: msg,
+    timestamp: Date.now(),
+  };
+  if (replyTo) newMsg.replyTo = replyTo;
+  push(getChatRef(), newMsg)
+    .then(() => {
+      messageInput.value = "";
+      replyTo = null;
+      replyPreview.style.display = "none";
+    })
+    .catch((err) => {
+      console.error("Error sending message:", err);
+    });
+});
+signInBtn.addEventListener("click", () => {
+  signInWithPopup(auth, provider).catch((error) => {
+    console.error("Sign-in error:", error);
+  });
+});
+signOutBtn.addEventListener("click", () => {
+  signOut(auth).catch((error) => {
+    console.error("Sign-out error:", error);
+  });
+});
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    usernameInput.value = user.displayName || "Anonymous";
+    usernameInput.readOnly = true;
+    usernameInput.style.userSelect = "none";
+    messageInput.disabled = false;
+    sendBtn.disabled = false;
+    signInBtn.style.display = "none";
+    signOutBtn.style.display = "inline-block";
+    usernameInput.placeholder = "";
+    set(ref(db, `users/${user.uid}`), {
+      displayName: user.displayName || "Anonymous",
+      photoURL: user.photoURL || ""
+    });
+    updateUsersAndFriends();
+    updateGroups();
+    setChatContext({ type: "public" });
+    setSidebarSelected("public");
+  } else {
+    usernameInput.value = "";
+    usernameInput.placeholder = "Sign in to chat";
+    usernameInput.readOnly = true;
+    messageInput.disabled = true;
+    sendBtn.disabled = true;
+    signInBtn.style.display = "inline-block";
+    signOutBtn.style.display = "none";
+    replyTo = null;
+    replyPreview.style.display = "none";
+    clearChat();
+    usersList.innerHTML = "";
+    friendsList.innerHTML = "";
+    groupsList.innerHTML = "";
+    myGroupsList.innerHTML = "";
+  }
+});
+  </script>
+</body>
+</html>
