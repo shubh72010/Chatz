@@ -7,20 +7,28 @@
   <!-- Google Fonts for modern look -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
-    /* --- Sexy UI Styles from previous answer --- */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    :root {
+      --main: #a259ff;
+      --main-dark: #5f27cd;
+      --main-light: #c3aaff;
+      --sidebar-bg: #2d1f4d;
+      --chat-bg: #2c2045;
+      --message-bg: #3c2e60;
+      --message-own-bg: var(--main);
+      --accent: #ff6ec7;
+      --danger: #ff4d6d;
+      --text: #f0eaff;
+      --text-dark: #1a102b;
     }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #2a2a72, #009ffd);
-      color: #f0f0f5;
+      background: linear-gradient(135deg, var(--main-dark), var(--main));
+      color: var(--text);
       height: 100vh;
       display: flex;
       flex-direction: column;
-      max-width: 900px;
+      max-width: 950px;
       margin: 0 auto;
       user-select: none;
     }
@@ -31,7 +39,7 @@
       font-weight: 800;
       letter-spacing: 3px;
       color: #fff;
-      text-shadow: 0 0 10px #00c6ff;
+      text-shadow: 0 0 10px var(--main);
       position: relative;
       box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
@@ -43,19 +51,19 @@
       gap: 1rem;
     }
     button.auth-btn {
-      background: #00c6ff;
+      background: var(--main);
       border: none;
-      color: #000;
+      color: var(--text-dark);
       font-weight: 700;
       padding: 0.4rem 1rem;
       border-radius: 50px;
       cursor: pointer;
       font-size: 1rem;
-      box-shadow: 0 0 10px #00c6ffaa;
-      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 0 10px var(--main-light);
+      transition: background-color 0.3s, transform 0.2s;
     }
     button.auth-btn:hover {
-      background: #00a0cc;
+      background: var(--main-dark);
       color: #fff;
       transform: scale(1.05);
     }
@@ -70,25 +78,25 @@
     }
     #sidebar {
       width: 260px;
-      background: #14142b;
+      background: var(--sidebar-bg);
       display: flex;
       flex-direction: column;
       padding: 1.5rem 1rem;
       gap: 1.5rem;
       overflow-y: auto;
-      border-right: 2px solid #00c6ff;
+      border-right: 2px solid var(--main);
       scrollbar-width: thin;
-      scrollbar-color: #00c6ff transparent;
+      scrollbar-color: var(--main) transparent;
     }
     #sidebar::-webkit-scrollbar { width: 6px; }
-    #sidebar::-webkit-scrollbar-thumb { background-color: #00c6ff; border-radius: 3px; }
+    #sidebar::-webkit-scrollbar-thumb { background-color: var(--main); border-radius: 3px; }
     #sidebar h3 {
       font-size: 1.1rem;
       letter-spacing: 1.5px;
-      color: #00c6ff;
+      color: var(--main);
       font-weight: 700;
       margin-bottom: 0.8rem;
-      border-bottom: 1px solid #00c6ff44;
+      border-bottom: 1px solid #a259ff44;
       padding-bottom: 0.3rem;
       text-transform: uppercase;
     }
@@ -100,28 +108,28 @@
       max-height: 180px;
       overflow-y: auto;
       scrollbar-width: thin;
-      scrollbar-color: #00c6ff transparent;
+      scrollbar-color: var(--main) transparent;
     }
     .sidebar-list::-webkit-scrollbar { width: 5px; }
-    .sidebar-list::-webkit-scrollbar-thumb { background-color: #00c6ff; border-radius: 3px; }
+    .sidebar-list::-webkit-scrollbar-thumb { background-color: var(--main); border-radius: 3px; }
     .sidebar-list li {
       padding: 0.5rem 1rem;
       border-radius: 8px;
       cursor: pointer;
-      color: #b0b0d0;
+      color: #d1bfff;
       font-weight: 600;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: background-color 0.25s ease, color 0.25s ease;
+      transition: background-color 0.25s, color 0.25s;
       box-shadow: inset 0 0 0 0 transparent;
       user-select: none;
     }
     .sidebar-list li:hover,
     .sidebar-list li.selected {
-      background: #00c6ff;
-      color: #000;
-      box-shadow: inset 0 0 10px #00c6ffaa;
+      background: var(--main);
+      color: var(--text-dark);
+      box-shadow: inset 0 0 10px var(--main-light);
     }
     .sidebar-list button {
       background: transparent;
@@ -129,30 +137,30 @@
       color: inherit;
       font-size: 1.3rem;
       cursor: pointer;
-      transition: color 0.3s ease;
+      transition: color 0.3s;
     }
-    .sidebar-list button:hover { color: #ff4d6d; }
+    .sidebar-list button:hover { color: var(--danger); }
     #create-group-btn {
       margin-top: 0.5rem;
-      background: #00c6ff;
-      color: #000;
+      background: var(--main);
+      color: var(--text-dark);
       border: none;
       padding: 0.5rem;
       border-radius: 50px;
       font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 0 10px #00c6ffaa;
-      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 0 10px var(--main-light);
+      transition: background-color 0.3s, transform 0.2s;
     }
     #create-group-btn:hover {
-      background: #00a0cc;
+      background: var(--main-dark);
       transform: scale(1.05);
     }
     main {
       flex: 1;
       display: flex;
       flex-direction: column;
-      background: #1a1a2e;
+      background: var(--chat-bg);
       border-radius: 0 15px 15px 0;
       overflow: hidden;
       box-shadow: inset 0 0 20px #000a;
@@ -165,33 +173,33 @@
       flex-direction: column;
       gap: 0.6rem;
       scrollbar-width: thin;
-      scrollbar-color: #00c6ff transparent;
+      scrollbar-color: var(--main) transparent;
     }
     #chat::-webkit-scrollbar { width: 7px; }
-    #chat::-webkit-scrollbar-thumb { background-color: #00c6ff; border-radius: 10px; }
+    #chat::-webkit-scrollbar-thumb { background-color: var(--main); border-radius: 10px; }
     .message {
       max-width: 75%;
       padding: 0.8rem 1.2rem;
       border-radius: 20px;
-      background: #2e2c4d;
-      color: #dcdcff;
+      background: var(--message-bg);
+      color: var(--text);
       font-weight: 500;
       position: relative;
       word-wrap: break-word;
       box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-      transition: background-color 0.3s ease;
+      transition: background-color 0.3s;
       cursor: pointer;
     }
-    .message:hover { background: #444177; }
+    .message:hover { background: #543c73; }
     .message.own {
-      background: #00c6ff;
-      color: #000;
+      background: var(--message-own-bg);
+      color: var(--text-dark);
       align-self: flex-end;
-      box-shadow: 0 2px 15px #00c6ffaa;
+      box-shadow: 0 2px 15px var(--main-light);
     }
     .reply-preview {
-      background: #00a0cc;
-      color: #000;
+      background: var(--main-dark);
+      color: #fff;
       padding: 0.7rem 1rem;
       border-radius: 15px;
       margin: 0 1.5rem 0.5rem 1.5rem;
@@ -199,7 +207,7 @@
       justify-content: space-between;
       align-items: center;
       font-weight: 700;
-      box-shadow: 0 0 10px #00a0ccaa;
+      box-shadow: 0 0 10px var(--main-light);
       user-select: none;
     }
     .reply-preview button {
@@ -207,11 +215,11 @@
       border: none;
       font-size: 1.5rem;
       font-weight: 900;
-      color: #000;
+      color: #fff;
       cursor: pointer;
-      transition: color 0.3s ease;
+      transition: color 0.3s;
     }
-    .reply-preview button:hover { color: #ff4d6d; }
+    .reply-preview button:hover { color: var(--danger); }
     .meta {
       font-size: 0.75rem;
       opacity: 0.6;
@@ -221,10 +229,10 @@
     form {
       display: flex;
       padding: 1rem 1.5rem;
-      background: #14142b;
+      background: var(--sidebar-bg);
       gap: 1rem;
       align-items: center;
-      border-top: 2px solid #00c6ff;
+      border-top: 2px solid var(--main);
     }
     #username {
       flex: 1 1 120px;
@@ -232,8 +240,8 @@
       border-radius: 50px;
       border: none;
       outline: none;
-      background: #2e2c4d;
-      color: #dcdcff;
+      background: var(--message-bg);
+      color: var(--main-light);
       font-weight: 600;
       user-select: none;
       cursor: default;
@@ -244,32 +252,32 @@
       border-radius: 50px;
       border: none;
       outline: none;
-      background: #2e2c4d;
-      color: #f0f0f5;
+      background: var(--message-bg);
+      color: var(--text);
       font-weight: 600;
       font-size: 1rem;
-      transition: background-color 0.25s ease;
+      transition: background-color 0.25s;
     }
-    #message:focus { background-color: #444177; }
+    #message:focus { background-color: #543c73; }
     button#send-btn {
       flex: 0 0 auto;
       padding: 0.6rem 1.5rem;
       border-radius: 50px;
       border: none;
-      background: #00c6ff;
-      color: #000;
+      background: var(--main);
+      color: var(--text-dark);
       font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 0 12px #00c6ffaa;
-      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 0 12px var(--main-light);
+      transition: background-color 0.3s, transform 0.2s;
     }
     button#send-btn:disabled {
-      background: #444177;
+      background: #543c73;
       cursor: not-allowed;
       box-shadow: none;
     }
     button#send-btn:hover:not(:disabled) {
-      background: #00a0cc;
+      background: var(--main-dark);
       transform: scale(1.05);
     }
     @media (max-width: 700px) {
@@ -279,7 +287,7 @@
         flex-direction: row;
         overflow-x: auto;
         border-right: none;
-        border-bottom: 2px solid #00c6ff;
+        border-bottom: 2px solid var(--main);
         padding: 0.5rem;
       }
       .sidebar-section {
@@ -356,9 +364,7 @@
       get,
       onValue,
       onChildAdded,
-      off,
-      remove,
-      update
+      off
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     // --- Firebase Config ---
@@ -459,7 +465,7 @@
           if (auth.currentUser && data.uid === auth.currentUser.uid) msgDiv.classList.add("own");
           let replyHTML = "";
           if (data.replyTo) {
-            replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid #a3a0ff; padding-left: 6px; color:#222;">
+            replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--main); padding-left: 6px; color:#fff;">
               Reply to: <strong>${escapeHtml(data.replyTo.name)}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
             </div>`;
           }
@@ -488,50 +494,60 @@
       onValue(ref(db, "users"), (snap) => {
         const users = snap.val() || {};
         const myUid = auth.currentUser ? auth.currentUser.uid : null;
-        Object.entries(users).forEach(([uid, user]) => {
-          if (myUid && uid === myUid) return; // skip self
-          const li = document.createElement("li");
-          li.textContent = user.displayName || "Anonymous";
-          li.setAttribute("data-uid", uid);
-          // Add Friend/Remove Friend button
-          if (auth.currentUser) {
-            get(ref(db, `friends/${myUid}/${uid}`)).then(fSnap => {
-              if (fSnap.exists()) {
+        // First, gather friend UIDs
+        get(ref(db, `friends/${myUid}`)).then(friendSnap => {
+          const friends = friendSnap.exists() ? Object.keys(friendSnap.val()) : [];
+          // Populate users list
+          Object.entries(users).forEach(([uid, user]) => {
+            if (myUid && uid === myUid) return; // skip self
+            const li = document.createElement("li");
+            li.textContent = user.displayName || "Anonymous";
+            li.setAttribute("data-uid", uid);
+            // Add Friend/Remove Friend button
+            if (auth.currentUser) {
+              if (friends.includes(uid)) {
                 li.innerHTML += `<button title="Remove Friend">−</button>`;
-                friendsList.appendChild(li.cloneNode(true));
               } else {
                 li.innerHTML += `<button title="Add Friend">+</button>`;
               }
-              usersList.appendChild(li);
-            });
-          } else {
-            usersList.appendChild(li);
-          }
-        });
-        // Add click events after DOM update
-        usersList.querySelectorAll("li").forEach(li => {
-          li.addEventListener("click", (e) => {
-            if (e.target.tagName === "BUTTON") {
-              // Add/remove friend
-              const uid = li.getAttribute("data-uid");
-              if (e.target.textContent === "+") {
-                set(ref(db, `friends/${myUid}/${uid}`), true);
-                set(ref(db, `friends/${uid}/${myUid}`), true);
-              } else {
-                set(ref(db, `friends/${myUid}/${uid}`), null);
-                set(ref(db, `friends/${uid}/${myUid}`), null);
-              }
-            } else {
-              // Start DM
-              setChatContext({ type: "dm", uid: li.getAttribute("data-uid") });
-              setSidebarSelected("dm", li.getAttribute("data-uid"));
             }
+            usersList.appendChild(li);
           });
-        });
-        friendsList.querySelectorAll("li").forEach(li => {
-          li.addEventListener("click", () => {
-            setChatContext({ type: "dm", uid: li.getAttribute("data-uid") });
-            setSidebarSelected("dm", li.getAttribute("data-uid"));
+          // Populate friends list
+          friends.forEach(friendUid => {
+            if (!users[friendUid]) return;
+            const li = document.createElement("li");
+            li.textContent = users[friendUid].displayName || "Anonymous";
+            li.setAttribute("data-uid", friendUid);
+            friendsList.appendChild(li);
+          });
+
+          // Attach event listeners for users list
+          usersList.querySelectorAll("li").forEach(li => {
+            li.addEventListener("click", (e) => {
+              const uid = li.getAttribute("data-uid");
+              if (e.target.tagName === "BUTTON") {
+                e.stopPropagation();
+                if (e.target.textContent === "+") {
+                  set(ref(db, `friends/${myUid}/${uid}`), true);
+                  set(ref(db, `friends/${uid}/${myUid}`), true);
+                } else {
+                  set(ref(db, `friends/${myUid}/${uid}`), null);
+                  set(ref(db, `friends/${uid}/${myUid}`), null);
+                }
+              } else {
+                setChatContext({ type: "dm", uid });
+                setSidebarSelected("dm", uid);
+              }
+            });
+          });
+          // Attach event listeners for friends list
+          friendsList.querySelectorAll("li").forEach(li => {
+            li.addEventListener("click", () => {
+              const uid = li.getAttribute("data-uid");
+              setChatContext({ type: "dm", uid });
+              setSidebarSelected("dm", uid);
+            });
           });
         });
       });
@@ -583,33 +599,3 @@
       if (!msg) return;
       const newMsg = {
         uid: auth.currentUser.uid,
-        name: auth.currentUser.displayName || "Anonymous",
-        message: msg,
-        timestamp: Date.now(),
-      };
-      if (replyTo) newMsg.replyTo = replyTo;
-      push(getChatRef(), newMsg)
-        .then(() => {
-          messageInput.value = "";
-          replyTo = null;
-          replyPreview.style.display = "none";
-        })
-        .catch((err) => {
-          console.error("Error sending message:", err);
-        });
-    });
-    // --- Auth ---
-    signInBtn.addEventListener("click", () => {
-      signInWithPopup(auth, provider).catch((error) => {
-        console.error("Sign-in error:", error);
-      });
-    });
-    signOutBtn.addEventListener("click", () => {
-      signOut(auth).catch((error) => {
-        console.error("Sign-out error:", error);
-      });
-    });
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        usernameInput.value = user.displayName || "Anonymous";
-  
