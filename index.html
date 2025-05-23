@@ -591,7 +591,7 @@
       replyTo = null;
       replyPreview.style.display = "none";
     });
-    // --- Send message ---
+        // --- Send message ---
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       if (!auth.currentUser) return alert("You must be signed in to send messages.");
@@ -599,3 +599,68 @@
       if (!msg) return;
       const newMsg = {
         uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || "Anonymous",
+        message: msg,
+        timestamp: Date.now(),
+      };
+      if (replyTo) newMsg.replyTo = replyTo;
+      push(getChatRef(), newMsg)
+        .then(() => {
+          messageInput.value = "";
+          replyTo = null;
+          replyPreview.style.display = "none";
+        })
+        .catch((err) => {
+          console.error("Error sending message:", err);
+        });
+    });
+    // --- Auth ---
+    signInBtn.addEventListener("click", () => {
+      signInWithPopup(auth, provider).catch((error) => {
+        console.error("Sign-in error:", error);
+      });
+    });
+    signOutBtn.addEventListener("click", () => {
+      signOut(auth).catch((error) => {
+        console.error("Sign-out error:", error);
+      });
+    });
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        usernameInput.value = user.displayName || "Anonymous";
+        usernameInput.readOnly = true;
+        usernameInput.style.userSelect = "none";
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+        signInBtn.style.display = "none";
+        signOutBtn.style.display = "inline-block";
+        usernameInput.placeholder = "";
+        // Save user info
+        set(ref(db, `users/${user.uid}`), {
+          displayName: user.displayName || "Anonymous",
+          photoURL: user.photoURL || ""
+        });
+        updateUsersAndFriends();
+        updateGroups();
+        setChatContext({ type: "public" });
+        setSidebarSelected("public");
+      } else {
+        usernameInput.value = "";
+        usernameInput.placeholder = "Sign in to chat";
+        usernameInput.readOnly = true;
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
+        signInBtn.style.display = "inline-block";
+        signOutBtn.style.display = "none";
+        replyTo = null;
+        replyPreview.style.display = "none";
+        clearChat();
+        usersList.innerHTML = "";
+        friendsList.innerHTML = "";
+        groupsList.innerHTML = "";
+      }
+    });
+  </script>
+</body>
+</html>
+
