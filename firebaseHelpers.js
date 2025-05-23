@@ -1,98 +1,67 @@
 // firebaseHelpers.js
+
 import { initializeApp } from "firebase/app";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+} from "firebase/auth";
 import {
   getFirestore,
   collection,
-  addDoc,
-  getDocs,
+  doc,
   query,
   orderBy,
+  addDoc,
   onSnapshot,
-  serverTimestamp
 } from "firebase/firestore";
 
-import {
-  getAuth,
-  onAuthStateChanged,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signOut
-} from "firebase/auth";
-
-import {
-  getMessaging,
-  getToken,
-  onMessage
-} from "firebase/messaging";
-
-// Your Firebase config
+// 🔥 Replace this with your Firebase config from console
 const firebaseConfig = {
-  apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
-  authDomain: "chatz-45df4.firebaseapp.com",
-  databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
-  projectId: "chatz-45df4",
-  storageBucket: "chatz-45df4.firebasestorage.app",
-  messagingSenderId: "463847844545",
-  appId: "1:463847844545:web:5006247d061c3e0dc28240",
-  measurementId: "G-2VHETC9V8B"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  // ...other config values
 };
 
-// Init Firebase
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-const messaging = getMessaging(app);
+const db = getFirestore(app);
 
-// === AUTH HELPERS ===
-export const login = () => signInWithPopup(auth, provider);
-export const logout = () => signOut(auth);
-export const onUserChanged = (callback) => onAuthStateChanged(auth, callback);
+// Auth functions
+export const signIn = () => signInWithPopup(auth, provider);
+export const signOutUser = () => signOut(auth);
+export const onAuthStateChangedListener = (callback) =>
+  onAuthStateChanged(auth, callback);
 
-// === FIRESTORE HELPERS ===
-export const sendMessage = async (chatId, text, user) => {
-  const messageRef = collection(db, "chats", chatId, "messages");
-  await addDoc(messageRef, {
-    text,
-    sender: user.uid,
-    senderName: user.displayName,
-    timestamp: serverTimestamp()
-  });
-};
+// Chat functions
 
-export const listenForMessages = (chatId, callback) => {
-  const q = query(
-    collection(db, "chats", chatId, "messages"),
-    orderBy("timestamp", "asc")
-  );
-  return onSnapshot(q, callback);
-};
+// Get real-time query for DMs of a user
+export const getChatsQuery = (userId) =>
+  query(collection(db, "chats", userId, "messages"), orderBy("timestamp", "asc"));
 
-// === FCM PUSH NOTIFICATIONS ===
-export const requestPermissionAndGetToken = async () => {
+// Send message to a specific user DM
+export const sendMessage = async (userId, message) => {
   try {
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      console.warn("Permission denied");
-      return null;
-    }
-    const token = await getToken(messaging, {
-      vapidKey: "BNN-NaMj_9BHsAbKpWIJdeeJLTySio259mpWdSvlWczz4-9hBXQXyNKwccMoiqh_r-wbgHhJ2Cp2z6jYG_zFezg"
-    });
-    console.log("FCM Token:", token);
-    return token;
-  } catch (err) {
-    console.error("Error getting FCM token:", err);
-    return null;
+    await addDoc(collection(db, "chats", userId, "messages"), message);
+  } catch (error) {
+    console.error("Error sending message: ", error);
   }
 };
 
-export const onMessageListener = () =>
-  new Promise((resolve) => {
-    onMessage(messaging, (payload) => {
-      resolve(payload);
-    });
-  });
+// Global chat query (all users share this)
+export const getGlobalChatQuery = () =>
+  query(collection(db, "globalMessages"), orderBy("timestamp", "asc"));
 
-// Export Firebase objects if needed
-export { auth, db, messaging };
+// Send message to global chat
+export const sendGlobalMessage = async (message) => {
+  try {
+    await addDoc(collection(db, "globalMessages"), message);
+  } catch (error) {
+    console.error("Error sending global message: ", error);
+  }
+};
