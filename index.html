@@ -1,128 +1,347 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chatz | by Flakious</title>
-  <style>
-    /* ... (keep your existing styles) ... */
-    #container {
-      display: flex;
-      height: 100vh;
-    }
-    #sidebar {
-      width: 200px;
-      background: #23213a;
-      border-right: 1px solid #38365a;
-      display: flex;
-      flex-direction: column;
-      padding: 1rem 0.5rem;
-      gap: 1rem;
-      overflow-y: auto;
-    }
-    #sidebar h3 {
-      font-size: 1rem;
-      margin-bottom: 0.5rem;
-      color: #a3a0ff;
-      font-weight: 700;
-      letter-spacing: 1px;
-    }
-    .sidebar-section {
-      margin-bottom: 1.5rem;
-    }
-    .sidebar-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-    }
-    .sidebar-list li {
-      padding: 0.3rem 0.5rem;
-      border-radius: 0.4rem;
-      cursor: pointer;
-      transition: background 0.15s;
-      color: #f5f5f5;
-      font-size: 0.98rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .sidebar-list li.selected,
-    .sidebar-list li:hover {
-      background: #726dff;
-      color: #fff;
-    }
-    .sidebar-list button {
-      background: none;
-      border: none;
-      color: #a3a0ff;
-      cursor: pointer;
-      font-size: 1.1rem;
-      margin-left: 0.5rem;
-    }
-    @media (max-width: 700px) {
-      #container {
-        flex-direction: column;
-      }
-      #sidebar {
-        width: 100%;
-        flex-direction: row;
-        overflow-x: auto;
-        overflow-y: hidden;
-        border-right: none;
-        border-bottom: 1px solid #38365a;
-      }
-      .sidebar-section {
-        min-width: 150px;
-      }
-    }
-  </style>
-</head>
-<body>
-  <header>
-    Chat
-    <div id="auth-btns">
-      <button id="sign-in" class="auth-btn">Sign In</button>
-      <button id="sign-out" class="auth-btn" style="display:none;">Sign Out</button>
-    </div>
-  </header>
-  <div id="container">
-    <aside id="sidebar">
-      <div class="sidebar-section">
-        <h3>Friends</h3>
-        <ul id="friends-list" class="sidebar-list"></ul>
-      </div>
-      <div class="sidebar-section">
-        <h3>Users</h3>
-        <ul id="users-list" class="sidebar-list"></ul>
-      </div>
-      <div class="sidebar-section">
-        <h3>Groups</h3>
-        <ul id="groups-list" class="sidebar-list"></ul>
-        <button id="create-group-btn" style="margin-top:0.5rem;">+ Create Group</button>
-      </div>
-      <div class="sidebar-section">
-        <h3>Public</h3>
-        <ul class="sidebar-list">
-          <li id="public-chat" class="selected"># General Chat</li>
-        </ul>
-      </div>
-    </aside>
-    <main style="flex:1;display:flex;flex-direction:column;">
-      <div id="chat"></div>
-      <div id="reply-preview" class="reply-preview" style="display:none;">
-        <span id="reply-text"></span>
-        <button id="cancel-reply" title="Cancel reply">&times;</button>
-      </div>
-      <form id="chat-form">
-        <input type="text" id="username" readonly placeholder="Sign in to chat" />
-        <input type="text" id="message" placeholder="Type a message..." disabled autocomplete="off" required />
-        <button id="send-btn" type="submit" disabled>Send</button>
-      </form>
-    </main>
-  </div>
-  <script type="module" src="./chatLogic.js"></script>
-</body>
-</html>
+/* Reset & base */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #2a2a72, #009ffd);
+  color: #f0f0f5;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: 900px;
+  margin: 0 auto;
+  user-select: none;
+}
+
+/* Header */
+header {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem 2rem;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: #fff;
+  text-shadow: 0 0 10px #00c6ff;
+  position: relative;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+/* Auth Buttons */
+#auth-btns {
+  position: absolute;
+  right: 2rem;
+  top: 1rem;
+  display: flex;
+  gap: 1rem;
+}
+button.auth-btn {
+  background: #00c6ff;
+  border: none;
+  color: #000;
+  font-weight: 700;
+  padding: 0.4rem 1rem;
+  border-radius: 50px;
+  cursor: pointer;
+  font-size: 1rem;
+  box-shadow: 0 0 10px #00c6ffaa;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+button.auth-btn:hover {
+  background: #00a0cc;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* Container */
+#container {
+  flex: 1;
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  overflow: hidden;
+  margin: 1rem 1rem 2rem 1rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+/* Sidebar */
+#sidebar {
+  width: 260px;
+  background: #14142b;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  gap: 1.5rem;
+  overflow-y: auto;
+  border-right: 2px solid #00c6ff;
+  scrollbar-width: thin;
+  scrollbar-color: #00c6ff transparent;
+}
+#sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#sidebar::-webkit-scrollbar-thumb {
+  background-color: #00c6ff;
+  border-radius: 3px;
+}
+
+/* Sidebar headings */
+#sidebar h3 {
+  font-size: 1.1rem;
+  letter-spacing: 1.5px;
+  color: #00c6ff;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  border-bottom: 1px solid #00c6ff44;
+  padding-bottom: 0.3rem;
+  text-transform: uppercase;
+}
+
+/* Sidebar lists */
+.sidebar-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 180px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #00c6ff transparent;
+}
+.sidebar-list::-webkit-scrollbar {
+  width: 5px;
+}
+.sidebar-list::-webkit-scrollbar-thumb {
+  background-color: #00c6ff;
+  border-radius: 3px;
+}
+
+/* Sidebar list items */
+.sidebar-list li {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #b0b0d0;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.25s ease, color 0.25s ease;
+  box-shadow: inset 0 0 0 0 transparent;
+  user-select: none;
+}
+.sidebar-list li:hover,
+.sidebar-list li.selected {
+  background: #00c6ff;
+  color: #000;
+  box-shadow: inset 0 0 10px #00c6ffaa;
+}
+
+/* Sidebar buttons */
+.sidebar-list button {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+.sidebar-list button:hover {
+  color: #ff4d6d;
+}
+
+/* Create group button */
+#create-group-btn {
+  margin-top: 0.5rem;
+  background: #00c6ff;
+  color: #000;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 10px #00c6ffaa;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+#create-group-btn:hover {
+  background: #00a0cc;
+  transform: scale(1.05);
+}
+
+/* Chat main */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #1a1a2e;
+  border-radius: 0 15px 15px 0;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px #000a;
+}
+
+/* Chat messages container */
+#chat {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  scrollbar-width: thin;
+  scrollbar-color: #00c6ff transparent;
+}
+#chat::-webkit-scrollbar {
+  width: 7px;
+}
+#chat::-webkit-scrollbar-thumb {
+  background-color: #00c6ff;
+  border-radius: 10px;
+}
+
+/* Messages */
+.message {
+  max-width: 75%;
+  padding: 0.8rem 1.2rem;
+  border-radius: 20px;
+  background: #2e2c4d;
+  color: #dcdcff;
+  font-weight: 500;
+  position: relative;
+  word-wrap: break-word;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+}
+.message:hover {
+  background: #444177;
+}
+.message.own {
+  background: #00c6ff;
+  color: #000;
+  align-self: flex-end;
+  box-shadow: 0 2px 15px #00c6ffaa;
+}
+
+/* Reply preview */
+.reply-preview {
+  background: #00a0cc;
+  color: #000;
+  padding: 0.7rem 1rem;
+  border-radius: 15px;
+  margin: 0 1.5rem 0.5rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  box-shadow: 0 0 10px #00a0ccaa;
+  user-select: none;
+}
+.reply-preview button {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #000;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+.reply-preview button:hover {
+  color: #ff4d6d;
+}
+
+/* Meta info */
+.meta {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  margin-top: 0.3rem;
+  user-select: none;
+}
+
+/* Form */
+form {
+  display: flex;
+  padding: 1rem 1.5rem;
+  background: #14142b;
+  gap: 1rem;
+  align-items: center;
+  border-top: 2px solid #00c6ff;
+}
+#username {
+  flex: 1 1 120px;
+  padding: 0.6rem 1rem;
+  border-radius: 50px;
+  border: none;
+  outline: none;
+  background: #2e2c4d;
+  color: #dcdcff;
+  font-weight: 600;
+  user-select: none;
+  cursor: default;
+}
+#message {
+  flex: 3 1 auto;
+  padding: 0.6rem 1rem;
+  border-radius: 50px;
+  border: none;
+  outline: none;
+  background: #2e2c4d;
+  color: #f0f0f5;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background-color 0.25s ease;
+}
+#message:focus {
+  background-color: #444177;
+}
+button#send-btn {
+  flex: 0 0 auto;
+  padding: 0.6rem 1.5rem;
+  border-radius: 50px;
+  border: none;
+  background: #00c6ff;
+  color: #000;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 12px #00c6ffaa;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+button#send-btn:disabled {
+  background: #444177;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+button#send-btn:hover:not(:disabled) {
+  background: #00a0cc;
+  transform: scale(1.05);
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+  #container {
+    flex-direction: column;
+  }
+  #sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 2px solid #00c6ff;
+    padding: 0.5rem;
+  }
+  .sidebar-section {
+    min-width: 150px;
+    margin-right: 1rem;
+  }
+  main {
+    border-radius: 0 0 15px 15px;
+  }
+  form {
+    flex-wrap: wrap;
+  }
+  #username, #message, button#send-btn {
+    flex: 1 1 100%;
+    margin-bottom: 0.5rem;
+  }
+}
