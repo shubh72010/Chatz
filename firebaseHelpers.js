@@ -20,10 +20,14 @@ import {
 
 // 🔥 Replace this with your Firebase config from console
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  // ...other config values
+  apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+  authDomain: "chatz-45df4.firebaseapp.com",
+  databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
+  projectId: "chatz-45df4",
+  storageBucket: "chatz-45df4.firebasestorage.app",
+  messagingSenderId: "463847844545",
+  appId: "1:463847844545:web:5006247d061c3e0dc28240",
+  measurementId: "G-2VHETC9V8B"
 };
 
 // Initialize Firebase
