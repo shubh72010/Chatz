@@ -2,394 +2,201 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chatz | by Flakious</title>
+  <title>Strait Chat</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0; padding: 0;
-    }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #1e1e2f;
-      color: #f5f5f5;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      max-width: 600px;
-      margin: 0 auto;
+      font-family: "Segoe UI", sans-serif;
+      background-color: #111;
+      color: #fff;
+      margin: 0;
+      padding: 0;
     }
+
     header {
-      background: #302d4c;
-      padding: 1rem;
-      text-align: center;
-      font-size: 1.6rem;
-      font-weight: 700;
-      user-select: none;
-      position: relative;
-    }
-    #auth-btns {
-      position: absolute;
-      right: 1rem;
-      top: 1rem;
-      display: flex;
-      gap: 0.5rem;
-    }
-    button.auth-btn {
-      background: #726dff;
-      border: none;
-      color: white;
-      font-weight: 600;
-      padding: 0.3rem 0.8rem;
-      border-radius: 0.4rem;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: background-color 0.2s ease;
-    }
-    button.auth-btn:hover {
-      background: #5c58e0;
-    }
-    #chat {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      scroll-behavior: smooth;
-      background: #252438;
-    }
-    .message {
-      padding: 0.6rem 1rem;
-      background: #3a375a;
-      border-radius: 1rem;
-      max-width: 80%;
-      word-wrap: break-word;
-      cursor: pointer;
-      position: relative;
-      transition: background-color 0.15s ease;
-    }
-    .message:hover {
-      background: #4b4781;
-    }
-    .own {
-      background: #726dff;
-      align-self: flex-end;
-    }
-    .meta {
-      font-size: 0.7rem;
-      opacity: 0.6;
-      margin-top: 0.2rem;
-      user-select: none;
-    }
-    .reply-preview {
-      background: #554fa6;
-      padding: 0.5rem 1rem;
-      margin: 0 1rem 0.5rem 1rem;
-      border-left: 3px solid #a3a0ff;
-      font-size: 0.85rem;
-      color: #dcdcff;
-      user-select: none;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-radius: 0.5rem;
-    }
-    .reply-preview span {
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 80%;
-    }
-    .reply-preview button {
-      background: transparent;
-      border: none;
-      color: #dcdcff;
-      font-size: 1.2rem;
-      cursor: pointer;
-      font-weight: bold;
-      user-select: none;
-    }
-    form {
-      display: flex;
-      flex-wrap: nowrap;
-      padding: 1rem;
-      background: #2d2b45;
-      gap: 0.5rem;
-      align-items: center;
-    }
-    #username {
-      flex: 1 1 auto;
-      padding: 0.6rem 1rem;
-      border-radius: 1rem;
-      border: none;
-      outline: none;
-      background: #44415e;
-      color: white;
-      font-size: 1rem;
-      user-select: none;
-    }
-    #message {
-      flex: 3 1 auto;
-      padding: 0.6rem 1rem;
-      border-radius: 1rem;
-      border: none;
-      outline: none;
-      background: #44415e;
-      color: white;
-      font-size: 1rem;
-    }
-    button#send-btn {
-      flex: 0 0 auto;
-      padding: 0.6rem 1rem;
-      border-radius: 1rem;
-      border: none;
-      background: #726dff;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background-color 0.2s ease;
-    }
-    button#send-btn:disabled {
-      background: #44415e;
-      cursor: not-allowed;
-    }
-    button#send-btn:hover:not(:disabled) {
-      background: #5c58e0;
+      background-color: #222;
+      padding: 10px 20px;
+      border-bottom: 2px solid #6200ea;
     }
 
-    /* Responsive */
-    @media (max-width: 480px) {
-      form {
-        flex-wrap: wrap;
-      }
-      #username {
-        flex: 1 1 100%;
-        margin-bottom: 0.5rem;
-        user-select: none;
-      }
-      #message {
-        flex: 1 1 100%;
-      }
-      button#send-btn {
-        flex: 1 1 100%;
-        margin-top: 0.5rem;
-      }
+    #user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #user-pic {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: none;
+    }
+
+    #user-name {
+      font-weight: bold;
+      display: none;
+    }
+
+    #cult-symbol {
+      font-size: 1.5em;
+      color: #8f5bff;
+    }
+
+    main {
+      padding: 20px;
+    }
+
+    #messages {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #333;
+      padding: 10px;
+      background-color: #1e1e1e;
+      border-radius: 8px;
+    }
+
+    .message {
+      margin-bottom: 10px;
+      padding: 8px;
+      background-color: #2a2a2a;
+      border-radius: 5px;
+    }
+
+    .timestamp {
+      font-size: 0.8em;
+      color: #aaa;
+    }
+
+    form {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+    }
+
+    input, button {
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      font-size: 1em;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background-color: #333;
+      color: #fff;
+    }
+
+    button {
+      background-color: #6200ea;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #444;
+      cursor: not-allowed;
     }
   </style>
 </head>
 <body>
   <header>
-<div id="user-info" style="position: absolute; left: 1rem; top: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-  <img id="user-pic" src="" alt="Profile" style="width: 32px; height: 32px; border-radius: 50%; display: none;" />
-  <span id="user-name" style="font-size: 0.9rem; font-weight: 600; display: none;"></span>
-</div>
-    Chat
-    <div id="auth-btns">
-      <button id="sign-in" class="auth-btn">Sign In</button>
-      <button id="sign-out" class="auth-btn" style="display:none;">Sign Out</button>
+    <div id="user-info">
+      <img id="user-pic" src="" alt="User Pic">
+      <span id="user-name"></span>
+    </div>
+    <div id="cult-symbol">🜲-//✴</div>
+    <div>
+      <button id="sign-in-btn">Sign In</button>
+      <button id="sign-out-btn" style="display:none;">Sign Out</button>
     </div>
   </header>
-  <div id="chat"></div>
 
-  <div id="reply-preview" class="reply-preview" style="display:none;">
-    <span id="reply-text"></span>
-    <button id="cancel-reply" title="Cancel reply">&times;</button>
-  </div>
+  <main>
+    <div id="messages"></div>
+    <form id="chat-form">
+      <input type="text" id="message" placeholder="Type your message..." disabled />
+      <button type="submit" disabled>Send</button>
+    </form>
+  </main>
 
-  <form id="chat-form">
-    <input type="text" id="username" readonly placeholder="Sign in to chat" />
-    <input type="text" id="message" placeholder="Type a message..." disabled autocomplete="off" required />
-    <button id="send-btn" type="submit" disabled>Send</button>
-  </form>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import {
-      getDatabase,
-      ref,
-      push,
-      onChildAdded
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-
-    import {
-      getAuth,
-      GoogleAuthProvider,
-      signInWithPopup,
-      signOut,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-
+  <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
-      authDomain: "chatz-45df4.firebaseapp.com",
-      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
-      projectId: "chatz-45df4",
-      storageBucket: "chatz-45df4.appspot.com",
-      messagingSenderId: "463847844545",
-      appId: "1:463847844545:web:5006247d061c3e0dc28240",
-      measurementId: "G-2VHETC9V8B"
+      apiKey: "AIzaSyCNY1EYmKfU1IGvMYMeAxy5h7PpAtV13g0",
+      authDomain: "strait-ai.firebaseapp.com",
+      projectId: "strait-ai",
+      storageBucket: "strait-ai.appspot.com",
+      messagingSenderId: "62791153286",
+      appId: "1:62791153286:web:f7f59311c893fce9aa26ee"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const provider = new firebase.auth.GoogleAuthProvider();
 
-    const chat = document.getElementById("chat");
-    const form = document.getElementById("chat-form");
-    const usernameInput = document.getElementById("username");
+    const signInBtn = document.getElementById("sign-in-btn");
+    const signOutBtn = document.getElementById("sign-out-btn");
+    const userPic = document.getElementById("user-pic");
+    const userName = document.getElementById("user-name");
     const messageInput = document.getElementById("message");
-    const sendBtn = document.getElementById("send-btn");
+    const sendBtn = document.querySelector("form button");
+    const messagesDiv = document.getElementById("messages");
 
-    const replyPreview = document.getElementById("reply-preview");
-    const replyText = document.getElementById("reply-text");
-    const cancelReplyBtn = document.getElementById("cancel-reply");
+    signInBtn.onclick = () => auth.signInWithPopup(provider);
+    signOutBtn.onclick = () => auth.signOut();
 
-    const signInBtn = document.getElementById("sign-in");
-    const signOutBtn = document.getElementById("sign-out");
-
-    let replyTo = null;
-
-    const scrollToBottom = () => {
-      chat.scrollTop = chat.scrollHeight;
-    };
-
-    function escapeHtml(text) {
-      return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function truncate(str, n) {
-      return str.length > n ? str.substr(0, n - 1) + "…" : str;
-    }
-
-    const messagesRef = ref(db, "messages");
-
-    onChildAdded(messagesRef, (snapshot) => {
-      const data = snapshot.val();
-      const msgDiv = document.createElement("div");
-      msgDiv.className = "message";
-
-      // Mark message as own if it’s from current user
-      if (auth.currentUser && data.uid === auth.currentUser.uid) {
-        msgDiv.classList.add("own");
-      }
-
-      let replyHTML = "";
-      if (data.replyTo) {
-        replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid #a3a0ff; padding-left: 6px; color:#ccc;">
-          Reply to: <strong>${escapeHtml(data.replyTo.name)}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
-        </div>`;
-      }
-
-      msgDiv.innerHTML = `
-        ${replyHTML}
-        <strong>${escapeHtml(data.name)}</strong>: ${escapeHtml(data.message)}
-        <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-      `;
-
-      // Clicking a message sets up reply (except own messages)
-      msgDiv.addEventListener("click", () => {
-        if (!auth.currentUser) return;
-        if (data.uid === auth.currentUser.uid) return; // no replying to your own messages
-        replyTo = {
-          id: snapshot.key,
-          name: data.name,
-          message: data.message,
-        };
-        replyText.textContent = `${replyTo.name}: ${truncate(replyTo.message, 50)}`;
-        replyPreview.style.display = "flex";
-        messageInput.focus();
-      });
-
-      chat.appendChild(msgDiv);
-      scrollToBottom();
-    });
-
-    cancelReplyBtn.addEventListener("click", () => {
-      replyTo = null;
-      replyPreview.style.display = "none";
-    });
-
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      if (!auth.currentUser) return alert("You must be signed in to send messages.");
-      const msg = messageInput.value.trim();
-      if (!msg) return;
-
-      // Build message payload
-      const newMsg = {
-        uid: auth.currentUser.uid,
-        name: auth.currentUser.displayName || "Anonymous",
-        message: msg,
-        timestamp: Date.now(),
-      };
-
-      if (replyTo) {
-        newMsg.replyTo = replyTo;
-      }
-
-      push(messagesRef, newMsg)
-        .then(() => {
-          messageInput.value = "";
-          replyTo = null;
-          replyPreview.style.display = "none";
-        })
-        .catch((err) => {
-          console.error("Error sending message:", err);
-        });
-    });
-
-    signInBtn.addEventListener("click", () => {
-      signInWithPopup(auth, provider).catch((error) => {
-        console.error("Sign-in error:", error);
-      });
-    });
-
-    signOutBtn.addEventListener("click", () => {
-      signOut(auth).catch((error) => {
-        console.error("Sign-out error:", error);
-      });
-    });
-
-    onAuthStateChanged(auth, (user) => {
+    auth.onAuthStateChanged(user => {
       if (user) {
-        // Signed in
-        usernameInput.value = user.displayName || "Anonymous";
-        usernameInput.readOnly = true;
-        usernameInput.style.userSelect = "none";
-
+        userPic.src = user.photoURL;
+        userPic.style.display = "block";
+        userName.textContent = user.displayName;
+        userName.style.display = "inline";
+        signInBtn.style.display = "none";
+        signOutBtn.style.display = "inline-block";
         messageInput.disabled = false;
         sendBtn.disabled = false;
 
-        signInBtn.style.display = "none";
-        signOutBtn.style.display = "inline-block";
+        db.collection("messages")
+          .orderBy("timestamp")
+          .onSnapshot(snapshot => {
+            messagesDiv.innerHTML = "";
+            snapshot.forEach(doc => {
+              const msg = doc.data();
+              const el = document.createElement("div");
+              el.classList.add("message");
+              el.innerHTML = `<b>${msg.name}</b>: ${msg.message}<br><span class="timestamp">${new Date(msg.timestamp?.toDate()).toLocaleTimeString()}</span>`;
+              messagesDiv.appendChild(el);
+              messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            });
+          });
 
-        usernameInput.placeholder = "";
+        document.getElementById("chat-form").onsubmit = (e) => {
+          e.preventDefault();
+          const text = messageInput.value.trim();
+          if (text) {
+            db.collection("messages").add({
+              name: user.displayName,
+              message: text,
+              timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            messageInput.value = "";
+          }
+        };
       } else {
-        // Signed out
-        usernameInput.value = "";
-        usernameInput.placeholder = "Sign in to chat";
-        usernameInput.readOnly = true;
-
-        messageInput.disabled = true;
-        sendBtn.disabled = true;
-
+        userPic.style.display = "none";
+        userName.style.display = "none";
         signInBtn.style.display = "inline-block";
         signOutBtn.style.display = "none";
-
-        replyTo = null;
-        replyPreview.style.display = "none";
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
+        messagesDiv.innerHTML = "<p>Sign in to see messages.</p>";
       }
     });
-
   </script>
 </body>
 </html>
