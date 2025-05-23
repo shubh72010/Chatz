@@ -573,4 +573,177 @@ function showNewGroupModal() {
         memberItem.className = 'group-member';
         memberItem.innerHTML = `
             <div class="group-member-avatar">
-                <img src="${friend.photoURL || 'https://via.plac
+                <img src="${friend.photoURL || 'https://via.placeholder.com/30'}" alt="${friend.displayName || friend.id}">
+            </div>
+            <div class="group-member-name">
+                ${friend.displayName || `Friend ${friend.id.substring(0, 5)}`}
+            </div>
+            <input type="checkbox" class="group-member-checkbox" data-id="${friend.id}">
+        `;
+        memberSelection.appendChild(memberItem);
+    });
+    
+    newGroupModal.style.display = 'flex';
+}
+
+// Create new group
+async function createGroup() {
+    const groupName = document.getElementById('groupName').value.trim();
+    if (!groupName) {
+        alert('Please enter a group name');
+        return;
+    }
+    
+    const selectedCheckboxes = document.querySelectorAll('.group-member-checkbox:checked');
+    if (selectedCheckboxes.length === 0) {
+        alert('Please select at least one member');
+        return;
+    }
+    
+    const selectedMembers = Array.from(selectedCheckboxes).map(checkbox => checkbox.getAttribute('data-id'));
+    
+    try {
+        const groupData = {
+            name: groupName,
+            photoURL: '', // Would be set after uploading
+            members: [currentUser.uid, ...selectedMembers],
+            admin: currentUser.uid,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await firestoreHelpers.createGroup(groupData);
+        newGroupModal.style.display = 'none';
+        
+        // The groups listener will automatically update the UI
+    } catch (error) {
+        console.error('Error creating group:', error);
+        alert('Failed to create group');
+    }
+}
+
+// Handle search
+function handleSearch() {
+    const searchTerm = searchInput.value.toLowerCase();
+    
+    if (!searchTerm) {
+        renderChatsList();
+        renderFriendsList();
+        renderGroupsList();
+        return;
+    }
+    
+    // Filter chats
+    const filteredChats = chatsList.filter(chat => 
+        chat.name.toLowerCase().includes(searchTerm) ||
+        (chat.lastMessage?.text.toLowerCase().includes(searchTerm))
+    );
+    
+    renderFilteredChats(filteredChats);
+    
+    // Filter friends
+    const filteredFriends = friendsList.filter(friend => 
+        (friend.displayName || `Friend ${friend.id.substring(0, 5)}`).toLowerCase().includes(searchTerm) ||
+        (friend.status && friend.status.toLowerCase().includes(searchTerm))
+    );
+    
+    renderFilteredFriends(filteredFriends);
+    
+    // Filter groups
+    const filteredGroups = groupsList.filter(group => 
+        group.name.toLowerCase().includes(searchTerm)
+    );
+    
+    renderFilteredGroups(filteredGroups);
+}
+
+// Render filtered chats
+function renderFilteredChats(chats) {
+    chatsTab.innerHTML = '';
+    
+    if (chats.length === 0) {
+        chatsTab.innerHTML = '<p class="empty-state">No matching chats</p>';
+        return;
+    }
+    
+    chats.forEach(chat => {
+        const chatItem = document.createElement('div');
+        chatItem.className = 'list-item';
+        if (currentChat && ((chat.type === 'dm' && chat.id === currentChat) || (chat.type === 'group' && chat.id === currentChat))) {
+            chatItem.classList.add('active');
+        }
+        
+        const lastMessageText = chat.lastMessage?.text || 'No messages yet';
+        const lastMessageTime = chat.lastMessage?.timestamp 
+            ? formatTime(chat.lastMessage.timestamp.toDate()) 
+            : '';
+        
+        chatItem.innerHTML = `
+            <div class="list-item-avatar">
+                <img src="${chat.photoURL || 'https://via.placeholder.com/40'}" alt="${chat.name}">
+            </div>
+            <div class="list-item-text">
+                <h4>${chat.name}</h4>
+                <p>${lastMessageText}</p>
+            </div>
+            ${lastMessageTime ? `<div class="message-time">${lastMessageTime}</div>` : ''}
+        `;
+        
+        chatItem.addEventListener('click', () => openChat(chat.id, chat.type));
+        chatsTab.appendChild(chatItem);
+    });
+}
+
+// Render filtered friends
+function renderFilteredFriends(friends) {
+    friendsTab.innerHTML = '';
+    
+    if (friends.length === 0) {
+        friendsTab.innerHTML = '<p class="empty-state">No matching friends</p>';
+        return;
+    }
+    
+    friends.forEach(friend => {
+        const friendItem = document.createElement('div');
+        friendItem.className = 'list-item';
+        friendItem.innerHTML = `
+            <div class="list-item-avatar">
+                <img src="${friend.photoURL || 'https://via.placeholder.com/40'}" alt="${friend.displayName || friend.id}">
+            </div>
+            <div class="list-item-text">
+                <h4>${friend.displayName || `Friend ${friend.id.substring(0, 5)}`}</h4>
+                <p>${friend.status || 'Offline'}</p>
+            </div>
+        `;
+        friendItem.addEventListener('click', () => openChat(friend.id, 'dm'));
+        friendsTab.appendChild(friendItem);
+    });
+}
+
+// Render filtered groups
+function renderFilteredGroups(groups) {
+    groupsTab.innerHTML = '';
+    
+    if (groups.length === 0) {
+        groupsTab.innerHTML = '<p class="empty-state">No matching groups</p>';
+        return;
+    }
+    
+    groups.forEach(group => {
+        const groupItem = document.createElement('div');
+        groupItem.className = 'list-item';
+        groupItem.innerHTML = `
+            <div class="list-item-avatar">
+                <img src="${group.photoURL || 'https://via.placeholder.com/40'}" alt="${group.name}">
+            </div>
+            <div class="list-item-text">
+                <h4>${group.name}</h4>
+                <p>${group.members.length} members</p>
+            </div>
+        `;
+        groupItem.addEventListener('click', () => openChat(group.id, 'group'));
+        groupsTab.appendChild(groupItem);
+    });
+}
+
+// Initialize the app
+document.addEventListener('DOMContentLoaded', init);
