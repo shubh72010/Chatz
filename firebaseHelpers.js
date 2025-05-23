@@ -1,58 +1,96 @@
-// firebaseHelper.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+// firebaseHelpers.js
+import { initializeApp } from "firebase/app";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp
+} from "firebase/firestore";
+
 import {
   getAuth,
-  GoogleAuthProvider,
+  onAuthStateChanged,
   signInWithPopup,
-  signOut,
-  onAuthStateChanged,
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+  GoogleAuthProvider,
+  signOut
+} from "firebase/auth";
+
 import {
-  getDatabase,
-  ref,
-  set,
-  push,
-  onChildAdded,
-  onValue,
-  get,
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+  getMessaging,
+  getToken,
+  onMessage
+} from "firebase/messaging";
 
-// Your fixed Firebase config
+// Your Firebase config
 const firebaseConfig = {
-  apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
-  authDomain: "chatz-45df4.firebaseapp.com",
-  databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
-  projectId: "chatz-45df4",
-  storageBucket: "chatz-45df4.appspot.com", // fixed storage bucket URL
-  messagingSenderId: "463847844545",
-  appId: "1:463847844545:web:5006247d061c3e0dc28240",
-  measurementId: "G-2VHETC9V8B",
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
+// Init Firebase
 const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 const auth = getAuth(app);
-const database = getDatabase(app);
 const provider = new GoogleAuthProvider();
+const messaging = getMessaging(app);
 
-function signIn() {
-  return signInWithPopup(auth, provider);
-}
+// === AUTH HELPERS ===
+export const login = () => signInWithPopup(auth, provider);
+export const logout = () => signOut(auth);
+export const onUserChanged = (callback) => onAuthStateChanged(auth, callback);
 
-function signUserOut() {
-  return signOut(auth);
-}
-
-export {
-  auth,
-  database,
-  provider,
-  signIn,
-  signUserOut,
-  onAuthStateChanged,
-  ref,
-  set,
-  push,
-  onChildAdded,
-  onValue,
-  get,
+// === FIRESTORE HELPERS ===
+export const sendMessage = async (chatId, text, user) => {
+  const messageRef = collection(db, "chats", chatId, "messages");
+  await addDoc(messageRef, {
+    text,
+    sender: user.uid,
+    senderName: user.displayName,
+    timestamp: serverTimestamp()
+  });
 };
+
+export const listenForMessages = (chatId, callback) => {
+  const q = query(
+    collection(db, "chats", chatId, "messages"),
+    orderBy("timestamp", "asc")
+  );
+  return onSnapshot(q, callback);
+};
+
+// === FCM PUSH NOTIFICATIONS ===
+export const requestPermissionAndGetToken = async () => {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      console.warn("Permission denied");
+      return null;
+    }
+    const token = await getToken(messaging, {
+      vapidKey: "BNN-NaMj_9BHsAbKpWIJdeeJLTySio259mpWdSvlWczz4-9hBXQXyNKwccMoiqh_r-wbgHhJ2Cp2z6jYG_zFezg"
+    });
+    console.log("FCM Token:", token);
+    return token;
+  } catch (err) {
+    console.error("Error getting FCM token:", err);
+    return null;
+  }
+};
+
+export const onMessageListener = () =>
+  new Promise((resolve) => {
+    onMessage(messaging, (payload) => {
+      resolve(payload);
+    });
+  });
+
+// Export Firebase objects if needed
+export { auth, db, messaging };
