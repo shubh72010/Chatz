@@ -1,24 +1,26 @@
 // firebaseHelpers.js
 
-import { initializeApp } from "firebase/app";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
   onAuthStateChanged,
-} from "firebase/auth";
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getFirestore,
   collection,
-  doc,
+  addDoc,
   query,
   orderBy,
-  addDoc,
   onSnapshot,
-} from "firebase/firestore";
+  doc,
+  setDoc,
+  getDoc,
+  where,
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// 🔥 Replace this with your Firebase config from console
 const firebaseConfig = {
   apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
   authDomain: "chatz-45df4.firebaseapp.com",
@@ -30,42 +32,26 @@ const firebaseConfig = {
   measurementId: "G-2VHETC9V8B"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
 
-// Auth functions
-export const signIn = () => signInWithPopup(auth, provider);
-export const signOutUser = () => signOut(auth);
-export const onAuthStateChangedListener = (callback) =>
-  onAuthStateChanged(auth, callback);
+const provider = new GoogleAuthProvider();
 
-// Chat functions
-
-// Get real-time query for DMs of a user
-export const getChatsQuery = (userId) =>
-  query(collection(db, "chats", userId, "messages"), orderBy("timestamp", "asc"));
-
-// Send message to a specific user DM
-export const sendMessage = async (userId, message) => {
-  try {
-    await addDoc(collection(db, "chats", userId, "messages"), message);
-  } catch (error) {
-    console.error("Error sending message: ", error);
-  }
-};
-
-// Global chat query (all users share this)
-export const getGlobalChatQuery = () =>
-  query(collection(db, "globalMessages"), orderBy("timestamp", "asc"));
-
-// Send message to global chat
-export const sendGlobalMessage = async (message) => {
-  try {
-    await addDoc(collection(db, "globalMessages"), message);
-  } catch (error) {
-    console.error("Error sending global message: ", error);
-  }
+export {
+  auth,
+  db,
+  provider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  doc,
+  setDoc,
+  getDoc,
+  where,
 };
