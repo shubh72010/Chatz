@@ -204,7 +204,7 @@ chatForm.addEventListener("submit", async (e) => {
       roomId,
       sender: currentUser.uid,
       text,
-      createdAt: new Date(),
+      createdAt: serverTimestamp(),
     });
     chatInput.value = "";
   } catch (error) {
