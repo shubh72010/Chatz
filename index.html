@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz | by Flakious</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
-    :root {
+    /* Default (Purple) Theme Variables */
+    body.theme-default {
       --main: #a259ff;
       --main-dark: #5f27cd;
       --main-light: #c3aaff;
@@ -15,22 +17,90 @@
       --message-bg: #3c2e60;
       --message-own-bg: var(--main);
       --accent: #ff6ec7;
+      /* Pink accent */
       --danger: #ff4d6d;
       --text: #f0eaff;
       --text-dark: #1a102b;
+      background: linear-gradient(135deg, var(--main-dark), var(--main));
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Dark Mode (Black) Theme Variables */
+    body.theme-dark {
+      --main: #4a4a4a;
+      /* Dark grey for accents */
+      --main-dark: #2c2c2c;
+      /* Even darker grey */
+      --main-light: #6a6a6a;
+      /* Lighter grey for highlights */
+      --sidebar-bg: #1a1a1a;
+      /* Almost black */
+      --chat-bg: #121212;
+      /* Pure black background */
+      --message-bg: #282828;
+      /* Dark grey message bubble */
+      --message-own-bg: var(--main);
+      /* Own message accent */
+      --accent: #bb86fc;
+      /* Purple-ish for links/buttons */
+      --danger: #cf6679;
+      /* Red for danger */
+      --text: #e0e0e0;
+      /* Light grey text */
+      --text-dark: #121212;
+      /* Dark text for main-colored elements */
+      background: #121212;
+      /* Solid black for body background */
+    }
+
+    /* Light Mode (White) Theme Variables - ADJUSTED */
+    body.theme-light {
+      --main: #4285f4;
+      /* A pleasant blue for main accent */
+      --main-dark: #1a73e8;
+      /* Darker blue */
+      --main-light: #e8f0fe;
+      /* Very light blue for background/highlights */
+      --sidebar-bg: #f8f9fa;
+      /* Very light grey for sidebar */
+      --chat-bg: #ffffff;
+      /* White background */
+      --message-bg: #e9e9eb;
+      /* Light grey message bubble */
+      --message-own-bg: var(--main);
+      /* Own message accent */
+      --accent: #03dac6;
+      /* Teal accent */
+      --danger: #dc3545;
+      /* Red for danger */
+      --text: #212121;
+      /* Dark text */
+      --text-dark: #ffffff;
+      /* Light text for main-colored elements */
+      background: var(--sidebar-bg);
+      /* Solid very light grey for body background */
+    }
+
+    /* Base styles (apply to all themes) */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, var(--main-dark), var(--main));
       color: var(--text);
+      /* Use text variable */
       height: 100vh;
       display: flex;
       flex-direction: column;
       max-width: 950px;
       margin: 0 auto;
       user-select: none;
+      transition: background-color 0.3s ease;
+      /* Smooth transition for body background */
     }
+
     header {
       background: rgba(0, 0, 0, 0.3);
       padding: 1rem 2rem;
@@ -40,55 +110,101 @@
       color: #fff;
       text-shadow: 0 0 10px var(--main);
       position: relative;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-      /* Make header a flex container to align items */
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
       display: flex;
       align-items: center;
-      justify-content: space-between; /* Pushes items to ends */
-      gap: 1rem; /* Space between Chat title, user info, and auth buttons */
+      justify-content: space-between;
+      gap: 1rem;
     }
 
-    /* Styles for the new user info section in the header */
     #header-user-info {
-        display: flex; /* Flex container for pfp and username */
-        align-items: center;
-        gap: 0.8rem;
-        font-size: 1.2rem; /* Adjust font size for username */
-        font-weight: 600;
-        color: var(--text);
-        margin-right: auto; /* Pushes user info to the left, and auth-btns to the right */
-        order: -1; /* Puts user info to the left of the "Chatz" title */
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-right: auto;
+      order: -1;
     }
 
     #user-pfp {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid var(--main-light);
-        box-shadow: 0 0 8px rgba(0,0,0,0.5);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--main-light);
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
     }
 
     #display-username {
-        white-space: nowrap; /* Prevent username from wrapping */
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 150px; /* Limit width of username to prevent overflow */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 150px;
     }
 
     #auth-btns {
-      /* Adjust position, no longer absolute due to flex container */
       display: flex;
       gap: 1rem;
-      order: 1; /* Puts auth buttons to the right */
+      order: 1;
+      align-items: center;
+      /* Align items vertically in auth-btns */
     }
 
-    /* Adjust the "Chatz" title's placement within the header */
-    header > span {
-        order: 0; /* Keeps the title in the middle by default */
-        margin-left: auto; /* Pushes the title to the right if auth-btns is left */
-        margin-right: auto; /* Centers the title between user-info and auth-btns */
+    header>span {
+      order: 0;
+      margin-left: auto;
+      margin-right: auto;
     }
+
+    /* Theme dropdown styles */
+    #theme-dropdown-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    #theme-dropdown-label {
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    #theme-select {
+      background: var(--sidebar-bg);
+      /* Use a themed background */
+      color: var(--text);
+      /* Use themed text color */
+      border: 1px solid var(--main);
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      /* Remove default dropdown arrow */
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      /* background-image will be set by JS dynamically based on theme's text color */
+      background-repeat: no-repeat;
+      background-position: right 0.5rem center;
+      background-size: 1.2em;
+      transition: border-color 0.3s, background-color 0.3s;
+    }
+
+    #theme-select:hover {
+      border-color: var(--accent);
+      background-color: var(--main-dark);
+    }
+
+    #theme-select option {
+      background-color: var(--sidebar-bg);
+      /* Match dropdown background */
+      color: var(--text);
+    }
+
 
     button.auth-btn {
       background: var(--main);
@@ -102,20 +218,25 @@
       box-shadow: 0 0 10px var(--main-light);
       transition: background-color 0.3s, transform 0.2s;
     }
+
     button.auth-btn:hover {
       background: var(--main-dark);
-      color: #fff;
+      color: var(--text);
+      /* Use text variable for hover */
       transform: scale(1.05);
     }
+
     #container {
       flex: 1;
       display: flex;
       background: rgba(255, 255, 255, 0.05);
+      /* This background can also be themed or made transparent */
       border-radius: 15px;
       overflow: hidden;
       margin: 1rem 1rem 2rem 1rem;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
+
     #sidebar {
       width: 280px;
       background: var(--sidebar-bg);
@@ -129,18 +250,28 @@
       scrollbar-color: var(--main) transparent;
       position: relative;
     }
-    #sidebar::-webkit-scrollbar { width: 6px; }
-    #sidebar::-webkit-scrollbar-thumb { background-color: var(--main); border-radius: 3px; }
+
+    #sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #sidebar::-webkit-scrollbar-thumb {
+      background-color: var(--main);
+      border-radius: 3px;
+    }
+
     #sidebar h3 {
       font-size: 1.1rem;
       letter-spacing: 1.5px;
       color: var(--main);
       font-weight: 700;
       margin-bottom: 0.8rem;
-      border-bottom: 1px solid #a259ff44;
+      border-bottom: 1px solid var(--main-light);
+      /* Use themed border */
       padding-bottom: 0.3rem;
       text-transform: uppercase;
     }
+
     .sidebar-list {
       list-style: none;
       display: flex;
@@ -151,13 +282,22 @@
       scrollbar-width: thin;
       scrollbar-color: var(--main) transparent;
     }
-    .sidebar-list::-webkit-scrollbar { width: 5px; }
-    .sidebar-list::-webkit-scrollbar-thumb { background-color: var(--main); border-radius: 3px; }
+
+    .sidebar-list::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .sidebar-list::-webkit-scrollbar-thumb {
+      background-color: var(--main);
+      border-radius: 3px;
+    }
+
     .sidebar-list li {
       padding: 0.5rem 1rem;
       border-radius: 8px;
       cursor: pointer;
-      color: #d1bfff;
+      color: var(--text);
+      /* Use text variable */
       font-weight: 600;
       display: flex;
       justify-content: space-between;
@@ -167,12 +307,15 @@
       user-select: none;
       position: relative;
     }
+
     .sidebar-list li:hover,
     .sidebar-list li.selected {
       background: var(--main);
       color: var(--text-dark);
+      /* Use text-dark for selected/hovered items */
       box-shadow: inset 0 0 10px var(--main-light);
     }
+
     .sidebar-list button {
       background: transparent;
       border: none;
@@ -182,17 +325,28 @@
       transition: color 0.3s;
       margin-left: 0.5rem;
     }
+
     .sidebar-list li.selected button {
-        color: var(--text-dark);
+      color: var(--text-dark);
     }
+
     .sidebar-list li.selected button.friend-btn.remove,
     .sidebar-list li.selected button.group-leave-btn {
-        color: var(--danger);
+      color: var(--danger);
     }
-    .sidebar-list button.friend-btn { color: var(--accent); }
-    .sidebar-list button.friend-btn.remove { color: var(--danger); }
-    .sidebar-list button.group-leave-btn { color: var(--danger); }
-    .sidebar-list button:hover { color: var(--danger); }
+
+    .sidebar-list button.friend-btn {
+      color: var(--accent);
+    }
+
+    .sidebar-list button.friend-btn.remove {
+      color: var(--danger);
+    }
+
+    .sidebar-list button:hover {
+      color: var(--danger);
+    }
+
     #create-group-btn {
       margin-top: 0.5rem;
       background: var(--main);
@@ -205,10 +359,12 @@
       box-shadow: 0 0 10px var(--main-light);
       transition: background-color 0.3s, transform 0.2s;
     }
+
     #create-group-btn:hover {
       background: var(--main-dark);
       transform: scale(1.05);
     }
+
     main {
       flex: 1;
       display: flex;
@@ -218,6 +374,7 @@
       overflow: hidden;
       box-shadow: inset 0 0 20px #000a;
     }
+
     #chat {
       flex: 1;
       padding: 1rem 1.5rem;
@@ -228,8 +385,16 @@
       scrollbar-width: thin;
       scrollbar-color: var(--main) transparent;
     }
-    #chat::-webkit-scrollbar { width: 7px; }
-    #chat::-webkit-scrollbar-thumb { background-color: var(--main); border-radius: 10px; }
+
+    #chat::-webkit-scrollbar {
+      width: 7px;
+    }
+
+    #chat::-webkit-scrollbar-thumb {
+      background-color: var(--main);
+      border-radius: 10px;
+    }
+
     .message {
       max-width: 75%;
       padding: 0.8rem 1.2rem;
@@ -239,20 +404,26 @@
       font-weight: 500;
       position: relative;
       word-wrap: break-word;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
       transition: background-color 0.3s;
       cursor: pointer;
     }
-    .message:hover { background: #543c73; }
+
+    .message:hover {
+      background: var(--main-dark);
+      /* Use a themed hover */
+    }
+
     .message.own {
       background: var(--message-own-bg);
       color: var(--text-dark);
       align-self: flex-end;
       box-shadow: 0 2px 15px var(--main-light);
     }
+
     .reply-preview {
       background: var(--main-dark);
-      color: #fff;
+      color: var(--text);
       padding: 0.7rem 1rem;
       border-radius: 15px;
       margin: 0 1.5rem 0.5rem 1.5rem;
@@ -263,22 +434,28 @@
       box-shadow: 0 0 10px var(--main-light);
       user-select: none;
     }
+
     .reply-preview button {
       background: transparent;
       border: none;
       font-size: 1.5rem;
       font-weight: 900;
-      color: #fff;
+      color: var(--text);
       cursor: pointer;
       transition: color 0.3s;
     }
-    .reply-preview button:hover { color: var(--danger); }
+
+    .reply-preview button:hover {
+      color: var(--danger);
+    }
+
     .meta {
       font-size: 0.75rem;
       opacity: 0.6;
       margin-top: 0.3rem;
       user-select: none;
     }
+
     form {
       display: flex;
       padding: 1rem 1.5rem;
@@ -287,7 +464,7 @@
       align-items: center;
       border-top: 2px solid var(--main);
     }
-    /* Removed #username styles as it's no longer in the form */
+
     #message {
       flex: 3 1 auto;
       padding: 0.6rem 1rem;
@@ -300,7 +477,11 @@
       font-size: 1rem;
       transition: background-color 0.25s;
     }
-    #message:focus { background-color: #543c73; }
+
+    #message:focus {
+      background-color: var(--main-dark);
+    }
+
     button#send-btn {
       flex: 0 0 auto;
       padding: 0.6rem 1.5rem;
@@ -313,17 +494,24 @@
       box-shadow: 0 0 12px var(--main-light);
       transition: background-color 0.3s, transform 0.2s;
     }
+
     button#send-btn:disabled {
-      background: #543c73;
+      background: var(--sidebar-bg);
+      /* Themed disabled button */
       cursor: not-allowed;
       box-shadow: none;
     }
+
     button#send-btn:hover:not(:disabled) {
       background: var(--main-dark);
       transform: scale(1.05);
     }
+
     @media (max-width: 700px) {
-      #container { flex-direction: column; }
+      #container {
+        flex-direction: column;
+      }
+
       #sidebar {
         width: 100%;
         flex-direction: row;
@@ -333,49 +521,73 @@
         border-bottom: 2px solid var(--main);
         padding: 0.5rem;
       }
+
       .sidebar-section {
         min-width: 150px;
         margin-right: 1rem;
       }
+
       .sidebar-list {
         max-height: unset;
         overflow-y: visible;
       }
-      main { border-radius: 0 0 15px 15px; }
-      form { flex-wrap: wrap; }
-      #message, button#send-btn {
+
+      main {
+        border-radius: 0 0 15px 15px;
+      }
+
+      form {
+        flex-wrap: wrap;
+      }
+
+      #message,
+      button#send-btn {
         flex: 1 1 100%;
         margin-bottom: 0.5rem;
       }
-      /* Adjust header layout for smaller screens */
+
       header {
-          flex-direction: column;
-          align-items: flex-start;
-          padding-bottom: 1rem; /* Add more padding for stacked elements */
+        flex-direction: column;
+        align-items: flex-start;
+        padding-bottom: 1rem;
       }
+
       #header-user-info {
-          margin-bottom: 0.5rem;
-          margin-right: 0; /* Remove auto-margin that pushes it right */
-          order: -2; /* Ensure it's always at the top-left */
-          width: 100%; /* Take full width */
+        margin-bottom: 0.5rem;
+        margin-right: 0;
+        order: -2;
+        width: 100%;
       }
-      header > span {
-          margin: 0; /* Reset margins */
-          align-self: flex-start; /* Align title to left */
-          margin-bottom: 0.5rem;
-          order: -1; /* Place after user info */
+
+      header>span {
+        margin: 0;
+        align-self: flex-start;
+        margin-bottom: 0.5rem;
+        order: -1;
       }
+
       #auth-btns {
-          position: static; /* No longer absolute */
-          right: auto;
-          top: auto;
-          width: 100%; /* Take full width */
-          justify-content: flex-start; /* Align buttons to the left */
-          order: 0; /* Place after title */
+        position: static;
+        right: auto;
+        top: auto;
+        width: 100%;
+        justify-content: flex-start;
+        order: 0;
+        flex-wrap: wrap;
+        /* Allow dropdown and buttons to wrap */
+      }
+
+      #theme-dropdown-container {
+        margin-left: 0;
+        /* No extra margin on mobile */
+        width: 100%;
+        /* Take full width on mobile */
+        justify-content: flex-start;
       }
     }
   </style>
 </head>
+
 <body>
   <header>
     <div id="header-user-info" style="display:none;">
@@ -384,6 +596,14 @@
     </div>
     <span>Chatz</span>
     <div id="auth-btns">
+      <div id="theme-dropdown-container">
+        <label for="theme-select" id="theme-dropdown-label">Themes:</label>
+        <select id="theme-select">
+          <option value="default">Purple Mode</option>
+          <option value="dark">Dark Mode</option>
+          <option value="light">Light Mode</option>
+        </select>
+      </div>
       <button id="sign-in" class="auth-btn">Sign In</button>
       <button id="sign-out" class="auth-btn" style="display:none;">Sign Out</button>
     </div>
@@ -478,11 +698,12 @@
     const createGroupBtn = document.getElementById("create-group-btn");
     const publicChatBtn = document.getElementById("public-chat");
 
-    // NEW DOM Elements for PFP and Username in Header
     const headerUserInfo = document.getElementById("header-user-info");
     const userPfp = document.getElementById("user-pfp");
     const displayUsername = document.getElementById("display-username");
 
+    // Theme dropdown element
+    const themeSelect = document.getElementById("theme-select");
 
     let replyTo = null;
     let chatContext = { type: "public" };
@@ -491,10 +712,10 @@
 
     function escapeHtml(text) {
       return text.replace(/&/g, "&amp;")
-                  .replace(/</g, "&lt;")
-                  .replace(/>/g, "&gt;")
-                  .replace(/"/g, "&quot;")
-                  .replace(/'/g, "&#039;");
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
     function truncate(str, n) {
       return str.length > n ? str.substr(0, n - 1) + "…" : str;
@@ -551,46 +772,45 @@
       });
 
       chatListener = onChildAdded(chatRef, (snapshot) => {
-        // Only append new messages coming in after initial load
         if (snapshot.val().timestamp > Date.now() - 1000) {
-            appendMessageToChat(snapshot.val());
-            scrollToBottom();
+          appendMessageToChat(snapshot.val());
+          scrollToBottom();
         }
       });
     }
 
     function appendMessageToChat(data) {
-        const msgDiv = document.createElement("div");
-        msgDiv.className = "message";
-        if (auth.currentUser && data.uid === auth.currentUser.uid) msgDiv.classList.add("own");
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "message";
+      if (auth.currentUser && data.uid === auth.currentUser.uid) msgDiv.classList.add("own");
 
-        let replyHTML = "";
-        if (data.replyTo) {
-            replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--main); padding-left: 6px; color:#fff;">
+      let replyHTML = "";
+      if (data.replyTo) {
+        replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--main); padding-left: 6px; color:inherit;">
                 Reply to: <strong>${escapeHtml(data.replyTo.name)}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
             </div>`;
-        }
+      }
 
-        msgDiv.innerHTML = `
+      msgDiv.innerHTML = `
             ${replyHTML}
             <strong>${escapeHtml(data.name)}</strong>: ${escapeHtml(data.message)}
-            <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+            <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
         `;
 
-        msgDiv.addEventListener("click", () => {
-            if (!auth.currentUser) {
-                alert("Please sign in to reply to messages.");
-                return;
-            }
-            if (data.uid === auth.currentUser.uid) {
-                return;
-            }
-            replyTo = { id: data.timestamp, name: data.name, message: data.message };
-            replyText.textContent = `Replying to ${replyTo.name}: ${truncate(replyTo.message, 50)}`;
-            replyPreview.style.display = "flex";
-            messageInput.focus();
-        });
-        chat.appendChild(msgDiv);
+      msgDiv.addEventListener("click", () => {
+        if (!auth.currentUser) {
+          alert("Please sign in to reply to messages.");
+          return;
+        }
+        if (data.uid === auth.currentUser.uid) {
+          return;
+        }
+        replyTo = { id: data.timestamp, name: data.name, message: data.message };
+        replyText.textContent = `Replying to ${replyTo.name}: ${truncate(replyTo.message, 50)}`;
+        replyPreview.style.display = "flex";
+        messageInput.focus();
+      });
+      chat.appendChild(msgDiv);
     }
 
     let userMenu = null;
@@ -688,52 +908,52 @@
         friendsList.innerHTML = "";
 
         if (myUid) {
-            onValue(ref(db, `friends/${myUid}`), (friendSnap) => {
-                const friends = friendSnap.exists() ? Object.keys(friendSnap.val()) : [];
+          onValue(ref(db, `friends/${myUid}`), (friendSnap) => {
+            const friends = friendSnap.exists() ? Object.keys(friendSnap.val()) : [];
 
-                Object.entries(users).forEach(([uid, user]) => {
-                    if (myUid && uid === myUid) return;
+            Object.entries(users).forEach(([uid, user]) => {
+              if (myUid && uid === myUid) return;
 
-                    const li = document.createElement("li");
-                    li.textContent = user.displayName || "Anonymous";
-                    li.setAttribute("data-uid", uid);
+              const li = document.createElement("li");
+              li.textContent = user.displayName || "Anonymous";
+              li.setAttribute("data-uid", uid);
 
-                    if (friends.includes(uid)) {
-                        const friendLi = li.cloneNode(true);
-                        friendLi.onclick = () => {
-                            setChatContext({ type: "dm", uid: uid });
-                            setSidebarSelected("dm", uid);
-                        };
-                        const removeFriendBtn = document.createElement("button");
-                        removeFriendBtn.innerHTML = "&#x2716;";
-                        removeFriendBtn.classList.add("friend-btn", "remove");
-                        removeFriendBtn.title = `Remove ${user.displayName || "Anonymous"}`;
-                        removeFriendBtn.onclick = async (e) => {
-                            e.stopPropagation();
-                            await remove(ref(db, `friends/${myUid}/${uid}`));
-                            await remove(ref(db, `friends/${uid}/${myUid}`));
-                        };
-                        friendLi.appendChild(removeFriendBtn);
-                        friendsList.appendChild(friendLi);
-                    } else {
-                        li.addEventListener("click", (e) => {
-                            e.stopPropagation();
-                            showUserMenu(li, uid, user.displayName || "Anonymous", false); // Not a friend
-                        });
-                        const addFriendBtn = document.createElement("button");
-                        addFriendBtn.innerHTML = "&#x271A;";
-                        addFriendBtn.classList.add("friend-btn");
-                        addFriendBtn.title = `Add ${user.displayName || "Anonymous"}`;
-                        addFriendBtn.onclick = async (e) => {
-                            e.stopPropagation();
-                            await set(ref(db, `friends/${myUid}/${uid}`), true);
-                            await set(ref(db, `friends/${uid}/${myUid}`), true);
-                        };
-                        li.appendChild(addFriendBtn);
-                        usersList.appendChild(li);
-                    }
+              if (friends.includes(uid)) {
+                const friendLi = li.cloneNode(true);
+                friendLi.onclick = () => {
+                  setChatContext({ type: "dm", uid: uid });
+                  setSidebarSelected("dm", uid);
+                };
+                const removeFriendBtn = document.createElement("button");
+                removeFriendBtn.innerHTML = "&#x2716;";
+                removeFriendBtn.classList.add("friend-btn", "remove");
+                removeFriendBtn.title = `Remove ${user.displayName || "Anonymous"}`;
+                removeFriendBtn.onclick = async (e) => {
+                  e.stopPropagation();
+                  await remove(ref(db, `friends/${myUid}/${uid}`));
+                  await remove(ref(db, `friends/${uid}/${myUid}`));
+                };
+                friendLi.appendChild(removeFriendBtn);
+                friendsList.appendChild(friendLi);
+              } else {
+                li.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  showUserMenu(li, uid, user.displayName || "Anonymous", false);
                 });
+                const addFriendBtn = document.createElement("button");
+                addFriendBtn.innerHTML = "&#x271A;";
+                addFriendBtn.classList.add("friend-btn");
+                addFriendBtn.title = `Add ${user.displayName || "Anonymous"}`;
+                addFriendBtn.onclick = async (e) => {
+                  e.stopPropagation();
+                  await set(ref(db, `friends/${myUid}/${uid}`), true);
+                  await set(ref(db, `friends/${uid}/${myUid}`), true);
+                };
+                li.appendChild(addFriendBtn);
+                usersList.appendChild(li);
+              }
             });
+          });
         }
       });
     }
@@ -767,10 +987,10 @@
             deleteGroupBtn.classList.add("group-leave-btn");
             deleteGroupBtn.title = "Delete Group";
             deleteGroupBtn.onclick = async (e) => {
-                e.stopPropagation();
-                if (confirm(`Are you sure you want to delete the group "${group.name}"? This action cannot be undone.`)) {
-                    await remove(ref(db, `groups/${groupId}`));
-                }
+              e.stopPropagation();
+              if (confirm(`Are you sure you want to delete the group "${group.name}"? This action cannot be undone.`)) {
+                await remove(ref(db, `groups/${groupId}`));
+              }
             };
             myLi.appendChild(deleteGroupBtn);
             myGroupsList.appendChild(myLi);
@@ -780,13 +1000,13 @@
             joinLeaveBtn.classList.add(isMember ? "group-leave-btn" : "friend-btn");
             joinLeaveBtn.title = isMember ? `Leave ${group.name}` : `Join ${group.name}`;
             joinLeaveBtn.onclick = async (e) => {
-                e.stopPropagation();
-                if (!auth.currentUser) return alert("Sign in to join or leave groups.");
-                if (isMember) {
-                    await remove(ref(db, `groups/${groupId}/members/${myUid}`));
-                } else {
-                    await set(ref(db, `groups/${groupId}/members/${myUid}`), true);
-                }
+              e.stopPropagation();
+              if (!auth.currentUser) return alert("Sign in to join or leave groups.");
+              if (isMember) {
+                await remove(ref(db, `groups/${groupId}/members/${myUid}`));
+              } else {
+                await set(ref(db, `groups/${groupId}/members/${myUid}`), true);
+              }
             };
             li.appendChild(joinLeaveBtn);
             groupsList.appendChild(li);
@@ -794,6 +1014,43 @@
         });
       });
     }
+
+    // Theme management functions
+    function applyTheme(themeName) {
+      document.body.classList.remove('theme-default', 'theme-dark', 'theme-light');
+      document.body.classList.add(`theme-${themeName}`);
+      localStorage.setItem('chatzTheme', themeName);
+
+      // Update selected option in the dropdown
+      themeSelect.value = themeName;
+
+      // Update dropdown arrow color after theme is applied
+      const computedTextColor = getComputedStyle(document.body).getPropertyValue('--text').trim();
+      let hexColor = '212121'; // Default to a dark gray for robustness
+
+      // Attempt to parse the computed text color into a hex string for the SVG fill
+      if (computedTextColor.startsWith('#')) {
+        hexColor = computedTextColor.slice(1);
+      } else if (computedTextColor.startsWith('rgb')) {
+        const rgbValues = computedTextColor.match(/\d+/g).map(Number);
+        if (rgbValues.length === 3) {
+          hexColor = ((1 << 24) + (rgbValues[0] << 16) + (rgbValues[1] << 8) + rgbValues[2]).toString(16).slice(1);
+        }
+      }
+      themeSelect.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg fill="%23${hexColor}" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>')`;
+    }
+
+    // Event Listener for theme dropdown
+    themeSelect.addEventListener('change', (event) => {
+      applyTheme(event.target.value);
+    });
+
+    // Apply saved theme on load
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('chatzTheme') || 'default';
+      applyTheme(savedTheme); // This will now also set the arrow color correctly
+    });
+
 
     createGroupBtn.addEventListener("click", async () => {
       if (!auth.currentUser) return alert("Sign in to create groups.");
@@ -857,7 +1114,7 @@
               console.error("Error sending message:", err);
             });
         }).catch((err) => {
-            console.error("Error checking group membership:", err);
+          console.error("Error checking group membership:", err);
         });
       } else {
         push(getChatRef(), newMsg)
@@ -908,18 +1165,18 @@
         updateGroups();
 
         if (!chatContext.type || (chatContext.type === "dm" && !auth.currentUser) || (chatContext.type === "group" && !auth.currentUser)) {
-            setChatContext({ type: "public" });
-            setSidebarSelected("public");
+          setChatContext({ type: "public" });
+          setSidebarSelected("public");
         } else {
-            setChatContext(chatContext);
-            setSidebarSelected(chatContext.type, chatContext.uid || chatContext.groupId);
+          setChatContext(chatContext);
+          setSidebarSelected(chatContext.type, chatContext.uid || chatContext.groupId);
         }
 
       } else {
         // User is signed out or hasn't signed in
-        headerUserInfo.style.display = "none"; // Hide the user info div
-        displayUsername.textContent = "Not Signed In"; // Display "Not Signed In" (this text will be hidden as the div is hidden)
-        userPfp.src = "https://via.placeholder.com/40/2c2045/f0eaff?text=?"; // Set to a blank/default PFP (this image will be hidden)
+        headerUserInfo.style.display = "none";
+        displayUsername.textContent = "Not Signed In";
+        userPfp.src = "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
 
         messageInput.disabled = true;
         sendBtn.disabled = true;
@@ -941,4 +1198,5 @@
     });
   </script>
 </body>
+
 </html>
