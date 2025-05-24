@@ -105,7 +105,8 @@
       display: flex;
       flex-direction: column;
       gap: 0.4rem;
-      max-height: 180px;
+      /* Max height for lists to enable scrolling within sections */
+      max-height: 180px; 
       overflow-y: auto;
       scrollbar-width: thin;
       scrollbar-color: var(--main) transparent;
@@ -135,16 +136,30 @@
     .sidebar-list button {
       background: transparent;
       border: none;
-      color: inherit;
+      color: inherit; /* Inherit color from parent LI */
       font-size: 1.3rem;
       cursor: pointer;
       transition: color 0.3s;
       margin-left: 0.5rem;
     }
+    /* Specific button colors when they are children of selected list items */
+    .sidebar-list li.selected button {
+        color: var(--text-dark);
+    }
+    .sidebar-list li.selected button.friend-btn.remove,
+    .sidebar-list li.selected button.group-leave-btn {
+        color: var(--danger); /* Maintain danger color even when selected */
+    }
+
+    /* Original button colors */
     .sidebar-list button.friend-btn { color: var(--accent); }
     .sidebar-list button.friend-btn.remove { color: var(--danger); }
     .sidebar-list button.group-leave-btn { color: var(--danger); }
-    .sidebar-list button:hover { color: var(--danger); }
+
+    .sidebar-list button:hover {
+      color: var(--danger); /* Hover color for all buttons */
+    }
+
     #create-group-btn {
       margin-top: 0.5rem;
       background: var(--main);
@@ -290,14 +305,19 @@
       #sidebar {
         width: 100%;
         flex-direction: row;
-        overflow-x: auto;
+        overflow-x: auto; /* Enable horizontal scrolling for sidebar sections */
+        overflow-y: hidden; /* Disable vertical scrolling for sidebar on small screens */
         border-right: none;
         border-bottom: 2px solid var(--main);
         padding: 0.5rem;
       }
       .sidebar-section {
-        min-width: 150px;
+        min-width: 150px; /* Ensure sections have a minimum width for scrolling */
         margin-right: 1rem;
+      }
+      .sidebar-list {
+        max-height: unset; /* Remove max-height to allow content to dictate height when sidebar is horizontal */
+        overflow-y: visible; /* Revert overflow-y to visible on smaller screens */
       }
       main { border-radius: 0 0 15px 15px; }
       form { flex-wrap: wrap; }
@@ -310,7 +330,7 @@
 </head>
 <body>
   <header>
-    Chat
+    Chatz
     <div id="auth-btns">
       <button id="sign-in" class="auth-btn">Sign In</button>
       <button id="sign-out" class="auth-btn" style="display:none;">Sign Out</button>
@@ -372,7 +392,8 @@
       get,
       onValue,
       onChildAdded,
-      off
+      off,
+      remove // Added for removing friends
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -414,10 +435,10 @@
 
     function escapeHtml(text) {
       return text.replace(/&/g, "&amp;")
-                 .replace(/</g, "&lt;")
-                 .replace(/>/g, "&gt;")
-                 .replace(/"/g, "&quot;")
-                 .replace(/'/g, "&#039;");
+                  .replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;")
+                  .replace(/"/g, "&quot;")
+                  .replace(/'/g, "&#039;");
     }
     function truncate(str, n) {
       return str.length > n ? str.substr(0, n - 1) + "…" : str;
@@ -445,6 +466,7 @@
       } else if (chatContext.type === "dm") {
         const uid1 = auth.currentUser.uid;
         const uid2 = chatContext.uid;
+        // Ensure consistent chat ID regardless of which user initiates the DM
         const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
         return ref(db, `dms/${chatId}`);
       } else if (chatContext.type === "group") {
@@ -463,38 +485,64 @@
       clearChat();
       const chatRef = getChatRef();
       chatListenerRef = chatRef;
+      // Fetch existing messages once before setting up listener for new messages
+      get(chatRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const messages = snapshot.val();
+          Object.values(messages).forEach((data) => {
+            appendMessageToChat(data, chatRef.key); // Pass the chat ID (for DM/group differentiation)
+          });
+          scrollToBottom();
+        }
+      });
+
       chatListener = onChildAdded(chatRef, (snapshot) => {
-        const data = snapshot.val();
+        // Only append new messages coming in after initial load
+        if (snapshot.val().timestamp > Date.now() - 1000) { // Simple heuristic to avoid re-adding initial messages
+            appendMessageToChat(snapshot.val(), chatRef.key);
+            scrollToBottom();
+        }
+      });
+    }
+
+    function appendMessageToChat(data, chatId) {
         const msgDiv = document.createElement("div");
         msgDiv.className = "message";
         if (auth.currentUser && data.uid === auth.currentUser.uid) msgDiv.classList.add("own");
+
         let replyHTML = "";
         if (data.replyTo) {
-          replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--main); padding-left: 6px; color:#fff;">
-            Reply to: <strong>${escapeHtml(data.replyTo.name)}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
-          </div>`;
+            replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--main); padding-left: 6px; color:#fff;">
+                Reply to: <strong>${escapeHtml(data.replyTo.name)}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
+            </div>`;
         }
+
         msgDiv.innerHTML = `
-          ${replyHTML}
-          <strong>${escapeHtml(data.name)}</strong>: ${escapeHtml(data.message)}
-          <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+            ${replyHTML}
+            <strong>${escapeHtml(data.name)}</strong>: ${escapeHtml(data.message)}
+            <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
         `;
+
+        // Add event listener for replying to messages
         msgDiv.addEventListener("click", () => {
-          if (!auth.currentUser) return;
-          if (data.uid === auth.currentUser.uid) return;
-          replyTo = { id: snapshot.key, name: data.name, message: data.message };
-          replyText.textContent = `${replyTo.name}: ${truncate(replyTo.message, 50)}`;
-          replyPreview.style.display = "flex";
-          messageInput.focus();
+            if (!auth.currentUser) {
+                alert("Please sign in to reply to messages.");
+                return;
+            }
+            if (data.uid === auth.currentUser.uid) {
+                return; // Cannot reply to your own messages (optional)
+            }
+            replyTo = { id: data.timestamp, name: data.name, message: data.message }; // Using timestamp as a unique ID for reply
+            replyText.textContent = `Replying to ${replyTo.name}: ${truncate(replyTo.message, 50)}`;
+            replyPreview.style.display = "flex";
+            messageInput.focus();
         });
         chat.appendChild(msgDiv);
-        scrollToBottom();
-      });
     }
 
     // --- User Action Menu ---
     let userMenu = null;
-    function showUserMenu(li, uid, isFriend) {
+    function showUserMenu(li, uid, displayName, isFriend) { // Added displayName to arguments
       if (userMenu) userMenu.remove();
 
       userMenu = document.createElement("div");
@@ -513,7 +561,7 @@
       userMenu.style.top = (rect.bottom + window.scrollY) + "px";
 
       const dmBtn = document.createElement("button");
-      dmBtn.textContent = "Direct Message";
+      dmBtn.textContent = `Direct Message ${displayName}`; // Display name in DM option
       dmBtn.style.display = "block";
       dmBtn.style.width = "100%";
       dmBtn.style.background = "none";
@@ -545,15 +593,15 @@
       friendBtn.style.cursor = "pointer";
       friendBtn.onmouseover = () => friendBtn.style.background = "var(--main)";
       friendBtn.onmouseout = () => friendBtn.style.background = "none";
-      friendBtn.onclick = (e) => {
+      friendBtn.onclick = async (e) => { // Made async to handle Firebase promises
         e.stopPropagation();
         const myUid = auth.currentUser.uid;
         if (isFriend) {
-          set(ref(db, `friends/${myUid}/${uid}`), null);
-          set(ref(db, `friends/${uid}/${myUid}`), null);
+          await remove(ref(db, `friends/${myUid}/${uid}`)); // Use remove() instead of set(null)
+          await remove(ref(db, `friends/${uid}/${myUid}`)); // Use remove() instead of set(null)
         } else {
-          set(ref(db, `friends/${myUid}/${uid}`), true);
-          set(ref(db, `friends/${uid}/${myUid}`), true);
+          await set(ref(db, `friends/${myUid}/${uid}`), true);
+          await set(ref(db, `friends/${uid}/${myUid}`), true);
         }
         if (userMenu) userMenu.remove();
         userMenu = null;
@@ -568,6 +616,7 @@
 
       document.body.appendChild(userMenu);
     }
+
     function hideUserMenu(e) {
       if (userMenu && (!e || !userMenu.contains(e.target))) {
         userMenu.remove();
@@ -576,145 +625,282 @@
     }
 
     function updateUsersAndFriends() {
+      // Clear lists only when new data is available to avoid flickering
       usersList.innerHTML = "";
       friendsList.innerHTML = "";
+
       onValue(ref(db, "users"), (snap) => {
         const users = snap.val() || {};
         const myUid = auth.currentUser ? auth.currentUser.uid : null;
-        get(ref(db, `friends/${myUid}`)).then(friendSnap => {
-          const friends = friendSnap.exists() ? Object.keys(friendSnap.val()) : [];
-          Object.entries(users).forEach(([uid, user]) => {
-            if (myUid && uid === myUid) return;
-            const li = document.createElement("li");
-            li.textContent = user.displayName || "Anonymous";
-            li.setAttribute("data-uid", uid);
-            li.onclick = (e) => {
-              e.preventDefault();
-              showUserMenu(li, uid, friends.includes(uid));
+
+        // Clear lists before re-populating to reflect real-time changes
+        usersList.innerHTML = "";
+        friendsList.innerHTML = "";
+
+        if (myUid) {
+            onValue(ref(db, `friends/${myUid}`), (friendSnap) => {
+                const friends = friendSnap.exists() ? Object.keys(friendSnap.val()) : [];
+
+                Object.entries(users).forEach(([uid, user]) => {
+                    if (myUid && uid === myUid) return; // Don't list self in users or friends
+
+                    const li = document.createElement("li");
+                    li.textContent = user.displayName || "Anonymous";
+                    li.setAttribute("data-uid", uid);
+                    li.addEventListener("click", (e) => { // Use addEventListener for better practice
+                        e.stopPropagation(); // Stop propagation to prevent immediate menu close
+                        showUserMenu(li, uid, user.displayName || "Anonymous", friends.includes(uid));
+                    });
+
+                    if (friends.includes(uid)) {
+                        const friendLi = li.cloneNode(true);
+                        friendLi.onclick = () => { // Ensure cloned friendLi has its own click handler
+                            setChatContext({ type: "dm", uid: uid });
+                            setSidebarSelected("dm", uid);
+                        };
+                        // Add a remove friend button directly for friends
+                        const removeFriendBtn = document.createElement("button");
+                        removeFriendBtn.innerHTML = "&#x2716;"; // Cross symbol
+                        removeFriendBtn.classList.add("friend-btn", "remove");
+                        removeFriendBtn.title = `Remove ${user.displayName || "Anonymous"}`;
+                        removeFriendBtn.onclick = async (e) => {
+                            e.stopPropagation();
+                            await remove(ref(db, `friends/${myUid}/${uid}`));
+                            await remove(ref(db, `friends/${uid}/${myUid}`));
+                        };
+                        friendLi.appendChild(removeFriendBtn);
+                        friendsList.appendChild(friendLi);
+                    } else {
+                        // For users not friends, add an 'add friend' button
+                        const addFriendBtn = document.createElement("button");
+                        addFriendBtn.innerHTML = "&#x271A;"; // Plus symbol
+                        addFriendBtn.classList.add("friend-btn");
+                        addFriendBtn.title = `Add ${user.displayName || "Anonymous"}`;
+                        addFriendBtn.onclick = async (e) => {
+                            e.stopPropagation();
+                            await set(ref(db, `friends/${myUid}/${uid}`), true);
+                            await set(ref(db, `friends/${uid}/${myUid}`), true);
+                        };
+                        li.appendChild(addFriendBtn);
+                        usersList.appendChild(li);
+                    }
+                });
+            });
+        }
+      });
+    }
+
+    function updateGroups() {
+      groupsList.innerHTML = "";
+      myGroupsList.innerHTML = "";
+      onValue(ref(db, "groups"), (snap) => {
+        const groups = snap.val() || {};
+        const myUid = auth.currentUser ? auth.currentUser.uid : null;
+
+        // Clear lists before re-populating
+        groupsList.innerHTML = "";
+        myGroupsList.innerHTML = "";
+
+        Object.entries(groups).forEach(([groupId, group]) => {
+          const li = document.createElement("li");
+          li.textContent = group.name;
+          li.setAttribute("data-groupid", groupId);
+          li.onclick = () => {
+            setChatContext({ type: "group", groupId });
+            setSidebarSelected("group", groupId);
+          };
+
+          // Check if current user is a member of the group
+          const isMember = group.members && Object.keys(group.members).includes(myUid);
+
+          if (myUid && group.createdBy === myUid) {
+            const myLi = li.cloneNode(true);
+            myLi.onclick = li.onclick;
+            // Add leave/delete options for owned groups
+            const deleteGroupBtn = document.createElement("button");
+            deleteGroupBtn.innerHTML = "&#x2716;"; // Cross symbol
+            deleteGroupBtn.classList.add("group-leave-btn");
+            deleteGroupBtn.title = "Delete Group";
+            deleteGroupBtn.onclick = async (e) => {
+                e.stopPropagation();
+                if (confirm(`Are you sure you want to delete the group "${group.name}"? This action cannot be undone.`)) {
+                    await remove(ref(db, `groups/${groupId}`));
+                }
             };
-            usersList.appendChild(li);
-          });
-          friends.forEach(friendUid => {
-            if (!users[friendUid]) return;
-            const li = document.createElement("li");
-            li.textContent = users[friendUid].displayName || "Anonymous";
-li.setAttribute("data-uid", friendUid);
-li.onclick = () => {
-  setChatContext({ type: "dm", uid: friendUid });
-  setSidebarSelected("dm", friendUid);
-};
-friendsList.appendChild(li);
-});
-});
-}
-function updateGroups() {
-  groupsList.innerHTML = "";
-  myGroupsList.innerHTML = "";
-  onValue(ref(db, "groups"), (snap) => {
-    const groups = snap.val() || {};
-    const myUid = auth.currentUser ? auth.currentUser.uid : null;
-    Object.entries(groups).forEach(([groupId, group]) => {
-      const li = document.createElement("li");
-      li.textContent = group.name;
-      li.setAttribute("data-groupid", groupId);
-      li.onclick = () => {
-        setChatContext({ type: "group", groupId });
-        setSidebarSelected("group", groupId);
-      };
-      groupsList.appendChild(li);
-      if (myUid && group.createdBy === myUid) {
-        const myLi = li.cloneNode(true);
-        myLi.onclick = li.onclick;
-        myGroupsList.appendChild(myLi);
+            myLi.appendChild(deleteGroupBtn);
+            myGroupsList.appendChild(myLi);
+          } else {
+            // Add join/leave button for other groups
+            const joinLeaveBtn = document.createElement("button");
+            joinLeaveBtn.textContent = isMember ? "Leave" : "Join";
+            joinLeaveBtn.classList.add(isMember ? "group-leave-btn" : "friend-btn"); // Reuse friend-btn for styling
+            joinLeaveBtn.title = isMember ? `Leave ${group.name}` : `Join ${group.name}`;
+            joinLeaveBtn.onclick = async (e) => {
+                e.stopPropagation();
+                if (!auth.currentUser) return alert("Sign in to join or leave groups.");
+                if (isMember) {
+                    await remove(ref(db, `groups/${groupId}/members/${myUid}`));
+                } else {
+                    await set(ref(db, `groups/${groupId}/members/${myUid}`), true);
+                }
+            };
+            li.appendChild(joinLeaveBtn);
+            groupsList.appendChild(li);
+          }
+        });
+      });
+    }
+
+    createGroupBtn.addEventListener("click", async () => { // Made async
+      if (!auth.currentUser) return alert("Sign in to create groups.");
+      const name = prompt("Enter group name:");
+      if (!name || name.trim() === "") return; // Basic validation
+      try {
+        const newGroupRef = push(ref(db, "groups"));
+        await set(newGroupRef, {
+          name: name.trim(),
+          createdBy: auth.currentUser.uid,
+          createdAt: Date.now(),
+          members: {
+            [auth.currentUser.uid]: true // Automatically add creator as a member
+          }
+        });
+        alert(`Group "${name}" created successfully!`);
+      } catch (error) {
+        console.error("Error creating group:", error);
+        alert("Failed to create group. Please try again.");
       }
     });
-  });
-}
-createGroupBtn.addEventListener("click", () => {
-  if (!auth.currentUser) return alert("Sign in to create groups.");
-  const name = prompt("Enter group name:");
-  if (!name) return;
-  push(ref(db, "groups"), {
-    name,
-    createdBy: auth.currentUser.uid,
-    createdAt: Date.now()
-  });
-});
-publicChatBtn.addEventListener("click", () => {
-  setChatContext({ type: "public" });
-  setSidebarSelected("public");
-});
-cancelReplyBtn.addEventListener("click", () => {
-  replyTo = null;
-  replyPreview.style.display = "none";
-});
-form.addEventListener("submit", (e) => {
-  e.preventDefault();
-  if (!auth.currentUser) return alert("You must be signed in to send messages.");
-  const msg = messageInput.value.trim();
-  if (!msg) return;
-  const newMsg = {
-    uid: auth.currentUser.uid,
-    name: auth.currentUser.displayName || "Anonymous",
-    message: msg,
-    timestamp: Date.now(),
-  };
-  if (replyTo) newMsg.replyTo = replyTo;
-  push(getChatRef(), newMsg)
-    .then(() => {
-      messageInput.value = "";
+
+    publicChatBtn.addEventListener("click", () => {
+      setChatContext({ type: "public" });
+      setSidebarSelected("public");
+    });
+
+    cancelReplyBtn.addEventListener("click", () => {
       replyTo = null;
       replyPreview.style.display = "none";
-    })
-    .catch((err) => {
-      console.error("Error sending message:", err);
     });
-});
-signInBtn.addEventListener("click", () => {
-  signInWithPopup(auth, provider).catch((error) => {
-    console.error("Sign-in error:", error);
-  });
-});
-signOutBtn.addEventListener("click", () => {
-  signOut(auth).catch((error) => {
-    console.error("Sign-out error:", error);
-  });
-});
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    usernameInput.value = user.displayName || "Anonymous";
-    usernameInput.readOnly = true;
-    usernameInput.style.userSelect = "none";
-    messageInput.disabled = false;
-    sendBtn.disabled = false;
-    signInBtn.style.display = "none";
-    signOutBtn.style.display = "inline-block";
-    usernameInput.placeholder = "";
-    set(ref(db, `users/${user.uid}`), {
-      displayName: user.displayName || "Anonymous",
-      photoURL: user.photoURL || ""
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!auth.currentUser) return alert("You must be signed in to send messages.");
+
+      const msg = messageInput.value.trim();
+      if (!msg) return;
+
+      const newMsg = {
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || "Anonymous",
+        message: msg,
+        timestamp: Date.now(),
+      };
+      if (replyTo) newMsg.replyTo = replyTo;
+
+      // Check if the current chat context is a group and the user is a member
+      if (chatContext.type === "group" && auth.currentUser) {
+        get(ref(db, `groups/${chatContext.groupId}/members/${auth.currentUser.uid}`)).then((snapshot) => {
+          if (!snapshot.exists()) {
+            alert("You must be a member of this group to send messages.");
+            return;
+          }
+          push(getChatRef(), newMsg)
+            .then(() => {
+              messageInput.value = "";
+              replyTo = null;
+              replyPreview.style.display = "none";
+            })
+            .catch((err) => {
+              console.error("Error sending message:", err);
+            });
+        }).catch((err) => {
+            console.error("Error checking group membership:", err);
+        });
+      } else {
+        push(getChatRef(), newMsg)
+          .then(() => {
+            messageInput.value = "";
+            replyTo = null;
+            replyPreview.style.display = "none";
+          })
+          .catch((err) => {
+            console.error("Error sending message:", err);
+          });
+      }
     });
-    updateUsersAndFriends();
-    updateGroups();
-    setChatContext({ type: "public" });
-    setSidebarSelected("public");
-  } else {
-    usernameInput.value = "";
-    usernameInput.placeholder = "Sign in to chat";
-    usernameInput.readOnly = true;
-    messageInput.disabled = true;
-    sendBtn.disabled = true;
-    signInBtn.style.display = "inline-block";
-    signOutBtn.style.display = "none";
-    replyTo = null;
-    replyPreview.style.display = "none";
-    clearChat();
-    usersList.innerHTML = "";
-    friendsList.innerHTML = "";
-    groupsList.innerHTML = "";
-    myGroupsList.innerHTML = "";
-  }
-});
+
+    signInBtn.addEventListener("click", () => {
+      signInWithPopup(auth, provider).catch((error) => {
+        console.error("Sign-in error:", error);
+        alert(`Sign-in failed: ${error.message}`); // Provide user feedback
+      });
+    });
+
+    signOutBtn.addEventListener("click", () => {
+      signOut(auth).catch((error) => {
+        console.error("Sign-out error:", error);
+        alert(`Sign-out failed: ${error.message}`); // Provide user feedback
+      });
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        usernameInput.value = user.displayName || "Anonymous";
+        usernameInput.readOnly = true;
+        usernameInput.style.userSelect = "none";
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+        signInBtn.style.display = "none";
+        signOutBtn.style.display = "inline-block";
+        usernameInput.placeholder = "";
+
+        // Update user presence/info in database
+        set(ref(db, `users/${user.uid}`), {
+          displayName: user.displayName || "Anonymous",
+          photoURL: user.photoURL || "",
+          lastOnline: Date.now()
+        });
+
+        // Listen for changes in users and friends lists
+        updateUsersAndFriends();
+        updateGroups();
+
+        // Set initial chat context to public if not already set or invalid
+        if (!chatContext.type || (chatContext.type === "dm" && !auth.currentUser) || (chatContext.type === "group" && !auth.currentUser)) {
+            setChatContext({ type: "public" });
+            setSidebarSelected("public");
+        } else {
+            // Re-load messages for current context after auth state change
+            setChatContext(chatContext); // This will call loadMessages()
+            setSidebarSelected(chatContext.type, chatContext.uid || chatContext.groupId);
+        }
+
+      } else {
+        usernameInput.value = "";
+        usernameInput.placeholder = "Sign in to chat";
+        usernameInput.readOnly = true;
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
+        signInBtn.style.display = "inline-block";
+        signOutBtn.style.display = "none";
+        replyTo = null;
+        replyPreview.style.display = "none";
+        clearChat();
+
+        // Clear all dynamic lists when logged out
+        usersList.innerHTML = "";
+        friendsList.innerHTML = "";
+        groupsList.innerHTML = "";
+        myGroupsList.innerHTML = "";
+
+        // Turn off all active Firebase listeners to prevent memory leaks and unnecessary data fetching
+        if (chatListenerRef && chatListener) {
+          off(chatListenerRef, "child_added", chatListener);
+        }
+        // Need to turn off other listeners for users, friends, and groups if they were set up with onValue
+        // For simplicity in this example, they are re-initialized on login.
+      }
+    });
   </script>
 </body>
 </html>
