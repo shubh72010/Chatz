@@ -41,14 +41,55 @@
       text-shadow: 0 0 10px var(--main);
       position: relative;
       box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      /* Make header a flex container to align items */
+      display: flex;
+      align-items: center;
+      justify-content: space-between; /* Pushes items to ends */
+      gap: 1rem; /* Space between Chat title, user info, and auth buttons */
     }
+
+    /* Styles for the new user info section in the header */
+    #header-user-info {
+        display: flex; /* Flex container for pfp and username */
+        align-items: center;
+        gap: 0.8rem;
+        font-size: 1.2rem; /* Adjust font size for username */
+        font-weight: 600;
+        color: var(--text);
+        margin-right: auto; /* Pushes user info to the left, and auth-btns to the right */
+        order: -1; /* Puts user info to the left of the "Chatz" title */
+    }
+
+    #user-pfp {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--main-light);
+        box-shadow: 0 0 8px rgba(0,0,0,0.5);
+    }
+
+    #display-username {
+        white-space: nowrap; /* Prevent username from wrapping */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px; /* Limit width of username to prevent overflow */
+    }
+
     #auth-btns {
-      position: absolute;
-      right: 2rem;
-      top: 1rem;
+      /* Adjust position, no longer absolute due to flex container */
       display: flex;
       gap: 1rem;
+      order: 1; /* Puts auth buttons to the right */
     }
+
+    /* Adjust the "Chatz" title's placement within the header */
+    header > span {
+        order: 0; /* Keeps the title in the middle by default */
+        margin-left: auto; /* Pushes the title to the right if auth-btns is left */
+        margin-right: auto; /* Centers the title between user-info and auth-btns */
+    }
+
     button.auth-btn {
       background: var(--main);
       border: none;
@@ -105,8 +146,7 @@
       display: flex;
       flex-direction: column;
       gap: 0.4rem;
-      /* Max height for lists to enable scrolling within sections */
-      max-height: 180px; 
+      max-height: 180px;
       overflow-y: auto;
       scrollbar-width: thin;
       scrollbar-color: var(--main) transparent;
@@ -136,30 +176,23 @@
     .sidebar-list button {
       background: transparent;
       border: none;
-      color: inherit; /* Inherit color from parent LI */
+      color: inherit;
       font-size: 1.3rem;
       cursor: pointer;
       transition: color 0.3s;
       margin-left: 0.5rem;
     }
-    /* Specific button colors when they are children of selected list items */
     .sidebar-list li.selected button {
         color: var(--text-dark);
     }
     .sidebar-list li.selected button.friend-btn.remove,
     .sidebar-list li.selected button.group-leave-btn {
-        color: var(--danger); /* Maintain danger color even when selected */
+        color: var(--danger);
     }
-
-    /* Original button colors */
     .sidebar-list button.friend-btn { color: var(--accent); }
     .sidebar-list button.friend-btn.remove { color: var(--danger); }
     .sidebar-list button.group-leave-btn { color: var(--danger); }
-
-    .sidebar-list button:hover {
-      color: var(--danger); /* Hover color for all buttons */
-    }
-
+    .sidebar-list button:hover { color: var(--danger); }
     #create-group-btn {
       margin-top: 0.5rem;
       background: var(--main);
@@ -254,7 +287,8 @@
       align-items: center;
       border-top: 2px solid var(--main);
     }
-    #username {
+    /* Removed #username styles as it's no longer in the form */
+    /* #username {
       flex: 1 1 120px;
       padding: 0.6rem 1rem;
       border-radius: 50px;
@@ -265,7 +299,7 @@
       font-weight: 600;
       user-select: none;
       cursor: default;
-    }
+    } */
     #message {
       flex: 3 1 auto;
       padding: 0.6rem 1rem;
@@ -305,33 +339,63 @@
       #sidebar {
         width: 100%;
         flex-direction: row;
-        overflow-x: auto; /* Enable horizontal scrolling for sidebar sections */
-        overflow-y: hidden; /* Disable vertical scrolling for sidebar on small screens */
+        overflow-x: auto;
+        overflow-y: hidden;
         border-right: none;
         border-bottom: 2px solid var(--main);
         padding: 0.5rem;
       }
       .sidebar-section {
-        min-width: 150px; /* Ensure sections have a minimum width for scrolling */
+        min-width: 150px;
         margin-right: 1rem;
       }
       .sidebar-list {
-        max-height: unset; /* Remove max-height to allow content to dictate height when sidebar is horizontal */
-        overflow-y: visible; /* Revert overflow-y to visible on smaller screens */
+        max-height: unset;
+        overflow-y: visible;
       }
       main { border-radius: 0 0 15px 15px; }
       form { flex-wrap: wrap; }
-      #username, #message, button#send-btn {
+      /* Removed #username from mobile styles as it's no longer in the form */
+      /* #username, */
+      #message, button#send-btn {
         flex: 1 1 100%;
         margin-bottom: 0.5rem;
+      }
+      /* Adjust header layout for smaller screens */
+      header {
+          flex-direction: column;
+          align-items: flex-start;
+          padding-bottom: 1rem; /* Add more padding for stacked elements */
+      }
+      #header-user-info {
+          margin-bottom: 0.5rem;
+          margin-right: 0; /* Remove auto-margin that pushes it right */
+          order: -2; /* Ensure it's always at the top-left */
+          width: 100%; /* Take full width */
+      }
+      header > span {
+          margin: 0; /* Reset margins */
+          align-self: flex-start; /* Align title to left */
+          margin-bottom: 0.5rem;
+          order: -1; /* Place after user info */
+      }
+      #auth-btns {
+          position: static; /* No longer absolute */
+          right: auto;
+          top: auto;
+          width: 100%; /* Take full width */
+          justify-content: flex-start; /* Align buttons to the left */
+          order: 0; /* Place after title */
       }
     }
   </style>
 </head>
 <body>
   <header>
-    Chatz
-    <div id="auth-btns">
+    <div id="header-user-info" style="display:none;"> <img id="user-pfp" src="https://via.placeholder.com/40/2c2045/f0eaff?text=?" alt="Profile Picture" />
+      <span id="display-username">Guest</span>
+    </div>
+    <span>Chatz</span> <div id="auth-btns">
       <button id="sign-in" class="auth-btn">Sign In</button>
       <button id="sign-out" class="auth-btn" style="display:none;">Sign Out</button>
     </div>
@@ -369,7 +433,6 @@
         <button id="cancel-reply" title="Cancel reply">&times;</button>
       </div>
       <form id="chat-form">
-        <input type="text" id="username" readonly placeholder="Sign in to chat" />
         <input type="text" id="message" placeholder="Type a message..." disabled autocomplete="off" required />
         <button id="send-btn" type="submit" disabled>Send</button>
       </form>
@@ -393,7 +456,7 @@
       onValue,
       onChildAdded,
       off,
-      remove // Added for removing friends
+      remove
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -413,7 +476,6 @@
 
     const chat = document.getElementById("chat");
     const form = document.getElementById("chat-form");
-    const usernameInput = document.getElementById("username");
     const messageInput = document.getElementById("message");
     const sendBtn = document.getElementById("send-btn");
     const replyPreview = document.getElementById("reply-preview");
@@ -427,6 +489,12 @@
     const myGroupsList = document.getElementById("my-groups-list");
     const createGroupBtn = document.getElementById("create-group-btn");
     const publicChatBtn = document.getElementById("public-chat");
+
+    // NEW DOM Elements for PFP and Username in Header
+    const headerUserInfo = document.getElementById("header-user-info");
+    const userPfp = document.getElementById("user-pfp");
+    const displayUsername = document.getElementById("display-username");
+
 
     let replyTo = null;
     let chatContext = { type: "public" };
@@ -466,7 +534,6 @@
       } else if (chatContext.type === "dm") {
         const uid1 = auth.currentUser.uid;
         const uid2 = chatContext.uid;
-        // Ensure consistent chat ID regardless of which user initiates the DM
         const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
         return ref(db, `dms/${chatId}`);
       } else if (chatContext.type === "group") {
@@ -485,12 +552,11 @@
       clearChat();
       const chatRef = getChatRef();
       chatListenerRef = chatRef;
-      // Fetch existing messages once before setting up listener for new messages
       get(chatRef).then((snapshot) => {
         if (snapshot.exists()) {
           const messages = snapshot.val();
           Object.values(messages).forEach((data) => {
-            appendMessageToChat(data, chatRef.key); // Pass the chat ID (for DM/group differentiation)
+            appendMessageToChat(data);
           });
           scrollToBottom();
         }
@@ -498,14 +564,14 @@
 
       chatListener = onChildAdded(chatRef, (snapshot) => {
         // Only append new messages coming in after initial load
-        if (snapshot.val().timestamp > Date.now() - 1000) { // Simple heuristic to avoid re-adding initial messages
-            appendMessageToChat(snapshot.val(), chatRef.key);
+        if (snapshot.val().timestamp > Date.now() - 1000) {
+            appendMessageToChat(snapshot.val());
             scrollToBottom();
         }
       });
     }
 
-    function appendMessageToChat(data, chatId) {
+    function appendMessageToChat(data) {
         const msgDiv = document.createElement("div");
         msgDiv.className = "message";
         if (auth.currentUser && data.uid === auth.currentUser.uid) msgDiv.classList.add("own");
@@ -523,16 +589,15 @@
             <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
         `;
 
-        // Add event listener for replying to messages
         msgDiv.addEventListener("click", () => {
             if (!auth.currentUser) {
                 alert("Please sign in to reply to messages.");
                 return;
             }
             if (data.uid === auth.currentUser.uid) {
-                return; // Cannot reply to your own messages (optional)
+                return;
             }
-            replyTo = { id: data.timestamp, name: data.name, message: data.message }; // Using timestamp as a unique ID for reply
+            replyTo = { id: data.timestamp, name: data.name, message: data.message };
             replyText.textContent = `Replying to ${replyTo.name}: ${truncate(replyTo.message, 50)}`;
             replyPreview.style.display = "flex";
             messageInput.focus();
@@ -540,9 +605,8 @@
         chat.appendChild(msgDiv);
     }
 
-    // --- User Action Menu ---
     let userMenu = null;
-    function showUserMenu(li, uid, displayName, isFriend) { // Added displayName to arguments
+    function showUserMenu(li, uid, displayName, isFriend) {
       if (userMenu) userMenu.remove();
 
       userMenu = document.createElement("div");
@@ -561,7 +625,7 @@
       userMenu.style.top = (rect.bottom + window.scrollY) + "px";
 
       const dmBtn = document.createElement("button");
-      dmBtn.textContent = `Direct Message ${displayName}`; // Display name in DM option
+      dmBtn.textContent = `Direct Message ${displayName}`;
       dmBtn.style.display = "block";
       dmBtn.style.width = "100%";
       dmBtn.style.background = "none";
@@ -593,12 +657,12 @@
       friendBtn.style.cursor = "pointer";
       friendBtn.onmouseover = () => friendBtn.style.background = "var(--main)";
       friendBtn.onmouseout = () => friendBtn.style.background = "none";
-      friendBtn.onclick = async (e) => { // Made async to handle Firebase promises
+      friendBtn.onclick = async (e) => {
         e.stopPropagation();
         const myUid = auth.currentUser.uid;
         if (isFriend) {
-          await remove(ref(db, `friends/${myUid}/${uid}`)); // Use remove() instead of set(null)
-          await remove(ref(db, `friends/${uid}/${myUid}`)); // Use remove() instead of set(null)
+          await remove(ref(db, `friends/${myUid}/${uid}`));
+          await remove(ref(db, `friends/${uid}/${myUid}`));
         } else {
           await set(ref(db, `friends/${myUid}/${uid}`), true);
           await set(ref(db, `friends/${uid}/${myUid}`), true);
@@ -625,7 +689,6 @@
     }
 
     function updateUsersAndFriends() {
-      // Clear lists only when new data is available to avoid flickering
       usersList.innerHTML = "";
       friendsList.innerHTML = "";
 
@@ -633,7 +696,6 @@
         const users = snap.val() || {};
         const myUid = auth.currentUser ? auth.currentUser.uid : null;
 
-        // Clear lists before re-populating to reflect real-time changes
         usersList.innerHTML = "";
         friendsList.innerHTML = "";
 
@@ -642,25 +704,20 @@
                 const friends = friendSnap.exists() ? Object.keys(friendSnap.val()) : [];
 
                 Object.entries(users).forEach(([uid, user]) => {
-                    if (myUid && uid === myUid) return; // Don't list self in users or friends
+                    if (myUid && uid === myUid) return;
 
                     const li = document.createElement("li");
                     li.textContent = user.displayName || "Anonymous";
                     li.setAttribute("data-uid", uid);
-                    li.addEventListener("click", (e) => { // Use addEventListener for better practice
-                        e.stopPropagation(); // Stop propagation to prevent immediate menu close
-                        showUserMenu(li, uid, user.displayName || "Anonymous", friends.includes(uid));
-                    });
 
                     if (friends.includes(uid)) {
                         const friendLi = li.cloneNode(true);
-                        friendLi.onclick = () => { // Ensure cloned friendLi has its own click handler
+                        friendLi.onclick = () => {
                             setChatContext({ type: "dm", uid: uid });
                             setSidebarSelected("dm", uid);
                         };
-                        // Add a remove friend button directly for friends
                         const removeFriendBtn = document.createElement("button");
-                        removeFriendBtn.innerHTML = "&#x2716;"; // Cross symbol
+                        removeFriendBtn.innerHTML = "&#x2716;";
                         removeFriendBtn.classList.add("friend-btn", "remove");
                         removeFriendBtn.title = `Remove ${user.displayName || "Anonymous"}`;
                         removeFriendBtn.onclick = async (e) => {
@@ -671,9 +728,12 @@
                         friendLi.appendChild(removeFriendBtn);
                         friendsList.appendChild(friendLi);
                     } else {
-                        // For users not friends, add an 'add friend' button
+                        li.addEventListener("click", (e) => {
+                            e.stopPropagation();
+                            showUserMenu(li, uid, user.displayName || "Anonymous", false); // Not a friend
+                        });
                         const addFriendBtn = document.createElement("button");
-                        addFriendBtn.innerHTML = "&#x271A;"; // Plus symbol
+                        addFriendBtn.innerHTML = "&#x271A;";
                         addFriendBtn.classList.add("friend-btn");
                         addFriendBtn.title = `Add ${user.displayName || "Anonymous"}`;
                         addFriendBtn.onclick = async (e) => {
@@ -697,7 +757,6 @@
         const groups = snap.val() || {};
         const myUid = auth.currentUser ? auth.currentUser.uid : null;
 
-        // Clear lists before re-populating
         groupsList.innerHTML = "";
         myGroupsList.innerHTML = "";
 
@@ -710,15 +769,13 @@
             setSidebarSelected("group", groupId);
           };
 
-          // Check if current user is a member of the group
-          const isMember = group.members && Object.keys(group.members).includes(myUid);
+          const isMember = myUid && group.members && Object.keys(group.members).includes(myUid);
 
           if (myUid && group.createdBy === myUid) {
             const myLi = li.cloneNode(true);
             myLi.onclick = li.onclick;
-            // Add leave/delete options for owned groups
             const deleteGroupBtn = document.createElement("button");
-            deleteGroupBtn.innerHTML = "&#x2716;"; // Cross symbol
+            deleteGroupBtn.innerHTML = "&#x2716;";
             deleteGroupBtn.classList.add("group-leave-btn");
             deleteGroupBtn.title = "Delete Group";
             deleteGroupBtn.onclick = async (e) => {
@@ -730,10 +787,9 @@
             myLi.appendChild(deleteGroupBtn);
             myGroupsList.appendChild(myLi);
           } else {
-            // Add join/leave button for other groups
             const joinLeaveBtn = document.createElement("button");
             joinLeaveBtn.textContent = isMember ? "Leave" : "Join";
-            joinLeaveBtn.classList.add(isMember ? "group-leave-btn" : "friend-btn"); // Reuse friend-btn for styling
+            joinLeaveBtn.classList.add(isMember ? "group-leave-btn" : "friend-btn");
             joinLeaveBtn.title = isMember ? `Leave ${group.name}` : `Join ${group.name}`;
             joinLeaveBtn.onclick = async (e) => {
                 e.stopPropagation();
@@ -751,10 +807,10 @@
       });
     }
 
-    createGroupBtn.addEventListener("click", async () => { // Made async
+    createGroupBtn.addEventListener("click", async () => {
       if (!auth.currentUser) return alert("Sign in to create groups.");
       const name = prompt("Enter group name:");
-      if (!name || name.trim() === "") return; // Basic validation
+      if (!name || name.trim() === "") return;
       try {
         const newGroupRef = push(ref(db, "groups"));
         await set(newGroupRef, {
@@ -762,7 +818,7 @@
           createdBy: auth.currentUser.uid,
           createdAt: Date.now(),
           members: {
-            [auth.currentUser.uid]: true // Automatically add creator as a member
+            [auth.currentUser.uid]: true
           }
         });
         alert(`Group "${name}" created successfully!`);
@@ -797,7 +853,6 @@
       };
       if (replyTo) newMsg.replyTo = replyTo;
 
-      // Check if the current chat context is a group and the user is a member
       if (chatContext.type === "group" && auth.currentUser) {
         get(ref(db, `groups/${chatContext.groupId}/members/${auth.currentUser.uid}`)).then((snapshot) => {
           if (!snapshot.exists()) {
@@ -832,53 +887,52 @@
     signInBtn.addEventListener("click", () => {
       signInWithPopup(auth, provider).catch((error) => {
         console.error("Sign-in error:", error);
-        alert(`Sign-in failed: ${error.message}`); // Provide user feedback
+        alert(`Sign-in failed: ${error.message}`);
       });
     });
 
     signOutBtn.addEventListener("click", () => {
       signOut(auth).catch((error) => {
         console.error("Sign-out error:", error);
-        alert(`Sign-out failed: ${error.message}`); // Provide user feedback
+        alert(`Sign-out failed: ${error.message}`);
       });
     });
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        usernameInput.value = user.displayName || "Anonymous";
-        usernameInput.readOnly = true;
-        usernameInput.style.userSelect = "none";
+        // Update header user info
+        headerUserInfo.style.display = "flex";
+        displayUsername.textContent = user.displayName || "Anonymous";
+        userPfp.src = user.photoURL || "https://via.placeholder.com/40/2c2045/f0eaff?text=?"; // Default placeholder PFP
+
         messageInput.disabled = false;
         sendBtn.disabled = false;
         signInBtn.style.display = "none";
         signOutBtn.style.display = "inline-block";
-        usernameInput.placeholder = "";
 
-        // Update user presence/info in database
         set(ref(db, `users/${user.uid}`), {
           displayName: user.displayName || "Anonymous",
           photoURL: user.photoURL || "",
           lastOnline: Date.now()
         });
 
-        // Listen for changes in users and friends lists
         updateUsersAndFriends();
         updateGroups();
 
-        // Set initial chat context to public if not already set or invalid
         if (!chatContext.type || (chatContext.type === "dm" && !auth.currentUser) || (chatContext.type === "group" && !auth.currentUser)) {
             setChatContext({ type: "public" });
             setSidebarSelected("public");
         } else {
-            // Re-load messages for current context after auth state change
-            setChatContext(chatContext); // This will call loadMessages()
+            setChatContext(chatContext);
             setSidebarSelected(chatContext.type, chatContext.uid || chatContext.groupId);
         }
 
       } else {
-        usernameInput.value = "";
-        usernameInput.placeholder = "Sign in to chat";
-        usernameInput.readOnly = true;
+        // Clear header user info
+        headerUserInfo.style.display = "none";
+        displayUsername.textContent = "Guest";
+        userPfp.src = "https://via.placeholder.com/40/2c2045/f0eaff?text=?"; // Reset to default placeholder
+
         messageInput.disabled = true;
         sendBtn.disabled = true;
         signInBtn.style.display = "inline-block";
@@ -887,18 +941,14 @@
         replyPreview.style.display = "none";
         clearChat();
 
-        // Clear all dynamic lists when logged out
         usersList.innerHTML = "";
         friendsList.innerHTML = "";
         groupsList.innerHTML = "";
         myGroupsList.innerHTML = "";
 
-        // Turn off all active Firebase listeners to prevent memory leaks and unnecessary data fetching
         if (chatListenerRef && chatListener) {
           off(chatListenerRef, "child_added", chatListener);
         }
-        // Need to turn off other listeners for users, friends, and groups if they were set up with onValue
-        // For simplicity in this example, they are re-initialized on login.
       }
     });
   </script>
