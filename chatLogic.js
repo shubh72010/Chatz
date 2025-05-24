@@ -363,4 +363,32 @@ onAuthStateChanged(auth, (user) => {
     groupsList.innerHTML = "";
     myGroupsList.innerHTML = "";
   }
+// Attach a single event listener to handle all like buttons, including dynamically added ones
+document.addEventListener('click', function(event) {
+    if (event.target && event.target.classList.contains('like')) {
+        // Extract message ID from the button's ID
+        const messageId = event.target.id.replace('like_btn_', '');
+        updateLike(messageId);
+    }
+});
+
+// Update like count in UI and Firebase
+function updateLike(messageId) {
+    const countElem = document.getElementById('like_count_' + messageId);
+    if (!countElem) return;
+
+    // Increment like count in UI
+    let likes = Number(countElem.textContent) || 0;
+    likes++;
+    countElem.textContent = likes;
+
+    // Update like count in Firebase (if using Firebase)
+    // Replace 'your_firebase_db_path' with your actual path
+    if (typeof firebase !== "undefined" && firebase.database) {
+        firebase.database().ref('messages/' + messageId).update({
+            likes: likes
+        });
+    }
+}
+
 });
