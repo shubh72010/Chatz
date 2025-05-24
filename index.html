@@ -288,18 +288,6 @@
       border-top: 2px solid var(--main);
     }
     /* Removed #username styles as it's no longer in the form */
-    /* #username {
-      flex: 1 1 120px;
-      padding: 0.6rem 1rem;
-      border-radius: 50px;
-      border: none;
-      outline: none;
-      background: var(--message-bg);
-      color: var(--main-light);
-      font-weight: 600;
-      user-select: none;
-      cursor: default;
-    } */
     #message {
       flex: 3 1 auto;
       padding: 0.6rem 1rem;
@@ -355,8 +343,6 @@
       }
       main { border-radius: 0 0 15px 15px; }
       form { flex-wrap: wrap; }
-      /* Removed #username from mobile styles as it's no longer in the form */
-      /* #username, */
       #message, button#send-btn {
         flex: 1 1 100%;
         margin-bottom: 0.5rem;
@@ -392,10 +378,12 @@
 </head>
 <body>
   <header>
-    <div id="header-user-info" style="display:none;"> <img id="user-pfp" src="https://via.placeholder.com/40/2c2045/f0eaff?text=?" alt="Profile Picture" />
+    <div id="header-user-info" style="display:none;">
+      <img id="user-pfp" src="https://via.placeholder.com/40/2c2045/f0eaff?text=?" alt="Profile Picture" />
       <span id="display-username">Guest</span>
     </div>
-    <span>Chatz</span> <div id="auth-btns">
+    <span>Chatz</span>
+    <div id="auth-btns">
       <button id="sign-in" class="auth-btn">Sign In</button>
       <button id="sign-out" class="auth-btn" style="display:none;">Sign Out</button>
     </div>
@@ -900,10 +888,10 @@
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        // Update header user info
-        headerUserInfo.style.display = "flex";
+        // User is signed in
+        headerUserInfo.style.display = "flex"; // Show the user info div
         displayUsername.textContent = user.displayName || "Anonymous";
-        userPfp.src = user.photoURL || "https://via.placeholder.com/40/2c2045/f0eaff?text=?"; // Default placeholder PFP
+        userPfp.src = user.photoURL || "https://via.placeholder.com/40/2c2045/f0eaff?text=?"; // Use user's PFP or a default placeholder
 
         messageInput.disabled = false;
         sendBtn.disabled = false;
@@ -928,10 +916,10 @@
         }
 
       } else {
-        // Clear header user info
-        headerUserInfo.style.display = "none";
-        displayUsername.textContent = "Guest";
-        userPfp.src = "https://via.placeholder.com/40/2c2045/f0eaff?text=?"; // Reset to default placeholder
+        // User is signed out or hasn't signed in
+        headerUserInfo.style.display = "none"; // Hide the user info div
+        displayUsername.textContent = "Not Signed In"; // Display "Not Signed In" (this text will be hidden as the div is hidden)
+        userPfp.src = "https://via.placeholder.com/40/2c2045/f0eaff?text=?"; // Set to a blank/default PFP (this image will be hidden)
 
         messageInput.disabled = true;
         sendBtn.disabled = true;
