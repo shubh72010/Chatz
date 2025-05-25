@@ -244,59 +244,6 @@
         color: var(--text);
     }
 
-    /* Toggle Switch Styles */
-    .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 40px;
-        height: 24px;
-    }
-    .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-    .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #ccc;
-        -webkit-transition: .4s;
-        transition: .4s;
-        border-radius: 24px;
-    }
-    .slider:before {
-        position: absolute;
-        content: "";
-        height: 16px;
-        width: 16px;
-        left: 4px;
-        bottom: 4px;
-        background-color: white;
-        -webkit-transition: .4s;
-        transition: .4s;
-        border-radius: 50%;
-    }
-    input:checked + .slider {
-        background-color: var(--main);
-    }
-    input:focus + .slider {
-        box-shadow: 0 0 1px var(--main);
-    }
-    input:checked + .slider:before {
-        -webkit-transform: translateX(16px);
-        -ms-transform: translateX(16px);
-        transform: translateX(16px);
-    }
-    .settings-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
 
     button.auth-btn {
       background: var(--main);
@@ -493,13 +440,6 @@
       margin-top: 0.3rem;
       user-select: none;
     }
-
-    /* Font size specific classes */
-    body.font-small #chat .message { font-size: 0.85rem; }
-    body.font-medium #chat .message { font-size: 1rem; }
-    body.font-large #chat .message { font-size: 1.15rem; }
-
-
     form {
       display: flex;
       padding: 1rem 1.5rem;
@@ -681,47 +621,6 @@
       </div>
 
       <div class="settings-section">
-        <label>Notification Settings:</label>
-        <div class="settings-row">
-            <label for="notification-sound-toggle">Play sound for new messages</label>
-            <label class="toggle-switch">
-                <input type="checkbox" id="notification-sound-toggle" />
-                <span class="slider"></span>
-            </label>
-        </div>
-        <div class="settings-row">
-            <label for="desktop-notification-toggle">Show desktop notifications</label>
-            <label class="toggle-switch">
-                <input type="checkbox" id="desktop-notification-toggle" />
-                <span class="slider"></span>
-            </label>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <label>Chat Behavior:</label>
-        <div class="settings-row">
-            <label for="enter-sends-toggle">Press Enter to send message</label>
-            <label class="toggle-switch">
-                <input type="checkbox" id="enter-sends-toggle" checked />
-                <span class="slider"></span>
-            </label>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <label>Display Settings:</label>
-        <div class="settings-row">
-            <label for="font-size-select">Chat Font Size:</label>
-            <select id="font-size-select">
-                <option value="small">Small</option>
-                <option value="medium">Medium</option>
-                <option value="large">Large</option>
-            </select>
-        </div>
-      </div>
-
-      <div class="settings-section">
         <label>Account Actions:</label>
         <button id="sign-out" class="auth-btn">Sign Out</button>
         <button id="set-nickname-btn" class="auth-btn" style="margin-top: 10px;">Set Nickname</button>
@@ -729,9 +628,6 @@
 
     </div>
   </div>
-  
-  <audio id="message-sound" src="new-message.mp3" preload="auto"></audio>
-
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
@@ -755,24 +651,21 @@
       update
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-    // Your Firebase Configuration - REPLACE WITH YOUR ACTUAL DETAILS
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY", // <--- REPLACE THIS
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com", // <--- REPLACE THIS
-      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com", // <--- REPLACE THIS
-      projectId: "YOUR_PROJECT_ID", // <--- REPLACE THIS
-      storageBucket: "YOUR_PROJECT_ID.appspot.com", // <--- REPLACE THIS
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // <--- REPLACE THIS
-      appId: "YOUR_APP_ID", // <--- REPLACE THIS
-      measurementId: "YOUR_MEASUREMENT_ID" // <--- REPLACE THIS
+      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+      authDomain: "chatz-45df4.firebaseapp.com",
+      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
+      projectId: "chatz-45df4",
+      storageBucket: "chatz-45df4.appspot.com",
+      messagingSenderId: "463847844545",
+      appId: "1:463847844545:web:5006247d061c3e0dc28240",
+      measurementId: "G-2VHETC9V8B"
     };
-
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
     const db = getDatabase(app);
 
-    // DOM Elements
     const chat = document.getElementById("chat");
     const form = document.getElementById("chat-form");
     const messageInput = document.getElementById("message");
@@ -781,6 +674,7 @@
     const replyText = document.getElementById("reply-text");
     const cancelReplyBtn = document.getElementById("cancel-reply");
     const signInBtn = document.getElementById("sign-in");
+    // const signOutBtn = document.getElementById("sign-out"); // Moved to settings page
     const friendsList = document.getElementById("friends-list");
     const usersList = document.getElementById("users-list");
     const groupsList = document.getElementById("groups-list");
@@ -792,30 +686,24 @@
     const userPfp = document.getElementById("user-pfp");
     const displayUsername = document.getElementById("display-username");
 
+    // Theme dropdown element (now inside settings)
     const themeSelect = document.getElementById("theme-select");
 
+    // Nickname elements and variable
     const setNicknameBtn = document.getElementById("set-nickname-btn");
-    let currentUserNickname = "Guest"; // Initialize with a default value
+    let currentUserNickname = "Guest";
 
+    // NEW: Settings page DOM elements
     const settingsBtn = document.getElementById("settings-btn");
     const settingsPage = document.getElementById("settings-page");
     const settingsCloseBtn = document.getElementById("settings-close-btn");
-    const signOutBtn = document.getElementById("sign-out");
-
-    // New Settings DOM Elements
-    const notificationSoundToggle = document.getElementById('notification-sound-toggle');
-    const desktopNotificationToggle = document.getElementById('desktop-notification-toggle');
-    const enterSendsToggle = document.getElementById('enter-sends-toggle');
-    const fontSizeSelect = document.getElementById('font-size-select');
-    const messageSound = document.getElementById('message-sound'); // Audio element
-
+    const signOutBtn = document.getElementById("sign-out"); // Re-declare as it's now in settings-page
 
     let replyTo = null;
-    let chatContext = { type: "public" }; // Default chat context
-    let chatListener = null; // Stores the listener function for chat updates
-    let chatListenerRef = null; // Stores the database reference for the current chat listener
+    let chatContext = { type: "public" };
+    let chatListener = null;
+    let chatListenerRef = null;
 
-    // Helper functions
     function escapeHtml(text) {
       return text.replace(/&/g, "&amp;")
                   .replace(/</g, "&lt;")
@@ -823,20 +711,15 @@
                   .replace(/"/g, "&quot;")
                   .replace(/'/g, "&#039;");
     }
-
     function truncate(str, n) {
       return str.length > n ? str.substr(0, n - 1) + "…" : str;
     }
-
     function scrollToBottom() {
       chat.scrollTop = chat.scrollHeight;
     }
-
     function clearChat() {
       chat.innerHTML = "";
     }
-
-    // Manages sidebar selection
     function setSidebarSelected(type, id) {
       document.querySelectorAll('.sidebar-list li').forEach(li => li.classList.remove('selected'));
       if (type === "public") publicChatBtn.classList.add('selected');
@@ -848,68 +731,51 @@
         if (li) li.classList.add('selected');
       }
     }
-
-    // Determines the Firebase Realtime Database reference based on current chat context
     function getChatRef() {
       if (chatContext.type === "public") {
         return ref(db, "messages");
       } else if (chatContext.type === "dm") {
         const uid1 = auth.currentUser.uid;
         const uid2 = chatContext.uid;
-        // Ensure consistent chat ID regardless of which user initiates the DM
         const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
         return ref(db, `dms/${chatId}`);
       } else if (chatContext.type === "group") {
         return ref(db, `groups/${chatContext.groupId}/messages`);
       }
     }
-
-    // Sets the current chat context and reloads messages
     function setChatContext(ctx) {
       chatContext = ctx;
       clearChat();
-      // Detach previous listener to prevent multiple listeners on the same ref
       if (chatListenerRef && chatListener) {
         off(chatListenerRef, "child_added", chatListener);
       }
       loadMessages();
     }
-
-    // Loads initial messages and sets up a new listener for new messages
     function loadMessages() {
-      clearChat(); // Clear chat before loading
+      clearChat();
       const chatRef = getChatRef();
-      chatListenerRef = chatRef; // Store the reference for detaching later
-
-      // Load existing messages once
+      chatListenerRef = chatRef;
       get(chatRef).then((snapshot) => {
         if (snapshot.exists()) {
           const messages = snapshot.val();
-          // Ensure messages are sorted by timestamp for correct display order
-          const sortedMessages = Object.values(messages).sort((a, b) => a.timestamp - b.timestamp);
-          sortedMessages.forEach((data) => {
-            appendMessageToChat(data, false); // Pass false for isNewMessage to avoid sound/notification on initial load
+          Object.values(messages).forEach((data) => {
+            appendMessageToChat(data);
           });
           scrollToBottom();
         }
       });
 
-      // Listen for new messages added to the chat
-      chatListener = onChildAdded(chatRef, (snapshot) => {
-        // Only append messages that are truly new (after initial load)
-        // This timestamp check helps differentiate from initial load vs. new incoming messages
-        if (snapshot.val().timestamp > Date.now() - 5000 && !chat.querySelector(`[data-timestamp="${snapshot.val().timestamp}-${snapshot.val().uid}"]`)) {
-            appendMessageToChat(snapshot.val(), true); // Pass true for isNewMessage
+      onChildAdded(chatRef, (snapshot) => {
+        if (snapshot.val().timestamp > Date.now() - 5000) {
+            appendMessageToChat(snapshot.val());
             scrollToBottom();
         }
       });
     }
 
-    // Appends a single message to the chat display
-    function appendMessageToChat(data, isNewMessage = false) {
+    function appendMessageToChat(data) {
         const msgDiv = document.createElement("div");
         msgDiv.className = "message";
-        msgDiv.setAttribute("data-timestamp", `${data.timestamp}-${data.uid}`); // Unique ID for message
         if (auth.currentUser && data.uid === auth.currentUser.uid) msgDiv.classList.add("own");
 
         let replyHTML = "";
@@ -931,7 +797,7 @@
                 return;
             }
             if (data.uid === auth.currentUser.uid) {
-                return; // Can't reply to your own messages (or might not want to show menu)
+                return;
             }
             replyTo = { id: data.timestamp, name: data.name, message: data.message };
             replyText.textContent = `Replying to ${replyTo.name}: ${truncate(replyTo.message, 50)}`;
@@ -939,30 +805,11 @@
             messageInput.focus();
         });
         chat.appendChild(msgDiv);
-
-        // Handle notifications for new messages
-        if (isNewMessage && auth.currentUser && data.uid !== auth.currentUser.uid) {
-            if (localStorage.getItem('notificationSound') === 'true') {
-                messageSound.play().catch(e => console.error("Error playing sound:", e));
-            }
-            if (localStorage.getItem('desktopNotifications') === 'true' && document.hidden) {
-                if (Notification.permission === 'granted') {
-                    new Notification(`${data.name} in Chatz`, {
-                        body: truncate(data.message, 100),
-                        icon: 'https://via.placeholder.com/40/a259ff/f0eaff?text=C', // Consider a real icon
-                        tag: 'chatz-new-message', // To prevent multiple notifications for the same message
-                    });
-                } else if (Notification.permission === 'default') {
-                    // Prompt for permission if user has desktop notifications enabled in settings
-                    Notification.requestPermission();
-                }
-            }
-        }
     }
 
-    let userMenu = null; // To manage the user right-click/long-press menu
+    let userMenu = null;
     function showUserMenu(li, uid, displayName, isFriend) {
-      if (userMenu) userMenu.remove(); // Remove any existing menu
+      if (userMenu) userMenu.remove();
 
       userMenu = document.createElement("div");
       userMenu.style.position = "absolute";
@@ -975,13 +822,10 @@
       userMenu.style.zIndex = 1000;
       userMenu.style.minWidth = "150px";
       userMenu.style.fontSize = "1rem";
-
-      // Position the menu relative to the clicked list item
       const rect = li.getBoundingClientRect();
       userMenu.style.left = (rect.left + window.scrollX) + "px";
       userMenu.style.top = (rect.bottom + window.scrollY) + "px";
 
-      // Direct Message Button
       const dmBtn = document.createElement("button");
       dmBtn.textContent = `Direct Message ${displayName}`;
       dmBtn.style.display = "block";
@@ -995,7 +839,7 @@
       dmBtn.onmouseover = () => dmBtn.style.background = "var(--main)";
       dmBtn.onmouseout = () => dmBtn.style.background = "none";
       dmBtn.onclick = (e) => {
-        e.stopPropagation(); // Prevent li click event from firing again
+        e.stopPropagation();
         setChatContext({ type: "dm", uid });
         setSidebarSelected("dm", uid);
         if (userMenu) userMenu.remove();
@@ -1003,7 +847,6 @@
       };
       userMenu.appendChild(dmBtn);
 
-      // Add/Remove Friend Button
       const friendBtn = document.createElement("button");
       friendBtn.textContent = isFriend ? "Remove Friend" : "Add Friend";
       friendBtn.style.display = "block";
@@ -1021,20 +864,18 @@
         const myUid = auth.currentUser.uid;
         if (isFriend) {
           await remove(ref(db, `friends/${myUid}/${uid}`));
-          await remove(ref(db, `friends/${uid}/${myUid}`)); // Also remove from the other user's list
+          await remove(ref(db, `friends/${uid}/${myUid}`));
         } else {
           await set(ref(db, `friends/${myUid}/${uid}`), true);
-          await set(ref(db, `friends/${uid}/${myUid}`), true); // Also add to the other user's list
+          await set(ref(db, `friends/${uid}/${myUid}`), true);
         }
         if (userMenu) userMenu.remove();
         userMenu = null;
       };
       userMenu.appendChild(friendBtn);
 
-      // Prevent menu from closing if clicked inside it
       userMenu.addEventListener("pointerdown", (e) => e.stopPropagation());
 
-      // Close menu when clicking anywhere else
       setTimeout(() => {
         document.addEventListener("pointerdown", hideUserMenu, { once: true });
       }, 0);
@@ -1042,7 +883,6 @@
       document.body.appendChild(userMenu);
     }
 
-    // Hides the user context menu
     function hideUserMenu(e) {
       if (userMenu && (!e || !userMenu.contains(e.target))) {
         userMenu.remove();
@@ -1050,63 +890,58 @@
       }
     }
 
-    // Updates the lists of all users and friends
     function updateUsersAndFriends() {
       usersList.innerHTML = "";
       friendsList.innerHTML = "";
 
-      // Listen for changes in the 'users' collection
       onValue(ref(db, "users"), (snap) => {
         const users = snap.val() || {};
         const myUid = auth.currentUser ? auth.currentUser.uid : null;
 
-        usersList.innerHTML = ""; // Clear lists before repopulating
+        usersList.innerHTML = "";
         friendsList.innerHTML = "";
 
         if (myUid) {
-            // Listen for changes in the current user's 'friends' list
             onValue(ref(db, `friends/${myUid}`), (friendSnap) => {
                 const friends = friendSnap.exists() ? Object.keys(friendSnap.val()) : [];
 
                 Object.entries(users).forEach(([uid, user]) => {
-                    if (myUid && uid === myUid) return; // Don't list self
+                    if (myUid && uid === myUid) return;
 
                     const nameToDisplay = user.nickname || user.displayName || "Anonymous";
 
                     const li = document.createElement("li");
                     li.textContent = nameToDisplay;
-                    li.setAttribute("data-uid", uid); // Store UID for later use
+                    li.setAttribute("data-uid", uid);
 
                     if (friends.includes(uid)) {
-                        // User is a friend
                         const friendLi = li.cloneNode(true);
                         friendLi.onclick = () => {
                             setChatContext({ type: "dm", uid: uid });
                             setSidebarSelected("dm", uid);
                         };
                         const removeFriendBtn = document.createElement("button");
-                        removeFriendBtn.innerHTML = "&#x2716;"; // X icon
+                        removeFriendBtn.innerHTML = "&#x2716;";
                         removeFriendBtn.classList.add("friend-btn", "remove");
                         removeFriendBtn.title = `Remove ${nameToDisplay}`;
                         removeFriendBtn.onclick = async (e) => {
-                            e.stopPropagation(); // Prevent li click
+                            e.stopPropagation();
                             await remove(ref(db, `friends/${myUid}/${uid}`));
                             await remove(ref(db, `friends/${uid}/${myUid}`));
                         };
                         friendLi.appendChild(removeFriendBtn);
                         friendsList.appendChild(friendLi);
                     } else {
-                        // User is not a friend
                         li.addEventListener("click", (e) => {
                             e.stopPropagation();
-                            showUserMenu(li, uid, nameToDisplay, false); // Show context menu
+                            showUserMenu(li, uid, nameToDisplay, false);
                         });
                         const addFriendBtn = document.createElement("button");
-                        addFriendBtn.innerHTML = "&#x271A;"; // Plus icon
+                        addFriendBtn.innerHTML = "&#x271A;";
                         addFriendBtn.classList.add("friend-btn");
                         addFriendBtn.title = `Add ${nameToDisplay}`;
                         addFriendBtn.onclick = async (e) => {
-                            e.stopPropagation(); // Prevent li click
+                            e.stopPropagation();
                             await set(ref(db, `friends/${myUid}/${uid}`), true);
                             await set(ref(db, `friends/${uid}/${myUid}`), true);
                         };
@@ -1119,7 +954,6 @@
       });
     }
 
-    // Updates the lists of all groups and groups the current user is a member of
     function updateGroups() {
       groupsList.innerHTML = "";
       myGroupsList.innerHTML = "";
@@ -1127,7 +961,7 @@
         const groups = snap.val() || {};
         const myUid = auth.currentUser ? auth.currentUser.uid : null;
 
-        groupsList.innerHTML = ""; // Clear lists
+        groupsList.innerHTML = "";
         myGroupsList.innerHTML = "";
 
         Object.entries(groups).forEach(([groupId, group]) => {
@@ -1142,12 +976,11 @@
           const isMember = myUid && group.members && Object.keys(group.members).includes(myUid);
 
           if (myUid && group.createdBy === myUid) {
-            // User is the creator of this group
             const myLi = li.cloneNode(true);
-            myLi.onclick = li.onclick; // Keep original click behavior
+            myLi.onclick = li.onclick;
             const deleteGroupBtn = document.createElement("button");
-            deleteGroupBtn.innerHTML = "&#x2716;"; // X icon
-            deleteGroupBtn.classList.add("group-leave-btn"); // Reusing class for styling
+            deleteGroupBtn.innerHTML = "&#x2716;";
+            deleteGroupBtn.classList.add("group-leave-btn");
             deleteGroupBtn.title = "Delete Group";
             deleteGroupBtn.onclick = async (e) => {
                 e.stopPropagation();
@@ -1158,7 +991,6 @@
             myLi.appendChild(deleteGroupBtn);
             myGroupsList.appendChild(myLi);
           } else {
-            // User is not the creator
             const joinLeaveBtn = document.createElement("button");
             joinLeaveBtn.textContent = isMember ? "Leave" : "Join";
             joinLeaveBtn.classList.add(isMember ? "group-leave-btn" : "friend-btn");
@@ -1187,88 +1019,29 @@
 
         themeSelect.value = themeName; // Update selected option in the dropdown
 
-        // Dynamically update dropdown arrow color based on text color
         const computedTextColor = getComputedStyle(document.body).getPropertyValue('--text').trim();
-        let hexColor = '212121'; // Default for dark text
+        let hexColor = '212121';
 
         if (computedTextColor.startsWith('#')) {
             hexColor = computedTextColor.slice(1);
         } else if (computedTextColor.startsWith('rgb')) {
             const rgbValues = computedTextColor.match(/\d+/g).map(Number);
             if (rgbValues.length === 3) {
-                // Convert RGB to hex (simplified)
                 hexColor = ((1 << 24) + (rgbValues[0] << 16) + (rgbValues[1] << 8) + rgbValues[2]).toString(16).slice(1);
             }
         }
-        // Apply SVG with hex color as background image for the dropdown
         themeSelect.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg fill="%23${hexColor}" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>')`;
     }
 
-    // Font size management functions
-    function applyFontSize(fontSize) {
-        document.body.classList.remove('font-small', 'font-medium', 'font-large');
-        document.body.classList.add(`font-${fontSize}`);
-        localStorage.setItem('chatzFontSize', fontSize);
-        fontSizeSelect.value = fontSize;
-    }
+    // Event Listener for theme dropdown
+    themeSelect.addEventListener('change', (event) => {
+        applyTheme(event.target.value);
+    });
 
-    // Initial preference loading on app start
+    // Apply saved theme on load
     document.addEventListener('DOMContentLoaded', () => {
-        // Load Theme
         const savedTheme = localStorage.getItem('chatzTheme') || 'default';
         applyTheme(savedTheme);
-
-        // Load Notification Sound Preference
-        const savedSoundPref = localStorage.getItem('notificationSound');
-        notificationSoundToggle.checked = savedSoundPref === 'true' || savedSoundPref === null; // Default to true if not set
-
-        // Load Desktop Notification Preference
-        const savedDesktopPref = localStorage.getItem('desktopNotifications');
-        desktopNotificationToggle.checked = savedDesktopPref === 'true' || savedDesktopPref === null; // Default to true if not set
-        // Request notification permission if it's not granted yet
-        if (desktopNotificationToggle.checked && Notification.permission === 'default') {
-             Notification.requestPermission().then(permission => {
-                 if (permission !== 'granted') desktopNotificationToggle.checked = false; // Uncheck if permission denied
-             });
-        }
-
-
-        // Load Enter Sends Preference
-        const savedEnterSendsPref = localStorage.getItem('enterSends');
-        enterSendsToggle.checked = savedEnterSendsPref === 'true' || savedEnterSendsPref === null; // Default to true if not set
-
-        // Load Font Size Preference
-        const savedFontSize = localStorage.getItem('chatzFontSize') || 'medium';
-        applyFontSize(savedFontSize);
-    });
-
-    // Event Listeners for new settings
-    themeSelect.addEventListener('change', (event) => applyTheme(event.target.value));
-    fontSizeSelect.addEventListener('change', (event) => applyFontSize(event.target.value));
-
-    notificationSoundToggle.addEventListener('change', (event) => {
-        localStorage.setItem('notificationSound', event.target.checked);
-    });
-
-    desktopNotificationToggle.addEventListener('change', (event) => {
-        localStorage.setItem('desktopNotifications', event.target.checked);
-        if (event.target.checked && Notification.permission === 'default') {
-            Notification.requestPermission().then(permission => {
-                if (permission !== 'granted') {
-                    alert("Desktop notifications permission denied. Please allow them in your browser settings if you wish to use this feature.");
-                    desktopNotificationToggle.checked = false; // Reflect denial in UI
-                    localStorage.setItem('desktopNotifications', false);
-                }
-            });
-        } else if (!event.target.checked && Notification.permission === 'granted') {
-            // Optional: Provide a way to revoke permission, or just let user manage it via browser
-            // For example, close all active notifications
-            // (Note: revoking permission from JS is not possible without browser UI interaction)
-        }
-    });
-
-    enterSendsToggle.addEventListener('change', (event) => {
-        localStorage.setItem('enterSends', event.target.checked);
     });
 
 
@@ -1279,17 +1052,17 @@
             return;
         }
         const newNickname = prompt(`Enter your new nickname (current: ${currentUserNickname || 'None'}):`);
-        if (newNickname === null) return; // User cancelled the prompt
+        if (newNickname === null) return;
         if (newNickname.trim() === "") {
             alert("Nickname cannot be empty or just spaces.");
             return;
         }
-
+        
         const userRef = ref(db, `users/${auth.currentUser.uid}`);
         try {
-            await update(userRef, { nickname: newNickname.trim() }); // Saves the nickname to Firebase
-            currentUserNickname = newNickname.trim(); // Update local variable
-            displayUsername.textContent = currentUserNickname; // Update the header display instantly
+            await update(userRef, { nickname: newNickname.trim() });
+            currentUserNickname = newNickname.trim();
+            displayUsername.textContent = currentUserNickname;
             alert("Nickname updated successfully!");
         } catch (error) {
             console.error("Error setting nickname:", error);
@@ -1297,19 +1070,18 @@
         }
     });
 
-    // Group Creation Button
     createGroupBtn.addEventListener("click", async () => {
       if (!auth.currentUser) return alert("Sign in to create groups.");
       const name = prompt("Enter group name:");
       if (!name || name.trim() === "") return;
       try {
-        const newGroupRef = push(ref(db, "groups")); // Generate unique key for new group
+        const newGroupRef = push(ref(db, "groups"));
         await set(newGroupRef, {
           name: name.trim(),
           createdBy: auth.currentUser.uid,
           createdAt: Date.now(),
           members: {
-            [auth.currentUser.uid]: true // Add creator as first member
+            [auth.currentUser.uid]: true
           }
         });
         alert(`Group "${name}" created successfully!`);
@@ -1319,36 +1091,32 @@
       }
     });
 
-    // Public Chat Button
     publicChatBtn.addEventListener("click", () => {
       setChatContext({ type: "public" });
       setSidebarSelected("public");
     });
 
-    // Cancel Reply Button
     cancelReplyBtn.addEventListener("click", () => {
       replyTo = null;
       replyPreview.style.display = "none";
     });
 
-    // Chat Form Submission
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (!auth.currentUser) return alert("You must be signed in to send messages.");
 
       const msg = messageInput.value.trim();
-      if (!msg) return; // Don't send empty messages
+      if (!msg) return;
 
       const newMsg = {
         uid: auth.currentUser.uid,
-        name: currentUserNickname, // Use the current user's nickname
+        name: currentUserNickname,
         message: msg,
         timestamp: Date.now(),
       };
-      if (replyTo) newMsg.replyTo = replyTo; // Add reply metadata if replying
+      if (replyTo) newMsg.replyTo = replyTo;
 
       try {
-          // Additional check for group messages: ensure user is a member
           if (chatContext.type === "group" && auth.currentUser) {
               const snapshot = await get(ref(db, `groups/${chatContext.groupId}/members/${auth.currentUser.uid}`));
               if (!snapshot.exists()) {
@@ -1356,132 +1124,130 @@
                   return;
               }
           }
-          await push(getChatRef(), newMsg); // Push message to current chat context
-          messageInput.value = ""; // Clear input
-          replyTo = null; // Reset reply state
-          replyPreview.style.display = "none"; // Hide reply preview
+          await push(getChatRef(), newMsg);
+          messageInput.value = "";
+          replyTo = null;
+          replyPreview.style.display = "none";
       } catch (err) {
           console.error("Error sending message:", err);
-          alert("Error sending message: " + err.message);
+          alert("Failed to send message. Please try again.");
       }
     });
 
-    // New: Enter key behavior based on setting
-    messageInput.addEventListener('keydown', (e) => {
-        // Check if "Enter to send" is enabled and Shift key is NOT pressed
-        if (e.key === 'Enter' && !e.shiftKey && localStorage.getItem('enterSends') === 'true') {
-            e.preventDefault(); // Prevent default (new line)
-            if (messageInput.value.trim() !== '') { // Only send if not empty
-                sendBtn.click(); // Programmatically click the send button
-            }
-        }
+    signInBtn.addEventListener("click", () => {
+      signInWithPopup(auth, provider).catch((error) => {
+        console.error("Sign-in error:", error);
+        alert(`Sign-in failed: ${error.message}`);
+      });
     });
 
-    // Auth state observer
-    onAuthStateChanged(auth, async (user) => {
+    signOutBtn.addEventListener("click", () => {
+      signOut(auth).catch((error) => {
+        console.error("Sign-out error:", error);
+        alert(`Sign-out failed: ${error.message}`);
+      });
+    });
+
+    // NEW: Settings button event listeners
+    settingsBtn.addEventListener("click", () => {
+        settingsPage.style.display = "flex"; // Show the overlay
+        // Use a class for transition, so it fades in
+        setTimeout(() => settingsPage.classList.add('active'), 10);
+    });
+
+    settingsCloseBtn.addEventListener("click", () => {
+        settingsPage.classList.remove('active');
+        // Hide after transition
+        settingsPage.addEventListener('transitionend', function handler() {
+            settingsPage.style.display = "none";
+            settingsPage.removeEventListener('transitionend', handler);
+        });
+    });
+
+
+    onAuthStateChanged(auth, (user) => {
       if (user) {
-        // User is signed in
-        headerUserInfo.style.display = 'flex';
-        signInBtn.style.display = 'none';
-        settingsBtn.style.display = 'inline-block';
-        messageInput.disabled = false;
-        sendBtn.disabled = false;
-        userPfp.src = user.photoURL || "https://via.placeholder.com/40/2c2045/f0eaff?text=U"; // Default image if no photoURL
-        
-        // Fetch user's custom nickname, otherwise use display name
+        headerUserInfo.style.display = "flex";
+        signInBtn.style.display = "none";
+        // signOutBtn.style.display = "inline-block"; // Moved to settings page
+        // setNicknameBtn.style.display = "inline-block"; // Moved to settings page
+
+        settingsBtn.style.display = "inline-block"; // Show settings button
+        signOutBtn.style.display = "inline-block"; // Ensure it's visible within settings
+        setNicknameBtn.style.display = "inline-block"; // Ensure it's visible within settings
+
+
         const userRef = ref(db, `users/${user.uid}`);
-        onValue(userRef, (snapshot) => {
+        get(userRef).then(snapshot => {
             const userData = snapshot.val();
             if (userData && userData.nickname) {
                 currentUserNickname = userData.nickname;
-                displayUsername.textContent = userData.nickname;
             } else {
-                currentUserNickname = user.displayName || user.email.split('@')[0] || "Anonymous";
-                displayUsername.textContent = user.displayName || user.email.split('@')[0] || "Anonymous";
-                // Optionally save displayName if no nickname exists for consistency
-                if (!userData || (!userData.displayName && !userData.nickname)) {
-                    update(userRef, {
-                        displayName: user.displayName,
-                        photoURL: user.photoURL,
-                        lastOnline: Date.now()
-                    });
-                }
+                currentUserNickname = user.displayName || "Anonymous";
+                update(userRef, { nickname: currentUserNickname });
             }
-            // Update last online status
-            update(userRef, { lastOnline: Date.now() });
-        }, { onlyOnce: false }); // Keep listener active for nickname changes
-
-
-        // Set default chat context to public if none is active
-        if (!chatContext.type) {
-            setChatContext({ type: "public" });
-            setSidebarSelected("public");
-        } else {
-             // Re-load current chat if user logs in/out and context was already set
-             setChatContext(chatContext);
-             // Re-select sidebar item
-             if (chatContext.type === "public") setSidebarSelected("public");
-             else if (chatContext.type === "dm") setSidebarSelected("dm", chatContext.uid);
-             else if (chatContext.type === "group") setSidebarSelected("group", chatContext.groupId);
-        }
+            displayUsername.textContent = currentUserNickname;
+            userPfp.src = user.photoURL || "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
+        }).catch(error => {
+            console.error("Error fetching user data:", error);
+            currentUserNickname = user.displayName || "Anonymous";
+            displayUsername.textContent = currentUserNickname;
+            userPfp.src = user.photoURL || "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
+        });
+        
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+        
+        update(ref(db, `users/${user.uid}`), {
+          displayName: user.displayName || "Anonymous",
+          photoURL: user.photoURL || "",
+          lastOnline: Date.now()
+        });
 
         updateUsersAndFriends();
         updateGroups();
 
+        if (!chatContext.type || (chatContext.type === "dm" && !auth.currentUser) || (chatContext.type === "group" && !auth.currentUser)) {
+            setChatContext({ type: "public" });
+            setSidebarSelected("public");
+        } else {
+            setChatContext(chatContext);
+            setSidebarSelected(chatContext.type, chatContext.uid || chatContext.groupId);
+        }
+
       } else {
-        // User is signed out
-        headerUserInfo.style.display = 'none';
-        signInBtn.style.display = 'inline-block';
-        settingsBtn.style.display = 'none'; // Hide settings for signed out users
+        headerUserInfo.style.display = "none";
+        displayUsername.textContent = "Not Signed In";
+        userPfp.src = "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
+
         messageInput.disabled = true;
         sendBtn.disabled = true;
-        currentUserNickname = "Guest";
-        displayUsername.textContent = "Guest";
+        signInBtn.style.display = "inline-block";
+        // signOutBtn.style.display = "none"; // Moved to settings page
+        // setNicknameBtn.style.display = "none"; // Moved to settings page
+
+        settingsBtn.style.display = "none"; // Hide settings button
+        signOutBtn.style.display = "none"; // Ensure it's hidden within settings
+        setNicknameBtn.style.display = "none"; // Ensure it's hidden within settings
+
+        replyTo = null;
+        replyPreview.style.display = "none";
         clearChat();
 
-        // Clear sidebar lists and stop listeners
-        friendsList.innerHTML = "";
         usersList.innerHTML = "";
+        friendsList.innerHTML = "";
         groupsList.innerHTML = "";
         myGroupsList.innerHTML = "";
-        
+        currentUserNickname = "Guest";
+
         if (chatListenerRef && chatListener) {
           off(chatListenerRef, "child_added", chatListener);
         }
-        chatContext = { type: "public" }; // Reset context to public chat
-        setSidebarSelected("public"); // Select public chat visually
-        loadMessages(); // Load public messages for guests
+        // Remove listeners for users, friends, groups lists to prevent memory leaks
+        off(ref(db, "users"), 'value');
+        off(ref(db, "groups"), 'value');
       }
     });
-
-    // Event Listeners for Auth
-    signInBtn.addEventListener("click", () => {
-      signInWithPopup(auth, provider)
-        .catch((error) => console.error("Sign-in error:", error.message));
-    });
-
-    // Sign out functionality moved to settings page
-    signOutBtn.addEventListener("click", () => {
-        signOut(auth).then(() => {
-            console.log("Signed out successfully.");
-            settingsPage.style.display = 'none'; // Hide settings page on sign out
-            settingsPage.classList.remove('active');
-        }).catch((error) => {
-            console.error("Sign-out error:", error.message);
-        });
-    });
-
-    // Settings Page Toggle
-    settingsBtn.addEventListener('click', () => {
-        settingsPage.style.display = 'flex';
-        setTimeout(() => settingsPage.classList.add('active'), 10); // Trigger transition
-    });
-
-    settingsCloseBtn.addEventListener('click', () => {
-        settingsPage.classList.remove('active');
-        setTimeout(() => settingsPage.style.display = 'none', 300); // Wait for transition
-    });
-
   </script>
 </body>
 </html>
