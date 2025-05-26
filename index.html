@@ -1,149 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Home - ChatApp</title>
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #0f0f0f;
-      color: white;
-    }
-
-    .container {
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-    }
-
-    .user-header {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      padding: 10px 0;
-      border-bottom: 1px solid #333;
-    }
-
-    .user-header img {
-      width: 50px;
-      height: 50px;
-      border-radius: 999px;
-    }
-
-    .username {
-      font-size: 1.2rem;
-      font-weight: 600;
-    }
-
-    .chat-group {
-      margin-top: 25px;
-    }
-
-    .chat-title {
-      font-size: 1rem;
-      color: #aaa;
-      margin-bottom: 10px;
-    }
-
-    .chat-item {
-      display: flex;
-      align-items: center;
-      padding: 12px;
-      border-radius: 10px;
-      background-color: #1a1a1a;
-      margin-bottom: 12px;
-      transition: background 0.2s;
-      text-decoration: none;
-      color: white;
-    }
-
-    .chat-item:hover {
-      background-color: #262626;
-    }
-
-    .chat-item img {
-      width: 45px;
-      height: 45px;
-      border-radius: 999px;
-      margin-right: 12px;
-    }
-
-    .chat-info {
-      flex-grow: 1;
-    }
-
-    .chat-name {
-      font-weight: 600;
-    }
-
-    .chat-preview {
-      font-size: 0.9rem;
-      color: #999;
-    }
-
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #30ff5b;
-      margin-left: auto;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Landing Page</title>
+<!-- Include your CSS, fonts, scripts needed for landing -->
+<link rel="stylesheet" href="styles.css" />
+<script src="scripts.js" defer></script>
 </head>
 <body>
-  <div class="container">
-    <div class="user-header">
-      <img src="default-pfp.png" alt="Profile" id="profile-pic"/>
-      <div class="username" id="username">Loading...</div>
-    </div>
+  <!-- Header/Nav -->
+  <header>
+    <h1>Welcome to the Chat App</h1>
+    <nav>
+      <a href="global.html">Go to Chat</a>
+      <!-- Other landing page links -->
+    </nav>
+  </header>
 
-    <div class="chat-group">
-      <div class="chat-title">Recent Chats</div>
+  <!-- Main landing content -->
+  <main>
+    <section>
+      <h2>About the Chat App</h2>
+      <p>Some info about the app, features, whatever.</p>
+    </section>
 
-      <a href="global.html" class="chat-item">
-        <img src="global-icon.png" alt="Global Chat" />
-        <div class="chat-info">
-          <div class="chat-name">🌐 Global Chat</div>
-          <div class="chat-preview">Join the public convo</div>
-        </div>
-        <div class="status-dot"></div>
-      </a>
+    <section>
+      <h2>Get Started</h2>
+      <button onclick="location.href='global.html'">Start Chatting</button>
+    </section>
+  </main>
 
-      <a href="#" class="chat-item">
-        <img src="study.png" alt="Study Group" />
-        <div class="chat-info">
-          <div class="chat-name">📚 Study Squad</div>
-          <div class="chat-preview">Let’s revise ch.5</div>
-        </div>
-        <div class="status-dot" style="background: gray;"></div>
-      </a>
-
-      <a href="#" class="chat-item">
-        <img src="gaming.png" alt="Gaming Gang" />
-        <div class="chat-info">
-          <div class="chat-name">🎮 Gaming Gang</div>
-          <div class="chat-preview">Fortnite at 9?</div>
-        </div>
-        <div class="status-dot"></div>
-      </a>
-    </div>
-  </div>
-
-  <script type="module">
-    import { auth, onAuthStateChanged } from './firebase-config.js';
-
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        document.getElementById('username').textContent = user.displayName || 'Unnamed';
-        document.getElementById('profile-pic').src = user.photoURL || 'default-pfp.png';
-      } else {
-        window.location.href = "login.html";
-      }
-    });
-  </script>
+  <!-- Footer -->
+  <footer>
+    <p>© 2025 Chat App by Flay</p>
+  </footer>
 </body>
 </html>
