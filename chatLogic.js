@@ -17,7 +17,7 @@ import {
   listenValue,
   listenChildAdded,
   removeListener
-} from "./firebaseHelpers.js";
+} from "./firebaseHelpers.js"; // <-- relative path
 
 // --- Firebase Setup ---
 const db = getDatabase();
