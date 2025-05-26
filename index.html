@@ -3,35 +3,220 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chatz | Welcome</title>
+  <title>Chatz | Home</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
-    body {
+    :root {
+      --main: #a259ff;
+      --accent: #5f27cd;
+      --danger: #ff5252;
+      --sidebar-bg: rgba(44,32,69,0.7);
+      --sidebar-blur: 16px;
+      --settings-bg: rgba(44,32,69,0.95);
+      --text: #f0eaff;
+      --text-dark: #2c2045;
+      --input-bg: rgba(255,255,255,0.2);
+      --input-border: #a259ff;
+      --input-focus: #fff;
+      --scrollbar: #a259ff;
+      --scrollbar-bg: #2c2045;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #a259ff, #5f27cd);
-      color: #fff;
+      background: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%);
+      color: var(--text);
       min-height: 100vh;
+      overflow: hidden;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+      justify-content: flex-start;
+      align-items: stretch;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 2.5rem 1.2rem 2.5rem;
+      background: rgba(44,32,69,0.85);
+      box-shadow: 0 4px 32px #0002;
+      border-bottom: 1px solid #a259ff33;
+      position: relative;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+    }
+    #header-user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2rem;
+      padding: 0.3rem 1rem 0.3rem 0.3rem;
+      box-shadow: 0 2px 8px #0002;
+    }
+    #user-pfp {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--main);
+      object-fit: cover;
+      background: #fff;
+    }
+    #display-username {
+      color: var(--main);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    header > span {
+      font-size: 2.1rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #fff;
+      text-shadow: 0 2px 12px #a259ff55;
+      user-select: none;
+    }
+    #auth-btns {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    .auth-btn {
+      background: var(--main);
+      color: #fff;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.6rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #a259ff33;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .auth-btn:hover {
+      background: var(--accent);
+      box-shadow: 0 4px 16px #a259ff44;
+    }
+    #container {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+      overflow: hidden;
+    }
+    aside#sidebar {
+      width: 320px;
+      background: var(--sidebar-bg);
+      backdrop-filter: blur(var(--sidebar-blur));
+      border-right: 1.5px solid #a259ff33;
+      padding: 1.5rem 1rem 1.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      box-shadow: 2px 0 24px #0002;
+      overflow-y: auto;
+      transition: background 0.3s;
+    }
+    .sidebar-section h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--main);
+      letter-spacing: 1px;
+      text-shadow: 0 1px 8px #a259ff22;
+    }
+    .sidebar-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+    .sidebar-list li, .sidebar-list a {
+      background: rgba(255,255,255,0.09);
+      border-radius: 1.2rem;
+      padding: 0.5rem 1rem;
+      color: var(--text);
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+      position: relative;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-decoration: none;
+    }
+    .sidebar-list li.selected,
+    .sidebar-list li:hover,
+    .sidebar-list a:hover {
+      background: var(--main);
+      color: #fff;
+      box-shadow: 0 2px 12px #a259ff33;
+    }
+    .sidebar-list .friend-btn, .sidebar-list .group-leave-btn {
+      background: none;
+      border: none;
+      color: var(--main);
+      font-size: 1.1rem;
+      margin-left: 0.7rem;
+      cursor: pointer;
+      border-radius: 50%;
+      padding: 0.2rem 0.5rem;
+      transition: background 0.2s, color 0.2s;
+    }
+    .sidebar-list .friend-btn:hover, .sidebar-list .group-leave-btn:hover {
+      background: var(--main);
+      color: #fff;
+    }
+    .sidebar-list .group-leave-btn {
+      color: var(--danger);
+    }
+    .sidebar-list .group-leave-btn:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+    main {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin: 0;
+      background: transparent;
+      min-width: 0;
+      min-height: 0;
+      position: relative;
     }
-    h1 { font-size: 3rem; margin-bottom: 1rem; }
-    p { font-size: 1.2rem; margin-bottom: 2rem; }
-    #sign-in {
-      background: #a259ff;
+    .welcome-card {
+      background: rgba(255,255,255,0.13);
+      border-radius: 2.5rem;
+      box-shadow: 0 8px 32px #a259ff22;
+      padding: 3rem 2.5rem;
+      text-align: center;
+      color: var(--text);
+      max-width: 420px;
+      margin: 2rem auto;
+      animation: fadeIn 0.3s;
+    }
+    .welcome-card h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
       color: #fff;
-      border: none;
-      padding: 1rem 2rem;
-      border-radius: 50px;
-      font-size: 1.2rem;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 0 10px #c3aaff;
-      transition: background 0.3s;
+      text-shadow: 0 2px 12px #a259ff55;
     }
-    #sign-in:hover { background: #5f27cd; }
+    .welcome-card p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      color: #e0e0e0;
+    }
     .footer {
       position: fixed;
       bottom: 10px;
@@ -41,37 +226,410 @@
       color: #e0e0e0;
       font-size: 0.9rem;
       opacity: 0.7;
+      z-index: 100;
+    }
+    /* Settings Modal */
+    #settings-page {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(44,32,69,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      transition: background 0.3s;
+      backdrop-filter: blur(10px);
+    }
+    #settings-page.active {
+      display: flex;
+    }
+    .settings-content {
+      background: var(--settings-bg);
+      border-radius: 2rem;
+      padding: 2.5rem 2.5rem 2rem 2.5rem;
+      box-shadow: 0 8px 32px #a259ff55;
+      min-width: 340px;
+      max-width: 95vw;
+      color: #fff;
+      position: relative;
+      animation: fadeIn 0.2s;
+    }
+    .settings-close-btn {
+      position: absolute;
+      top: 1.2rem;
+      right: 1.2rem;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .settings-close-btn:hover {
+      color: var(--danger);
+    }
+    .settings-section {
+      margin-bottom: 1.7rem;
+    }
+    .settings-section label {
+      font-weight: 600;
+      color: var(--main);
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    #theme-dropdown-container {
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    #theme-select {
+      padding: 0.5rem 1.2rem;
+      border-radius: 1.2rem;
+      border: 2px solid var(--main);
+      background: var(--input-bg);
+      color: var(--main);
+      font-size: 1rem;
+      font-weight: 600;
+      outline: none;
+      margin-left: 0.5rem;
+      transition: border 0.2s, background 0.2s;
+    }
+    #theme-select:focus {
+      border: 2px solid var(--accent);
+      background: #fff;
+      color: var(--main);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+    @media (max-width: 900px) {
+      #container {
+        flex-direction: column;
+      }
+      aside#sidebar {
+        width: 100vw;
+        flex-direction: row;
+        gap: 1.5rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        border-radius: 0 0 2rem 2rem;
+        border-right: none;
+        border-bottom: 1.5px solid #a259ff33;
+        padding: 1rem 0.5rem 1rem 1rem;
+      }
+      main {
+        margin: 0.5rem;
+        border-radius: 2rem;
+      }
+    }
+    @media (max-width: 600px) {
+      header {
+        flex-direction: column;
+        gap: 0.7rem;
+        padding: 1rem 0.5rem;
+      }
+      #container {
+        flex-direction: column;
+      }
+      aside#sidebar {
+        width: 100vw;
+        min-width: 0;
+        padding: 0.7rem 0.2rem 0.7rem 0.7rem;
+        border-radius: 0 0 1.2rem 1.2rem;
+      }
+      main {
+        margin: 0.2rem;
+        border-radius: 1.2rem;
+        padding: 0.5rem;
+      }
+      .settings-content {
+        padding: 1.2rem 0.7rem 1rem 0.7rem;
+        min-width: 0;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Welcome to Chatz</h1>
-  <p>Sign in to start chatting with friends and groups!</p>
-  <button id="sign-in">Sign In with Google</button>
+  <header>
+    <div id="header-user-info" style="display:none;">
+      <img id="user-pfp" src="https://via.placeholder.com/40/2c2045/f0eaff?text=?" alt="Profile Picture" />
+      <span id="display-username">Guest</span>
+    </div>
+    <span>Chatz</span>
+    <div id="auth-btns">
+      <button id="settings-btn" class="auth-btn" style="display:none;">Settings</button>
+      <button id="sign-in" class="auth-btn">Sign In</button>
+      <button id="sign-out" class="auth-btn" style="display:none;">Sign Out</button>
+    </div>
+  </header>
+  <div id="container">
+    <aside id="sidebar">
+      <div class="sidebar-section">
+        <h3>Global</h3>
+        <a href="global.html?type=public" class="sidebar-list"># General Chat</a>
+      </div>
+      <div class="sidebar-section">
+        <h3>Friends</h3>
+        <ul id="friends-list" class="sidebar-list"></ul>
+      </div>
+      <div class="sidebar-section">
+        <h3>Users</h3>
+        <ul id="users-list" class="sidebar-list"></ul>
+      </div>
+      <div class="sidebar-section">
+        <h3>My Groups</h3>
+        <ul id="my-groups-list" class="sidebar-list"></ul>
+      </div>
+      <div class="sidebar-section">
+        <h3>All Groups</h3>
+        <ul id="groups-list" class="sidebar-list"></ul>
+        <button id="create-group-btn" style="margin-top:0.5rem;" class="auth-btn">+ Create Group</button>
+      </div>
+    </aside>
+    <main>
+      <div class="welcome-card">
+        <h1>Welcome to Chatz</h1>
+        <p>Choose a chat from the sidebar or create a group.<br>Use the settings to customize your experience!</p>
+      </div>
+    </main>
+  </div>
   <div class="footer">Made with ❤️ by Flakious</div>
+  <div id="settings-page">
+    <div class="settings-content">
+      <button id="settings-close-btn" class="settings-close-btn">&times;</button>
+      <h2>Settings</h2>
+      <div class="settings-section">
+        <label>Theme Selection:</label>
+        <div id="theme-dropdown-container">
+            <label for="theme-select" id="theme-dropdown-label">Themes:</label>
+            <select id="theme-select">
+                <option value="default">Purple Mode</option>
+                <option value="dark">Dark Mode</option>
+                <option value="light">Light Mode</option>
+            </select>
+        </div>
+      </div>
+      <div class="settings-section">
+        <label>Account Actions:</label>
+        <button id="set-nickname-btn" class="auth-btn" style="margin-top: 10px;">Set Nickname</button>
+      </div>
+    </div>
+  </div>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      set,
+      get,
+      onValue,
+      remove,
+      update
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
       authDomain: "chatz-45df4.firebaseapp.com",
+      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
       projectId: "chatz-45df4",
+      storageBucket: "chatz-45df4.appspot.com",
+      messagingSenderId: "463847844545",
       appId: "1:463847844545:web:5006247d061c3e0dc28240"
     };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+    const db = getDatabase(app);
 
-    document.getElementById("sign-in").onclick = () => {
-      signInWithPopup(auth, provider)
-        .then(() => window.location.href = "global.html")
-        .catch(e => alert("Sign-in failed: " + e.message));
+    // DOM
+    const signInBtn = document.getElementById("sign-in");
+    const signOutBtn = document.getElementById("sign-out");
+    const settingsBtn = document.getElementById("settings-btn");
+    const settingsPage = document.getElementById("settings-page");
+    const settingsCloseBtn = document.getElementById("settings-close-btn");
+    const setNicknameBtn = document.getElementById("set-nickname-btn");
+    const themeSelect = document.getElementById("theme-select");
+    const headerUserInfo = document.getElementById("header-user-info");
+    const userPfp = document.getElementById("user-pfp");
+    const displayUsername = document.getElementById("display-username");
+    const friendsList = document.getElementById("friends-list");
+    const usersList = document.getElementById("users-list");
+    const groupsList = document.getElementById("groups-list");
+    const myGroupsList = document.getElementById("my-groups-list");
+    const createGroupBtn = document.getElementById("create-group-btn");
+
+    let currentUserNickname = "Guest";
+
+    // Auth
+    signInBtn.onclick = () => {
+      const provider = new GoogleAuthProvider();
+      signInWithPopup(auth, provider).catch(e => alert("Sign-in failed: " + e.message));
+    };
+    signOutBtn.onclick = () => {
+      signOut(auth).catch(e => alert("Sign-out failed: " + e.message));
     };
 
-    // If already signed in, redirect
-    onAuthStateChanged(auth, user => {
-      if (user) window.location.href = "global.html";
+    // Settings modal
+    settingsBtn.onclick = () => settingsPage.classList.add("active");
+    settingsCloseBtn.onclick = () => settingsPage.classList.remove("active");
+
+    // Theme
+    function applyTheme(themeName) {
+      document.body.classList.remove('theme-default', 'theme-dark', 'theme-light');
+      document.body.classList.add(`theme-${themeName}`);
+      localStorage.setItem('chatzTheme', themeName);
+      themeSelect.value = themeName;
+    }
+    themeSelect.addEventListener('change', (event) => applyTheme(event.target.value));
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('chatzTheme') || 'default';
+      applyTheme(savedTheme);
+    });
+
+    // Nickname
+    setNicknameBtn.onclick = async () => {
+      if (!auth.currentUser) return alert("Sign in to set a nickname.");
+      const newNickname = prompt(`Enter your new nickname (current: ${currentUserNickname || 'None'}):`);
+      if (newNickname === null || newNickname.trim() === "") return;
+      const userRef = ref(db, `users/${auth.currentUser.uid}`);
+      try {
+        await update(userRef, { nickname: newNickname.trim() });
+        currentUserNickname = newNickname.trim();
+        displayUsername.textContent = currentUserNickname;
+        alert("Nickname updated!");
+      } catch (error) {
+        alert("Failed to set nickname.");
+      }
+    };
+
+    // Sidebar population
+    function updateUsersAndFriends() {
+      usersList.innerHTML = "";
+      friendsList.innerHTML = "";
+      if (!auth.currentUser) return;
+      const myUid = auth.currentUser.uid;
+      onValue(ref(db, "users"), (snap) => {
+        const users = snap.val() || {};
+        usersList.innerHTML = "";
+        friendsList.innerHTML = "";
+        onValue(ref(db, `friends/${myUid}`), (friendSnap) => {
+          const friends = friendSnap.exists() ? Object.keys(friendSnap.val()) : [];
+          Object.entries(users).forEach(([uid, user]) => {
+            if (uid === myUid) return;
+            const nameToDisplay = user.nickname || user.displayName || "Anonymous";
+            // Friends
+            if (friends.includes(uid)) {
+              const li = document.createElement("li");
+              li.textContent = nameToDisplay;
+              li.onclick = () => window.location.href = `global.html?type=dm&uid=${uid}`;
+              friendsList.appendChild(li);
+            } else {
+              // Users
+              const li = document.createElement("li");
+              li.textContent = nameToDisplay;
+              li.onclick = () => window.location.href = `global.html?type=dm&uid=${uid}`;
+              const addFriendBtn = document.createElement("button");
+              addFriendBtn.innerHTML = "&#x271A;";
+              addFriendBtn.classList.add("friend-btn");
+              addFriendBtn.title = `Add ${nameToDisplay}`;
+              addFriendBtn.onclick = async (e) => {
+                e.stopPropagation();
+                await set(ref(db, `friends/${myUid}/${uid}`), true);
+                await set(ref(db, `friends/${uid}/${myUid}`), true);
+              };
+              li.appendChild(addFriendBtn);
+              usersList.appendChild(li);
+            }
+          });
+        });
+      });
+    }
+
+    function updateGroups() {
+      groupsList.innerHTML = "";
+      myGroupsList.innerHTML = "";
+      if (!auth.currentUser) return;
+      const myUid = auth.currentUser.uid;
+      onValue(ref(db, "groups"), (snap) => {
+        const groups = snap.val() || {};
+        groupsList.innerHTML = "";
+        myGroupsList.innerHTML = "";
+        Object.entries(groups).forEach(([groupId, group]) => {
+          const isMember = group.members && Object.keys(group.members).includes(myUid);
+          const li = document.createElement("li");
+          li.textContent = group.name;
+          li.onclick = () => window.location.href = `global.html?type=group&id=${groupId}`;
+          if (isMember) {
+            const myLi = li.cloneNode(true);
+            myLi.onclick = li.onclick;
+            myGroupsList.appendChild(myLi);
+          } else {
+            groupsList.appendChild(li);
+          }
+        });
+      });
+    }
+
+    createGroupBtn.onclick = async () => {
+      if (!auth.currentUser) return alert("Sign in to create groups.");
+      const name = prompt("Enter group name:");
+      if (!name || name.trim() === "") return;
+      try {
+        const newGroupRef = push(ref(db, "groups"));
+        await set(newGroupRef, {
+          name: name.trim(),
+          createdBy: auth.currentUser.uid,
+          createdAt: Date.now(),
+          members: {
+            [auth.currentUser.uid]: true
+          }
+        });
+        alert(`Group "${name}" created!`);
+      } catch (error) {
+        alert("Failed to create group.");
+      }
+    };
+
+    // Auth state UI
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        signInBtn.style.display = "none";
+        signOutBtn.style.display = "inline-block";
+        settingsBtn.style.display = "inline-block";
+        headerUserInfo.style.display = "flex";
+        const userRef = ref(db, `users/${user.uid}`);
+        get(userRef).then(snapshot => {
+          const userData = snapshot.val();
+          if (userData && userData.nickname) {
+            currentUserNickname = userData.nickname;
+          } else {
+            currentUserNickname = user.displayName || "Anonymous";
+            update(userRef, { nickname: currentUserNickname });
+          }
+          displayUsername.textContent = currentUserNickname;
+          userPfp.src = user.photoURL || "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
+        });
+        updateUsersAndFriends();
+        updateGroups();
+      } else {
+        signInBtn.style.display = "inline-block";
+        signOutBtn.style.display = "none";
+        settingsBtn.style.display = "none";
+        headerUserInfo.style.display = "none";
+        displayUsername.textContent = "Guest";
+        userPfp.src = "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
+        friendsList.innerHTML = "";
+        usersList.innerHTML = "";
+        groupsList.innerHTML = "";
+        myGroupsList.innerHTML = "";
+      }
     });
   </script>
 </body>
