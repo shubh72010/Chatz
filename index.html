@@ -431,9 +431,14 @@
       set,
       get,
       onValue,
-      remove,
       update
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+    import {
+      pushData,
+      setData,
+      getData,
+      listenValue
+    } from "./firebaseHelpers.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
