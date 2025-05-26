@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat App - Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="home-screen">
+    <div class="user-profile">
+      <img src="profile-pic.png" alt="Profile Picture" class="profile-pic" id="profile-pic">
+      <h2 id="username">User Name</h2>
+    </div>
+
+    <div class="group-list">
+      <h3>Chats</h3>
+      <ul>
+        <li><a href="global.html">🌐 Global Chat</a></li>
+        <li><a href="#">🔥 Gaming Squad</a></li>
+        <li><a href="#">📚 Study Buddies</a></li>
+        <!-- More groups -->
+      </ul>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, onAuthStateChanged } from './firebase-config.js';
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        document.getElementById('username').textContent = user.displayName || 'Unnamed';
+        document.getElementById('profile-pic').src = user.photoURL || 'default-pfp.png';
+      } else {
+        window.location.href = "login.html"; // or show sign-in
+      }
+    });
+  </script>
+</body>
+</html>
