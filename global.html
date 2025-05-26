@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Global Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <h2>🌐 Global Chat</h2>
+      <a href="home.html" class="back-btn">← Back</a>
+    </div>
+
+    <div id="chat-box" class="chat-box"></div>
+
+    <div id="typing-indicator" class="typing-indicator" style="display: none;">
+      Someone is typing...
+    </div>
+
+    <form id="chat-form" class="chat-form">
+      <input type="text" id="chat-input" placeholder="Type a message..." required />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <script type="module">
+    import {
+      auth, db, onAuthStateChanged,
+      collection, query, orderBy, addDoc,
+      serverTimestamp, onSnapshot, doc, setDoc
+    } from './firebase-config.js';
+
+    const chatBox = document.getElementById("chat-box");
+    const chatForm = document.getElementById("chat-form");
+    const chatInput = document.getElementById("chat-input");
+    const typingIndicator = document.getElementById("typing-indicator");
+
+    let currentUser;
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+      } else {
+        currentUser = user;
+
+        const q = query(collection(db, "global"), orderBy("timestamp"));
+        onSnapshot(q, (snapshot) => {
+          chatBox.innerHTML = "";
+          snapshot.forEach((doc) => {
+            const msg = doc.data();
+            const msgDiv = document.createElement("div");
+            msgDiv.className = msg.uid === currentUser.uid ? "chat-bubble user" : "chat-bubble";
+            msgDiv.innerHTML = `
+              <strong>${msg.name || "Anon"}</strong>: ${msg.text}
+              <span class="timestamp">${new Date(msg.timestamp?.toDate()).toLocaleTimeString()}</span>
+            `;
+            chatBox.appendChild(msgDiv);
+          });
+          chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        const typingDocRef = doc(db, "typing", "global");
+        let typingTimeout;
+
+        chatInput.addEventListener("input", () => {
+          clearTimeout(typingTimeout);
+          setDoc(typingDocRef, { typing: true, name: currentUser.displayName }, { merge: true });
+          typingTimeout = setTimeout(() => {
+            setDoc(typingDocRef, { typing: false }, { merge: true });
+          }, 2000);
+        });
+
+        onSnapshot(typingDocRef, (doc) => {
+          const data = doc.data();
+          if (data.typing && data.name !== currentUser.displayName) {
+            typingIndicator.style.display = "block";
+            typingIndicator.textContent = `${data.name} is typing...`;
+          } else {
+            typingIndicator.style.display = "none";
+          }
+        });
+
+        chatForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const text = chatInput.value.trim();
+          if (text) {
+            await addDoc(collection(db, "global"), {
+              text,
+              name: currentUser.displayName || "Anon",
+              uid: currentUser.uid,
+              timestamp: serverTimestamp()
+            });
+            chatInput.value = "";
+            await setDoc(typingDocRef, { typing: false }, { merge: true });
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
