@@ -3,29 +3,76 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chat App Landing</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="scripts.js" defer></script>
+  <title>Chatz | Welcome</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #a259ff, #5f27cd);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+    }
+    h1 { font-size: 3rem; margin-bottom: 1rem; }
+    p { font-size: 1.2rem; margin-bottom: 2rem; }
+    #sign-in {
+      background: #a259ff;
+      color: #fff;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 0 10px #c3aaff;
+      transition: background 0.3s;
+    }
+    #sign-in:hover { background: #5f27cd; }
+    .footer {
+      position: fixed;
+      bottom: 10px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      color: #e0e0e0;
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Welcome to Flay's Chat App</h1>
-    <nav>
-      <a href="global.html">Enter Chat Room</a>
-    </nav>
-  </header>
+  <h1>Welcome to Chatz</h1>
+  <p>Sign in to start chatting with friends and groups!</p>
+  <button id="sign-in">Sign In with Google</button>
+  <div class="footer">Made with ❤️ by Flakious</div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 
-  <main>
-    <section>
-      <h2>About This App</h2>
-      <p>This is a custom chat app with Firebase backend, voice/video calls, and more.</p>
-      <p>Click the button below to jump straight into the chat.</p>
-      <button onclick="location.href='global.html'">Start Chatting</button>
-    </section>
-  </main>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+      authDomain: "chatz-45df4.firebaseapp.com",
+      projectId: "chatz-45df4",
+      appId: "1:463847844545:web:5006247d061c3e0dc28240"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
-  <footer>
-    <p>© 2025 Flay's Chat App</p>
-  </footer>
+    document.getElementById("sign-in").onclick = () => {
+      signInWithPopup(auth, provider)
+        .then(() => window.location.href = "global.html")
+        .catch(e => alert("Sign-in failed: " + e.message));
+    };
+
+    // If already signed in, redirect
+    onAuthStateChanged(auth, user => {
+      if (user) window.location.href = "global.html";
+    });
+  </script>
 </body>
 </html>
