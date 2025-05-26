@@ -1,108 +1,131 @@
-import { initializeApp } from "firebase/app";
+// chatLogic.js
 import {
-  getFirestore,
-  collection,
-  doc,
-  addDoc,
-  getDocs,
-  query,
-  orderBy,
-  serverTimestamp
-} from "firebase/firestore";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+import {
+  getDatabase,
+  ref
+} from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+import {
+  pushData,
+  setData,
+  getData,
+  listenValue,
+  listenChildAdded,
+  removeListener
+} from "./firebaseHelpers.js";
 
-// Firebase config (replace with your actual config if not already initialized)
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_BUCKET",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
+// --- Firebase Setup ---
+const db = getDatabase();
+const auth = getAuth();
+const provider = new GoogleAuthProvider();
 
-// Init
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+// --- DOM ---
+const chat = document.getElementById("chat");
+const form = document.getElementById("chat-form");
+const usernameInput = document.getElementById("username");
+const messageInput = document.getElementById("message");
+const sendBtn = document.getElementById("send-btn");
+const replyPreview = document.getElementById("reply-preview");
+const replyText = document.getElementById("reply-text");
+const cancelReplyBtn = document.getElementById("cancel-reply");
+const signInBtn = document.getElementById("sign-in");
+const signOutBtn = document.getElementById("sign-out");
+const friendsList = document.getElementById("friends-list");
+const usersList = document.getElementById("users-list");
+const groupsList = document.getElementById("groups-list");
+const myGroupsList = document.getElementById("my-groups-list");
+const createGroupBtn = document.getElementById("create-group-btn");
+const publicChatBtn = document.getElementById("public-chat");
 
-let currentUserId = null;
-let currentChatId = "default"; // Change if using multiple chats
+let replyTo = null;
+let chatContext = { type: "public" };
+let chatListener = null;
+let chatListenerRef = null;
 
-const chatContainer = document.getElementById("chat");
-const messageForm = document.getElementById("message-form");
-const messageInput = document.getElementById("message-input");
-
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    currentUserId = user.uid;
-    loadMessages();
-  } else {
-    console.error("Not logged in");
-  }
-});
-
-// Load messages
-async function loadMessages() {
-  const messagesRef = collection(db, "users", currentUserId, "chats", currentChatId, "messages");
-  const q = query(messagesRef, orderBy("timestamp", "asc"));
-  const querySnapshot = await getDocs(q);
-
-  chatContainer.innerHTML = ""; // Clear existing messages
-
-  querySnapshot.forEach((doc) => {
-    const message = doc.data();
-    renderMessage(message.text, message.sender === "user");
-  });
-
-  scrollToBottom();
+// --- Utility ---
+function escapeHtml(text) {
+  return text.replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
 }
-
-// Save message
-async function saveMessage(text, sender) {
-  const messagesRef = collection(db, "users", currentUserId, "chats", currentChatId, "messages");
-  await addDoc(messagesRef, {
-    text,
-    sender,
-    timestamp: serverTimestamp()
-  });
+function truncate(str, n) {
+  return str.length > n ? str.substr(0, n - 1) + "…" : str;
 }
-
-// Send user message
-messageForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const userMessage = messageInput.value.trim();
-  if (!userMessage) return;
-
-  renderMessage(userMessage, true);
-  await saveMessage(userMessage, "user");
-  messageInput.value = "";
-
-  // Simulate AI response (replace with actual API call)
-  const aiResponse = await getAIResponse(userMessage);
-  renderMessage(aiResponse, false);
-  await saveMessage(aiResponse, "ai");
-});
-
-// Render message
-function renderMessage(text, isUser) {
-  const msg = document.createElement("div");
-  msg.classList.add("message", isUser ? "user-message" : "ai-message");
-  msg.textContent = text;
-  chatContainer.appendChild(msg);
-}
-
-// Simulated AI response
-async function getAIResponse(userInput) {
-  // Replace with your real backend call to Flask/OpenAI
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve("This is a dummy AI response to: " + userInput);
-    }, 500);
-  });
-}
-
-// Scroll to bottom
 function scrollToBottom() {
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  chat.scrollTop = chat.scrollHeight;
+}
+function clearChat() {
+  chat.innerHTML = "";
+}
+function setSidebarSelected(type, id) {
+  document.querySelectorAll('.sidebar-list li').forEach(li => li.classList.remove('selected'));
+  if (type === "public") publicChatBtn.classList.add('selected');
+  else if (type === "dm") {
+    const li = document.querySelector(`li[data-uid="${id}"]`);
+    if (li) li.classList.add('selected');
+  } else if (type === "group") {
+    const li = document.querySelector(`li[data-groupid="${id}"]`);
+    if (li) li.classList.add('selected');
+  }
+}
+function getChatRef() {
+  if (chatContext.type === "public") {
+    return ref(db, "messages");
+  } else if (chatContext.type === "dm") {
+    const uid1 = auth.currentUser.uid;
+    const uid2 = chatContext.uid;
+    const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+    return ref(db, `dms/${chatId}`);
+  } else if (chatContext.type === "group") {
+    return ref(db, `groups/${chatContext.groupId}/messages`);
+  }
+}
+function setChatContext(ctx) {
+  chatContext = ctx;
+  clearChat();
+  if (chatListenerRef && chatListener) {
+    removeListener(chatListenerRef, "child_added", chatListener);
+  }
+  loadMessages();
+}
+
+// --- Chat History ---
+function loadMessages() {
+  clearChat();
+  const chatRef = getChatRef();
+  chatListenerRef = chatRef;
+  chatListener = listenChildAdded(chatRef, (snapshot) => {
+    const data = snapshot.val();
+    const msgDiv = document.createElement("div");
+    msgDiv.className = "message";
+    if (auth.currentUser && data.uid === auth.currentUser.uid) msgDiv.classList.add("own");
+    let replyHTML = "";
+    if (data.replyTo) {
+      replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--main); padding-left: 6px; color:#fff;">
+        Reply to: <strong>${escapeHtml(data.replyTo.name)}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
+      </div>`;
+    }
+    msgDiv.innerHTML = `
+      ${replyHTML}
+      <strong>${escapeHtml(data.name)}</strong>: ${escapeHtml(data.message)}
+      <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+    `;
+    msgDiv.addEventListener("click", () => {
+      if (!auth.currentUser) return;
+      if (data.uid === auth.currentUser.uid) return;
+      replyTo = { id: snapshot.key, name: data.name, message: data.message };
+      replyText.textContent = `${replyTo.name}: ${truncate(replyTo.message, 50)}`;
+      replyPreview.style.display = "flex";
+      messageInput.focus();
+    });
+    chat.appendChild(msgDiv);
+    scrollToBottom();
+  });
 }
