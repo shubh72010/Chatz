@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz | Global Chat</title>
+  <!-- Instantly apply theme -->
   <script>
     (function() {
       var theme = localStorage.getItem('chatzTheme') || 'default';
@@ -149,10 +150,7 @@
       height: 32px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid var(--main);
-      background: #fff;
-    }
-    .chat-input-bar {
+      border:-input-bar {
       display: flex;
       align-items: center;
       gap: 0.7rem;
@@ -245,7 +243,7 @@
       get
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-    // Firebase config
+    // Firebase config (your actual config)
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
       authDomain: "chatz-45df4.firebaseapp.com",
@@ -290,7 +288,6 @@
     // Listen for auth
     onAuthStateChanged(auth, (user) => {
       myUser = user;
-      // Optionally, prompt for sign in if not signed in
       chatInput.disabled = !user;
       if (!user) {
         chatInput.placeholder = "Sign in to chat";
