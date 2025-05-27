@@ -1,28 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz</title>
-  <script src="https://kit.fontawesome.com/391827d54c.js" crossorigin="anonymous"></script>
+  <!-- Instant theme application -->
+  <script>
+    (function() {
+      var theme = localStorage.getItem('chatzTheme') || 'default';
+      document.documentElement.className = 'theme-' + theme;
+    })();
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/391827d54c.js" crossorigin="anonymous"></script>
   <style>
     :root {
       --main: #a259ff;
       --accent: #5f27cd;
-      --sidebar-bg: #2c2045;
-      --sidebar-light: #382759;
-      --header-bg: #fff;
-      --chat-bg: #f7f4fb;
+      --danger: #ff5252;
+      --settings-bg: rgba(44,32,69,0.96);
       --text: #f0eaff;
-      --text-dark: #2c2045;
+      --input-bg: rgba(255,255,255,0.16);
+      --dark-bg: #131324;
+      --dark-card: #191938;
+      --dark-input: #191938;
+      --dark-text: #f0eaff;
+      --light-bg: #f7f4fb;
+      --light-card: #fff;
+      --light-input: #f2edfd;
+      --light-text: #2c2045;
+      --bg: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%);
     }
+    .theme-default { --main: #a259ff; --accent: #5f27cd; --settings-bg: rgba(44,32,69,0.96); --text: #f0eaff; --input-bg: rgba(255,255,255,0.16); --bg: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%);}
+    .theme-dark    { --main: #a259ff; --accent: #5f27cd; --settings-bg: #191938; --text: #f0eaff; --input-bg: #191938; --bg: #131324;}
+    .theme-light   { --main: #a259ff; --accent: #5f27cd; --settings-bg: #fff; --text: #2c2045; --input-bg: #f2edfd; --bg: #f7f4fb;}
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
       font-family: 'Poppins', sans-serif;
-      background: var(--chat-bg);
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
       overflow: hidden;
     }
@@ -34,15 +52,11 @@
       display: flex;
       flex-direction: row;
     }
-    .main-container {
-      flex: 1;
-      min-width: 0;
-      min-height: 0;
-    }
+    .main-container { flex: 1; min-width: 0; min-height: 0;}
     .left-container {
       width: 340px;
       min-width: 220px;
-      background: var(--sidebar-bg);
+      background: var(--settings-bg);
       display: flex;
       flex-direction: column;
       box-shadow: 2px 0 18px #0002;
@@ -54,302 +68,42 @@
       align-items: center;
       justify-content: space-between;
       padding: 1.2rem 1rem 1rem 1rem;
-      background: var(--sidebar-light);
+      background: var(--settings-bg);
       min-height: 78px;
       flex-shrink: 0;
     }
-    .sidebar-header .user-info {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-    }
-    .sidebar-header .user-img {
-      width: 46px;
-      height: 46px;
-      border-radius: 50%;
-      overflow: hidden;
-    }
-    .sidebar-header .user-img img {
-      width: 46px;
-      height: 46px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 2px solid var(--main);
-      background: #fff;
-      transition: border 0.2s;
-    }
-    .sidebar-header .user-name {
-      color: var(--main);
-      font-size: 1.08rem;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-      max-width: 110px;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-    .sidebar-header .sign-in-btn {
-      background: var(--main);
-      color: #fff;
-      border: none;
-      border-radius: 2rem;
-      padding: 0.47rem 1.1rem;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 2px 8px #a259ff33;
-      transition: background 0.2s, box-shadow 0.2s;
-      margin-left: 0.85rem;
-      min-width: 68px;
-    }
-    .sidebar-header .sign-in-btn:hover {
-      background: var(--accent);
-      box-shadow: 0 4px 16px #a259ff44;
-    }
-    .sidebar-header .nav-icons {
-      display: flex;
-      gap: 1.15rem;
-      color: #fff;
-      font-size: 1.2rem;
-      margin-left: 0.75rem;
-    }
-    .sidebar-header .nav-icons li {
-      list-style: none;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-    .sidebar-header .nav-icons li:hover {
-      color: var(--main);
-    }
-    .search-container {
-      display: flex;
-      align-items: center;
-      background: #2c2045;
-      padding: 0.55rem 1rem;
-      border-bottom: 1px solid #a259ff33;
-      gap: 0.85rem;
-      flex-shrink: 0;
-    }
-    .search-container .input {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      background: #382759;
-      border-radius: 1.2rem;
-      padding: 0.37rem 0.8rem;
-      color: #ccc;
-    }
-    .search-container input {
-      border: none;
-      outline: none;
-      background: transparent;
-      color: #fff;
-      font-size: 1rem;
-      margin-left: 0.6rem;
-      width: 100%;
-    }
-    .search-container .fa-bars-filter {
-      color: #a259ff;
-      font-size: 1.1rem;
-      margin-left: 0.8rem;
-      cursor: pointer;
-    }
-    .chat-list {
-      flex: 1;
-      overflow-y: auto;
-      background: var(--sidebar-bg);
-      padding-top: 10px;
-      min-height: 0;
-      min-width: 0;
-    }
-    .chat-box {
-      display: flex;
-      align-items: center;
-      padding: 0.62rem 1.05rem 0.62rem 1.05rem;
-      border-bottom: 1px solid #382759;
-      cursor: pointer;
-      transition: background 0.17s;
-      gap: 1.04rem;
-      min-width: 0;
-    }
-    .chat-box.active, .chat-box:hover {
-      background: var(--sidebar-light);
-    }
-    .chat-box .img-box {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .chat-box .img-box img {
-      width: 38px;
-      height: 38px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 2px solid var(--main);
-      background: #fff;
-    }
-    .chat-details {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-    .text-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      color: #fff;
-      gap: 0.7rem;
-    }
-    .text-head h4 {
-      margin: 0;
-      font-size: 1.00rem;
-      font-weight: 600;
-      letter-spacing: 0.1px;
-      max-width: 103px;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-    .text-head .time {
-      font-size: 0.94rem;
-      color: #aaa;
-      font-weight: 400;
-      flex-shrink: 0;
-    }
-    .text-head .unread {
-      color: var(--main);
-      font-weight: 700;
-    }
-    .text-message {
-      color: #aaa;
-      display: flex;
-      align-items: center;
-      gap: 0.55rem;
-      font-size: 0.98rem;
-      margin-top: 0.04rem;
-      min-width: 0;
-    }
-    .text-message b {
-      background: var(--main);
-      color: #fff;
-      border-radius: 1.2rem;
-      padding: 2px 6px;
-      font-size: 0.89rem;
-      margin-left: 0.55rem;
-    }
-    .no-users-msg {
-      color: #ccc;
-      margin: 1.2rem auto 1rem auto;
-      font-size: 1.05rem;
-      text-align: center;
-      display: none;
-    }
-    .right-container {
-      flex: 1;
-      min-width: 0;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-      background: var(--chat-bg);
-      position: relative;
-    }
-    .right-header {
-      width: 100%;
-      height: 65px;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding: 0 2.2rem 0 1.5rem;
-      background: var(--header-bg);
-      color: var(--main);
-      box-shadow: 0 4px 32px #a259ff11;
-      position: relative;
-      z-index: 20;
-      font-size: 1.53rem;
-      font-weight: 800;
-      letter-spacing: 2px;
-      user-select: none;
-      flex-shrink: 0;
-    }
-    .welcome-section {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 1.2rem;
-      color: var(--main);
-      font-size: 1.35rem;
-      font-weight: 600;
-      text-align: center;
-      opacity: 0.92;
-      min-width: 0;
-      min-height: 0;
-    }
-    .pill-button {
-      background: var(--main);
-      color: #fff;
-      border: none;
-      border-radius: 2rem;
-      padding: 0.7rem 2.1rem;
-      font-size: 1.23rem;
-      font-weight: 700;
-      box-shadow: 0 2px 12px #a259ff33;
-      cursor: pointer;
-      transition: background 0.2s;
-      margin-top: 1.2rem;
-    }
-    .pill-button:hover {
-      background: var(--accent);
-    }
-    .footer {
-      position: fixed;
-      bottom: 10px;
-      left: 0;
-      width: 100%;
-      text-align: center;
-      color: #aaa;
-      font-size: 0.9rem;
-      opacity: 0.7;
-      z-index: 100;
-      pointer-events:none;
-      user-select: none;
-    }
-    #circle-nav {
-      position: fixed;
-      bottom: 2.5rem;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 1.3rem;
-      z-index: 200;
-      background: rgba(44,32,69,0.9);
-      border-radius: 2.2rem;
-      padding: 1rem 1.2rem;
-      box-shadow: 0 4px 24px #a259ff33;
-    }
-    #circle-nav button {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      border: none;
-      background: var(--main);
-      color: #fff;
-      font-size: 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s, box-shadow 0.2s;
-      cursor: pointer;
-      box-shadow: 0 2px 8px #a259ff33;
-    }
-    #circle-nav button:hover {
-      background: var(--accent);
-    }
+    .sidebar-header .user-info { display: flex; align-items: center; gap: 0.8rem;}
+    .sidebar-header .user-img { width: 46px; height: 46px; border-radius: 50%; overflow: hidden;}
+    .sidebar-header .user-img img { width: 46px; height: 46px; object-fit: cover; border-radius: 50%; border: 2px solid var(--main); background: #fff;}
+    .sidebar-header .user-name { color: var(--main); font-size: 1.08rem; font-weight: 600; letter-spacing: 0.2px; max-width: 110px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;}
+    .sidebar-header .sign-in-btn { background: var(--main); color: #fff; border: none; border-radius: 2rem; padding: 0.47rem 1.1rem; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px #a259ff33; transition: background 0.2s, box-shadow 0.2s; margin-left: 0.85rem; min-width: 68px;}
+    .sidebar-header .sign-in-btn:hover { background: var(--accent); box-shadow: 0 4px 16px #a259ff44;}
+    .sidebar-header .nav-icons { display: flex; gap: 1.15rem; color: #fff; font-size: 1.2rem; margin-left: 0.75rem;}
+    .sidebar-header .nav-icons li { list-style: none; cursor: pointer; transition: color 0.2s;}
+    .sidebar-header .nav-icons li:hover { color: var(--main);}
+    .search-container { display: flex; align-items: center; background: var(--settings-bg); padding: 0.55rem 1rem; border-bottom: 1px solid #a259ff33; gap: 0.85rem; flex-shrink: 0;}
+    .search-container .input { flex: 1; display: flex; align-items: center; background: var(--input-bg); border-radius: 1.2rem; padding: 0.37rem 0.8rem; color: #ccc;}
+    .search-container input { border: none; outline: none; background: transparent; color: var(--main); font-size: 1rem; margin-left: 0.6rem; width: 100%;}
+    .search-container .fa-bars-filter { color: var(--main); font-size: 1.1rem; margin-left: 0.8rem; cursor: pointer;}
+    .chat-list { flex: 1; overflow-y: auto; background: var(--settings-bg); padding-top: 10px; min-height: 0; min-width: 0;}
+    .chat-box { display: flex; align-items: center; padding: 0.62rem 1.05rem 0.62rem 1.05rem; border-bottom: 1px solid #382759; cursor: pointer; transition: background 0.17s; gap: 1.04rem; min-width: 0;}
+    .chat-box.active, .chat-box:hover { background: var(--accent);}
+    .chat-box .img-box { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; flex-shrink: 0;}
+    .chat-box .img-box img { width: 38px; height: 38px; object-fit: cover; border-radius: 50%; border: 2px solid var(--main); background: #fff;}
+    .chat-details { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;}
+    .text-head { display: flex; align-items: center; justify-content: space-between; color: #fff; gap: 0.7rem;}
+    .text-head h4 { margin: 0; font-size: 1.00rem; font-weight: 600; letter-spacing: 0.1px; max-width: 103px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;}
+    .text-message { color: #aaa; display: flex; align-items: center; gap: 0.55rem; font-size: 0.98rem; margin-top: 0.04rem; min-width: 0;}
+    .no-users-msg { color: #ccc; margin: 1.2rem auto 1rem auto; font-size: 1.05rem; text-align: center; display: none;}
+    .right-container { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--bg); position: relative;}
+    .right-header { width: 100%; height: 65px; display: flex; align-items: center; justify-content: flex-end; padding: 0 2.2rem 0 1.5rem; background: var(--settings-bg); color: var(--main); box-shadow: 0 4px 32px #a259ff11; position: relative; z-index: 20; font-size: 1.53rem; font-weight: 800; letter-spacing: 2px; user-select: none; flex-shrink: 0;}
+    .welcome-section { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1.2rem; color: var(--main); font-size: 1.35rem; font-weight: 600; text-align: center; opacity: 0.92; min-width: 0; min-height: 0;}
+    .pill-button { background: var(--main); color: #fff; border: none; border-radius: 2rem; padding: 0.7rem 2.1rem; font-size: 1.23rem; font-weight: 700; box-shadow: 0 2px 12px #a259ff33; cursor: pointer; transition: background 0.2s; margin-top: 1.2rem;}
+    .pill-button:hover { background: var(--accent);}
+    .footer { position: fixed; bottom: 10px; left: 0; width: 100%; text-align: center; color: #aaa; font-size: 0.9rem; opacity: 0.7; z-index: 100; pointer-events:none; user-select: none;}
+    #circle-nav { position: fixed; bottom: 2.5rem; left: 50%; transform: translateX(-50%); display: flex; gap: 1.3rem; z-index: 200; background: rgba(44,32,69,0.9); border-radius: 2.2rem; padding: 1rem 1.2rem; box-shadow: 0 4px 24px #a259ff33;}
+    #circle-nav button { width: 48px; height: 48px; border-radius: 50%; border: none; background: var(--main); color: #fff; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s, box-shadow 0.2s; cursor: pointer; box-shadow: 0 2px 8px #a259ff33;}
+    #circle-nav button:hover { background: var(--accent);}
     @media (max-width: 1100px) {
       .left-container { width: 210px; min-width: 120px;}
       .sidebar-header .user-img, .sidebar-header .user-img img { width: 38px; height: 38px;}
@@ -411,7 +165,7 @@
       </div>
       <div class="welcome-section" id="welcome-section">
         <div>👋 Welcome to Chatz</div>
-        <div style="font-size:1.02rem;font-weight:400; color:#5f27cd">Select a user on the left to start chatting.<br>Or join the <b>Global Chat</b>!</div>
+        <div style="font-size:1.02rem;font-weight:400; color:var(--accent)">Select a user on the left to start chatting.<br>Or join the <b>Global Chat</b>!</div>
         <button class="pill-button" onclick="window.location.href='global.html'">Global Chat</button>
       </div>
       <div class="footer">Made with ❤️ by Flakious</div>
@@ -433,8 +187,6 @@
       ref,
       onValue
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
       authDomain: "chatz-45df4.firebaseapp.com",
@@ -448,7 +200,6 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // DOM
     const signInBtn = document.getElementById("sign-in");
     const userPfp = document.getElementById("user-pfp");
     const displayUsername = document.getElementById("display-username");
@@ -509,7 +260,6 @@
         displayUsername.textContent = user.displayName || "Anonymous";
         userPfp.src = user.photoURL || "https://via.placeholder.com/46/2c2045/f0eaff?text=?";
         myUid = user.uid;
-        // Fetch users from DB
         onValue(ref(db, "users"), (snap) => {
           const users = snap.val() || {};
           allUsers = [];
