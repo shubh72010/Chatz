@@ -43,9 +43,7 @@
       font-size: 0.9rem;
       transition: background-color 0.2s ease;
     }
-    button.auth-btn:hover {
-      background: #5c58e0;
-    }
+    button.auth-btn:hover { background: #5c58e0; }
     #chat {
       flex: 1;
       overflow-y: auto;
@@ -114,17 +112,6 @@
       gap: 0.5rem;
       align-items: center;
     }
-    #username {
-      flex: 1 1 auto;
-      padding: 0.6rem 1rem;
-      border-radius: 1rem;
-      border: none;
-      outline: none;
-      background: #44415e;
-      color: white;
-      font-size: 1rem;
-      user-select: none;
-    }
     #message {
       flex: 3 1 auto;
       padding: 0.6rem 1rem;
@@ -151,12 +138,9 @@
       background: #44415e;
       cursor: not-allowed;
     }
-    button#send-btn:hover:not(:disabled) {
-      background: #5c58e0;
-    }
+    button#send-btn:hover:not(:disabled) { background: #5c58e0; }
     @media (max-width: 480px) {
       form { flex-wrap: wrap; }
-      #username { flex: 1 1 100%; margin-bottom: 0.5rem; user-select: none; }
       #message { flex: 1 1 100%; }
       button#send-btn { flex: 1 1 100%; margin-top: 0.5rem; }
     }
@@ -180,7 +164,6 @@
     <button id="cancel-reply" title="Cancel reply">&times;</button>
   </div>
   <form id="chat-form">
-    <input type="text" id="username" readonly placeholder="Sign in to chat" />
     <input type="text" id="message" placeholder="Type a message..." disabled autocomplete="off" required />
     <button id="send-btn" type="submit" disabled>Send</button>
   </form>
@@ -215,7 +198,6 @@
     const provider = new GoogleAuthProvider();
     const chat = document.getElementById("chat");
     const form = document.getElementById("chat-form");
-    const usernameInput = document.getElementById("username");
     const messageInput = document.getElementById("message");
     const sendBtn = document.getElementById("send-btn");
     const replyPreview = document.getElementById("reply-preview");
@@ -306,18 +288,14 @@
     });
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        usernameInput.value = user.displayName || "Anonymous";
-        usernameInput.readOnly = true;
-        usernameInput.style.userSelect = "none";
         messageInput.disabled = false;
         sendBtn.disabled = false;
         signInBtn.style.display = "none";
         signOutBtn.style.display = "inline-block";
-        usernameInput.placeholder = "";
+        messageInput.placeholder = "Type a message...";
       } else {
-        usernameInput.value = "";
-        usernameInput.placeholder = "Sign in to chat";
-        usernameInput.readOnly = true;
+        messageInput.value = "";
+        messageInput.placeholder = "Sign in to chat";
         messageInput.disabled = true;
         sendBtn.disabled = true;
         signInBtn.style.display = "inline-block";
