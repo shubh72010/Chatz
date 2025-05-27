@@ -45,7 +45,6 @@
     header {
       width: 100vw;
       text-align: center;
-      padding: 0;
       font-size: 2rem;
       font-weight: 700;
       color: var(--main);
@@ -60,6 +59,7 @@
       top: 0; left: 0; right: 0;
       z-index: 10;
       min-height: 60px;
+      padding: 0;
     }
     .header-left {
       min-width: 170px;
@@ -85,10 +85,11 @@
       align-items: center;
       justify-content: flex-end;
       gap: 1.3rem;
- {
+      min-height: 0;
+    }
+    .chat-container {
       background: var(--settings-bg);
       border-radius: 2rem;
-      padding: 1.2rem 1.1rem 0.4rem 1.1rem;
       box-shadow: 0 4px 32px #a259ff33;
       width: 98vw;
       max-width: 700px;
@@ -98,6 +99,7 @@
       flex-direction: column;
       gap: 0.8rem;
       min-height: 0;
+      padding: 1.2rem 1.1rem 0.4rem 1.1rem;
     }
     .messages-list {
       flex: 1;
@@ -237,10 +239,10 @@
       getDatabase,
       ref,
       push,
-      serverTimestamp,
       onChildAdded,
       query,
-      limitToLast
+      limitToLast,
+      get
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     // Firebase config
@@ -300,7 +302,11 @@
       } else {
         chatInput.placeholder = "Type a message...";
         chatInput.style.opacity = 1;
-        chatInput.onclick = null for last 100 messages, real-time
+        chatInput.onclick = null;
+      }
+    });
+
+    // Listen for last 100 messages, real-time
     const chatRef = query(ref(db, "globalChat"), limitToLast(100));
     onChildAdded(chatRef, (snap) => {
       const msg = snap.val();
@@ -318,7 +324,7 @@
       const text = chatInput.value.trim();
       if (!text) return;
       const u = auth.currentUser;
-      const snapshot = await (await import("https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js")).get(ref(db, `users/${u.uid}`));
+      const snapshot = await get(ref(db, `users/${u.uid}`));
       const userDbData = snapshot.exists() ? snapshot.val() : {};
       await push(ref(db, "globalChat"), {
         text,
