@@ -209,7 +209,6 @@
     </div>
   </main>
   <div class="footer">Made with ❤️ by PurpleDevs</div>
-  <!-- Inline JS for full functionality -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
@@ -228,6 +227,7 @@
       get
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
+    // Your Firebase config (replace if different!)
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
       authDomain: "chatz-45df4.firebaseapp.com",
@@ -276,6 +276,7 @@
                  .replace(/'/g, "&#039;");
     }
 
+    // Auth state
     onAuthStateChanged(auth, (user) => {
       myUser = user;
       messageInput.disabled = !user;
@@ -293,6 +294,7 @@
       }
     });
 
+    // Real-time messages
     const chatRef = query(ref(db, "globalChat"), limitToLast(100));
     onChildAdded(chatRef, (snap) => {
       const msg = snap.val();
@@ -300,6 +302,7 @@
       renderMessage(msg, isOwn);
     });
 
+    // Send message
     chatForm.onsubmit = async (e) => {
       e.preventDefault();
       if (!auth.currentUser) {
@@ -309,6 +312,7 @@
       const text = messageInput.value.trim();
       if (!text) return;
       const u = auth.currentUser;
+      // Try to get nickname from DB, fallback to displayName
       let nickname = "";
       try {
         const snapshot = await get(ref(db, `users/${u.uid}/nickname`));
