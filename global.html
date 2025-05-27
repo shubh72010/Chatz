@@ -113,7 +113,7 @@
       transform: translateY(-50%);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.5rem; /* Adjusted gap for spacing elements */
       /* display: none; will be set by JS */
     }
     .back-btn {
@@ -169,17 +169,18 @@
     #theme-switcher {
       padding: 0.3rem;
       border-radius: 5px;
+      /* background-image will be set by JS dynamically */
+      background-repeat: no-repeat;
+      background-position: right 0.5rem center;
+      background-size: 0.7em auto;
+      padding-right: 2rem; /* Make space for arrow */
+
       background: var(--input-field-bg); /* Themed */
       color: var(--text-color); /* Themed */
       border: 1px solid var(--button-bg); /* Themed border */
       font-size: 0.9rem;
       cursor: pointer;
       appearance: none; /* Remove default dropdown arrow */
-      background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2C114.7L159.2%2C242.5c-4.5%2C4.5-10.6%2C6.8-16.8%2C6.8s-12.3-2.3-16.8-6.8L5.4%2C114.7c-9.1-9.1-9.1-23.7%2C0-32.8s23.7-9.1%2C32.8%2C0l118%2C118l118-118c9.1-9.1%2C23.7-9.1%2C32.8%2C0S296.1%2C105.6%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E'); /* Custom dropdown arrow */
-      background-repeat: no-repeat;
-      background-position: right 0.5rem center;
-      background-size: 0.7em auto;
-      padding-right: 2rem; /* Make space for arrow */
       transition: background 0.3s, color 0.3s, border 0.3s; /* Smooth theme transition */
     }
     #theme-switcher option {
@@ -315,13 +316,14 @@
       <button class="back-btn" onclick="window.location.href='index.html'" title="Go back to main menu">&#8592;</button>
       <img id="user-pic" src="" alt="Profile" style="width: 32px; height: 32px; border-radius: 50%; display: none;" />
       <span id="user-name" style="font-size: 0.9rem; font-weight: 600; display: none;"></span>
-    </div>
-
-    Chat <div id="header-controls">
-      <select id="theme-switcher" style="display:none;"> <option value="default">Default</option>
+      <select id="theme-switcher" style="display:none;">
+        <option value="default">Default</option>
         <option value="dark">Dark</option>
         <option value="light">Light</option>
       </select>
+    </div>
+
+    Chat <div id="header-controls">
       <button id="settings-btn" class="header-btn" style="display:none;" title="Settings">⚙️</button>
       <button id="sign-in-header-btn" class="header-btn">Sign In</button>
     </div>
@@ -390,6 +392,15 @@
     function applyTheme(themeName) {
       document.documentElement.className = 'theme-' + themeName;
       localStorage.setItem('chatzTheme', themeName);
+
+      // Dynamically update the dropdown arrow color based on the current theme's text color
+      // This ensures the arrow is visible on all themes.
+      const computedStyle = getComputedStyle(document.documentElement);
+      const textColor = computedStyle.getPropertyValue('--text-color').trim();
+      const encodedTextColor = encodeURIComponent(textColor); // Encode for URL
+
+      const svgArrow = `url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22${encodedTextColor}%22%20d%3D%22M287%2C114.7L159.2%2C242.5c-4.5%2C4.5-10.6%2C6.8-16.8%2C6.8s-12.3-2.3-16.8-6.8L5.4%2C114.7c-9.1-9.1-9.1-23.7%2C0-32.8s23.7-9.1%2C32.8%2C0l118%2C118l118-118c9.1-9.1%2C23.7-9.1%2C32.8%2C0S296.1%2C105.6%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E')`;
+      themeSwitcher.style.backgroundImage = svgArrow;
     }
 
     // Event listener for theme switcher
@@ -457,7 +468,6 @@
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       if (!auth.currentUser) {
-        // Using console.error instead of alert as per instructions
         console.error("You must be signed in to send messages.");
         return;
       }
@@ -508,7 +518,7 @@
 
         messageInput.placeholder = "Type a message...";
 
-        // Display user info at top left (including back button)
+        // Display user info at top left (including back button and theme switcher)
         userInfoDiv.style.display = "flex"; // Make sure the container is visible
         userPic.src = user.photoURL || "https://via.placeholder.com/32/cccccc/2c2045?text=U";
         userPic.style.display = "inline-block"; // Show image
@@ -532,7 +542,7 @@
         replyTo = null;
         replyPreview.style.display = "none";
 
-        // Hide user info at top left (including back button)
+        // Hide user info at top left (including back button and theme switcher)
         userInfoDiv.style.display = "none";
         userPic.style.display = "none";
         userNameSpan.style.display = "none";
