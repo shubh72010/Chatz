@@ -104,104 +104,6 @@
       background: var(--accent);
       box-shadow: 0 4px 16px #a259ff44;
     }
-    #container {
-      display: flex;
-      flex: 1;
-      min-height: 0;
-      min-width: 0;
-      overflow: hidden;
-    }
-    aside#sidebar {
-      width: 320px;
-      background: var(--sidebar-bg);
-      backdrop-filter: blur(var(--sidebar-blur));
-      border-right: 1.5px solid #a259ff33;
-      padding: 1.5rem 1rem 1.5rem 1.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.2rem;
-      box-shadow: 2px 0 24px #0002;
-      overflow-y: auto;
-      transition: background 0.3s;
-      /* This ensures inner flex items can grow for centering */
-      height: 100%;
-    }
-    .sidebar-section h3 {
-      margin: 0 0 0.5rem 0;
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--main);
-      letter-spacing: 1px;
-      text-shadow: 0 1px 8px #a259ff22;
-    }
-    .sidebar-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-    }
-    .sidebar-list li, .sidebar-list a {
-      background: rgba(255,255,255,0.09);
-      border-radius: 1.2rem;
-      padding: 0.5rem 1rem;
-      color: var(--text);
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.18s, color 0.18s, box-shadow 0.18s;
-      position: relative;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      text-decoration: none;
-    }
-    .sidebar-list li.selected,
-    .sidebar-list li:hover,
-    .sidebar-list a:hover {
-      background: var(--main);
-      color: #fff;
-      box-shadow: 0 2px 12px #a259ff33;
-    }
-    .sidebar-list .friend-btn, .sidebar-list .group-leave-btn {
-      background: none;
-      border: none;
-      color: var(--main);
-      font-size: 1.1rem;
-      margin-left: 0.7rem;
-      cursor: pointer;
-      border-radius: 50%;
-      padding: 0.2rem 0.5rem;
-      transition: background 0.2s, color 0.2s;
-    }
-    .sidebar-list .friend-btn:hover, .sidebar-list .group-leave-btn:hover {
-      background: var(--main);
-      color: #fff;
-    }
-    .sidebar-list .group-leave-btn {
-      color: var(--danger);
-    }
-    .sidebar-list .group-leave-btn:hover {
-      background: var(--danger);
-      color: #fff;
-    }
-    /* Center Users List: */
-    #users-list {
-      margin-top: auto;
-      margin-bottom: auto;
-      min-height: 100px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    /* Center the whole Users section in the sidebar */
-    .sidebar-section:nth-child(3) {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
     main {
       flex: 1;
       display: flex;
@@ -213,27 +115,89 @@
       min-height: 0;
       position: relative;
     }
-    .welcome-card {
-      background: rgba(255,255,255,0.13);
-      border-radius: 2.5rem;
-      box-shadow: 0 8px 32px #a259ff22;
-      padding: 3rem 2.5rem;
-      text-align: center;
-      color: var(--text);
-      max-width: 420px;
-      margin: 2rem auto;
-      animation: fadeIn 0.3s;
+    .center-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 70vh;
+      gap: 2rem;
     }
-    .welcome-card h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
+    .pill-button {
+      background: var(--main);
       color: #fff;
-      text-shadow: 0 2px 12px #a259ff55;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.8rem 2.5rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      box-shadow: 0 2px 12px #a259ff33;
+      cursor: pointer;
+      transition: background 0.2s;
     }
-    .welcome-card p {
-      font-size: 1.2rem;
-      margin-bottom: 2rem;
-      color: #e0e0e0;
+    .pill-button:hover {
+      background: var(--accent);
+    }
+    .center-users-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      font-size: 1.1rem;
+    }
+    .center-users-list li {
+      background: rgba(255,255,255,0.09);
+      border-radius: 1.2rem;
+      padding: 0.5rem 1.7rem;
+      color: var(--text);
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+      text-align: center;
+      min-width: 120px;
+    }
+    .center-users-list li:hover {
+      background: var(--main);
+      color: #fff;
+      box-shadow: 0 2px 12px #a259ff33;
+    }
+    /* Bottom nav styles */
+    #circle-nav {
+      position: fixed;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 1.4rem;
+      z-index: 200;
+      background: rgba(44,32,69,0.9);
+      border-radius: 2.5rem;
+      padding: 1rem 1.5rem;
+      box-shadow: 0 4px 24px #a259ff33;
+    }
+    #circle-nav button {
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      border: none;
+      background: var(--main);
+      color: #fff;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #a259ff33;
+    }
+    #circle-nav button:hover {
+      background: var(--accent);
+    }
+    #circle-nav span {
+      pointer-events: none;
     }
     .footer {
       position: fixed;
@@ -245,174 +209,27 @@
       font-size: 0.9rem;
       opacity: 0.7;
       z-index: 100;
+      pointer-events:none;
     }
-    /* Settings Modal */
-    #settings-page {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(44,32,69,0.85);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      transition: background 0.3s;
-      backdrop-filter: blur(10px);
-    }
-    #settings-page.active {
-      display: flex;
-    }
-    .settings-content {
-      background: var(--settings-bg);
-      border-radius: 2rem;
-      padding: 2.5rem 2.5rem 2rem 2.5rem;
-      box-shadow: 0 8px 32px #a259ff55;
-      min-width: 340px;
-      max-width: 95vw;
-      color: #fff;
-      position: relative;
-      animation: fadeIn 0.2s;
-    }
-    .settings-close-btn {
-      position: absolute;
-      top: 1.2rem;
-      right: 1.2rem;
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 2rem;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-    .settings-close-btn:hover {
-      color: var(--danger);
-    }
-    .settings-section {
-      margin-bottom: 1.7rem;
-    }
-    .settings-section label {
-      font-weight: 600;
-      color: var(--main);
-      margin-bottom: 0.5rem;
-      display: block;
-    }
-    #theme-dropdown-container {
-      margin-top: 0.5rem;
-      margin-bottom: 1rem;
-    }
-    #theme-select {
-      padding: 0.5rem 1.2rem;
-      border-radius: 1.2rem;
-      border: 2px solid var(--main);
-      background: var(--input-bg);
-      color: var(--main);
-      font-size: 1rem;
-      font-weight: 600;
-      outline: none;
-      margin-left: 0.5rem;
-      transition: border 0.2s, background 0.2s;
-    }
-    #theme-select:focus {
-      border: 2px solid var(--accent);
-      background: #fff;
-      color: var(--main);
-    }
-    /* --- CIRCULAR UI AT BOTTOM --- */
-    #circle-ui {
-      position: fixed;
-      bottom: 2.5rem;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--main);
-      border-radius: 2.5rem;
-      box-shadow: 0 4px 24px #a259ff33;
-      display: flex;
-      align-items: center;
-      padding: 0.7rem 1.5rem;
-      z-index: 200;
-      gap: 0.7rem;
-    }
-    #circle-ui input {
-      border: none;
-      outline: none;
-      background: transparent;
-      color: #fff;
-      font-size: 1.1rem;
-      width: 160px;
-    }
-    #circle-ui button {
-      background: #fff;
-      color: var(--main);
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      font-size: 1.2rem;
-      cursor: pointer;
-      box-shadow: 0 2px 8px #a259ff33;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s, color 0.2s;
-    }
-    #circle-ui button:hover {
-      background: var(--accent);
-      color: #fff;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(30px);}
-      to { opacity: 1; transform: translateY(0);}
-    }
-    @media (max-width: 900px) {
-      #container {
-        flex-direction: column;
-      }
-      aside#sidebar {
-        width: 100vw;
-        flex-direction: row;
-        gap: 1.5rem;
-        overflow-x: auto;
-        overflow-y: hidden;
-        border-radius: 0 0 2rem 2rem;
-        border-right: none;
-        border-bottom: 1.5px solid #a259ff33;
-        padding: 1rem 0.5rem 1rem 1rem;
-      }
-      main {
-        margin: 0.5rem;
-        border-radius: 2rem;
-      }
-    }
+    /* Responsive */
     @media (max-width: 600px) {
       header {
         flex-direction: column;
         gap: 0.7rem;
         padding: 1rem 0.5rem;
       }
-      #container {
-        flex-direction: column;
-      }
-      aside#sidebar {
-        width: 100vw;
-        min-width: 0;
-        padding: 0.7rem 0.2rem 0.7rem 0.7rem;
-        border-radius: 0 0 1.2rem 1.2rem;
-      }
       main {
         margin: 0.2rem;
         border-radius: 1.2rem;
         padding: 0.5rem;
       }
-      .settings-content {
-        padding: 1.2rem 0.7rem 1rem 0.7rem;
-        min-width: 0;
+      .center-content {
+        height: 65vh;
       }
-      #circle-ui {
+      #circle-nav {
         width: 90vw;
         left: 5vw;
         transform: none;
-      }
-      #circle-ui input {
-        width: 100px;
       }
     }
   </style>
@@ -430,38 +247,12 @@
       <button id="sign-out" class="auth-btn" style="display:none;">Sign Out</button>
     </div>
   </header>
-  <div id="container">
-    <aside id="sidebar">
-      <div class="sidebar-section">
-        <h3>Global</h3>
-        <a href="global.html?type=public" class="sidebar-list"># General Chat</a>
-      </div>
-      <div class="sidebar-section">
-        <h3>Friends</h3>
-        <ul id="friends-list" class="sidebar-list"></ul>
-      </div>
-      <!-- USERS LIST CENTERED -->
-      <div class="sidebar-section">
-        <h3>Users</h3>
-        <ul id="users-list" class="sidebar-list"></ul>
-      </div>
-      <div class="sidebar-section">
-        <h3>My Groups</h3>
-        <ul id="my-groups-list" class="sidebar-list"></ul>
-      </div>
-      <div class="sidebar-section">
-        <h3>All Groups</h3>
-        <ul id="groups-list" class="sidebar-list"></ul>
-        <button id="create-group-btn" style="margin-top:0.5rem;" class="auth-btn">+ Create Group</button>
-      </div>
-    </aside>
-    <main>
-      <div class="welcome-card">
-        <h1>Welcome to Chatz</h1>
-        <p>Choose a chat from the sidebar or create a group.<br>Use the settings to customize your experience!</p>
-      </div>
-    </main>
-  </div>
+  <main>
+    <div class="center-content">
+      <button class="pill-button" onclick="window.location.href='global.html?type=public'">Global Chat</button>
+      <ul id="users-list" class="center-users-list"></ul>
+    </div>
+  </main>
   <div class="footer">Made with ❤️ by Flakious</div>
   <div id="settings-page">
     <div class="settings-content">
@@ -484,13 +275,12 @@
       </div>
     </div>
   </div>
-  <!-- CIRCULAR UI AT BOTTOM -->
-  <div id="circle-ui">
-    <input type="text" placeholder="Type a message..." />
-    <button>➤</button>
+  <!-- Bottom circular nav -->
+  <div id="circle-nav">
+    <button title="Global" onclick="window.location.href='global.html?type=public'"><span>🌐</span></button>
+    <button title="General Chat" onclick="window.location.href='global.html?type=public'"><span>#</span></button>
   </div>
   <script type="module">
-    // (Your existing JavaScript remains unchanged)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
       getAuth,
@@ -502,18 +292,11 @@
     import {
       getDatabase,
       ref,
-      push,
       set,
       get,
       onValue,
       update
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-    import {
-      pushData,
-      setData,
-      getData,
-      listenValue
-    } from "./firebaseHelpers.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
@@ -539,11 +322,7 @@
     const headerUserInfo = document.getElementById("header-user-info");
     const userPfp = document.getElementById("user-pfp");
     const displayUsername = document.getElementById("display-username");
-    const friendsList = document.getElementById("friends-list");
     const usersList = document.getElementById("users-list");
-    const groupsList = document.getElementById("groups-list");
-    const myGroupsList = document.getElementById("my-groups-list");
-    const createGroupBtn = document.getElementById("create-group-btn");
 
     let currentUserNickname = "Guest";
 
@@ -589,93 +368,24 @@
       }
     };
 
-    // Sidebar population
-    function updateUsersAndFriends() {
+    // Center users list population
+    function updateUsersList() {
       usersList.innerHTML = "";
-      friendsList.innerHTML = "";
       if (!auth.currentUser) return;
       const myUid = auth.currentUser.uid;
       onValue(ref(db, "users"), (snap) => {
         const users = snap.val() || {};
         usersList.innerHTML = "";
-        friendsList.innerHTML = "";
-        onValue(ref(db, `friends/${myUid}`), (friendSnap) => {
-          const friends = friendSnap.exists() ? Object.keys(friendSnap.val()) : [];
-          Object.entries(users).forEach(([uid, user]) => {
-            if (uid === myUid) return;
-            const nameToDisplay = user.nickname || user.displayName || "Anonymous";
-            // Friends
-            if (friends.includes(uid)) {
-              const li = document.createElement("li");
-              li.textContent = nameToDisplay;
-              li.onclick = () => window.location.href = `global.html?type=dm&uid=${uid}`;
-              friendsList.appendChild(li);
-            } else {
-              // Users
-              const li = document.createElement("li");
-              li.textContent = nameToDisplay;
-              li.onclick = () => window.location.href = `global.html?type=dm&uid=${uid}`;
-              const addFriendBtn = document.createElement("button");
-              addFriendBtn.innerHTML = "&#x271A;";
-              addFriendBtn.classList.add("friend-btn");
-              addFriendBtn.title = `Add ${nameToDisplay}`;
-              addFriendBtn.onclick = async (e) => {
-                e.stopPropagation();
-                await set(ref(db, `friends/${myUid}/${uid}`), true);
-                await set(ref(db, `friends/${uid}/${myUid}`), true);
-              };
-              li.appendChild(addFriendBtn);
-              usersList.appendChild(li);
-            }
-          });
-        });
-      });
-    }
-
-    function updateGroups() {
-      groupsList.innerHTML = "";
-      myGroupsList.innerHTML = "";
-      if (!auth.currentUser) return;
-      const myUid = auth.currentUser.uid;
-      onValue(ref(db, "groups"), (snap) => {
-        const groups = snap.val() || {};
-        groupsList.innerHTML = "";
-        myGroupsList.innerHTML = "";
-        Object.entries(groups).forEach(([groupId, group]) => {
-          const isMember = group.members && Object.keys(group.members).includes(myUid);
+        Object.entries(users).forEach(([uid, user]) => {
+          if (uid === myUid) return;
+          const nameToDisplay = user.nickname || user.displayName || "Anonymous";
           const li = document.createElement("li");
-          li.textContent = group.name;
-          li.onclick = () => window.location.href = `global.html?type=group&id=${groupId}`;
-          if (isMember) {
-            const myLi = li.cloneNode(true);
-            myLi.onclick = li.onclick;
-            myGroupsList.appendChild(myLi);
-          } else {
-            groupsList.appendChild(li);
-          }
+          li.textContent = nameToDisplay;
+          li.onclick = () => window.location.href = `global.html?type=dm&uid=${uid}`;
+          usersList.appendChild(li);
         });
       });
     }
-
-        createGroupBtn.onclick = async () => {
-      if (!auth.currentUser) return alert("Sign in to create groups.");
-      const name = prompt("Enter group name:");
-      if (!name || name.trim() === "") return;
-      try {
-        const newGroupRef = push(ref(db, "groups"));
-        await set(newGroupRef, {
-          name: name.trim(),
-          createdBy: auth.currentUser.uid,
-          createdAt: Date.now(),
-          members: {
-            [auth.currentUser.uid]: true
-          }
-        });
-        alert(`Group "${name}" created!`);
-      } catch (error) {
-        alert("Failed to create group.");
-      }
-    };
 
     // Auth state UI
     onAuthStateChanged(auth, (user) => {
@@ -696,8 +406,7 @@
           displayUsername.textContent = currentUserNickname;
           userPfp.src = user.photoURL || "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
         });
-        updateUsersAndFriends();
-        updateGroups();
+        updateUsersList();
       } else {
         signInBtn.style.display = "inline-block";
         signOutBtn.style.display = "none";
@@ -705,10 +414,7 @@
         headerUserInfo.style.display = "none";
         displayUsername.textContent = "Guest";
         userPfp.src = "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
-        friendsList.innerHTML = "";
         usersList.innerHTML = "";
-        groupsList.innerHTML = "";
-        myGroupsList.innerHTML = "";
       }
     });
   </script>
