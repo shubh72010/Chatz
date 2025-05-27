@@ -64,11 +64,19 @@
       position: relative;
       transition: background-color 0.15s ease;
     }
+    .message .sender {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #a7a7fa;
+      margin-bottom: 2px;
+      display: block;
+    }
     .message:hover { background: #4b4781; }
     .own {
       background: #726dff;
       align-self: flex-end;
     }
+    .own .sender { color: #fff; }
     .meta {
       font-size: 0.7rem;
       opacity: 0.6;
@@ -229,11 +237,12 @@
       let replyHTML = "";
       if (data.replyTo) {
         replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid #a3a0ff; padding-left: 6px; color:#ccc;">
-          Reply to: ${escapeHtml(truncate(data.replyTo.message, 40))}
+          Reply to: <strong>${escapeHtml(data.replyTo.name || "Anonymous")}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
         </div>`;
       }
       msgDiv.innerHTML = `
         ${replyHTML}
+        <span class="sender">${escapeHtml(data.name || "Anonymous")}</span>
         ${escapeHtml(data.message)}
         <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
       `;
@@ -242,9 +251,10 @@
         if (data.uid === auth.currentUser.uid) return;
         replyTo = {
           id: snapshot.key,
+          name: data.name,
           message: data.message,
         };
-        replyText.textContent = `${truncate(data.replyTo ? data.replyTo.message : data.message, 50)}`;
+        replyText.textContent = `${replyTo.name || "Anonymous"}: ${truncate(replyTo.message, 50)}`;
         replyPreview.style.display = "flex";
         messageInput.focus();
       });
@@ -262,6 +272,7 @@
       if (!msg) return;
       const newMsg = {
         uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || "Anonymous",
         message: msg,
         timestamp: Date.now(),
       };
