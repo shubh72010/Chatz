@@ -102,7 +102,7 @@
       margin-bottom: 3px;
       max-width: 93%;
     }
-    .message-bubble.own { flex-direction: row-reverse; align-self: flex-end;}
+    .message-bubble.own { flex-direction: row-reverse; align-self: flex-end; }
     .bubble {
       padding: 0.7rem 1.3rem;
       border-radius: 1.5rem;
@@ -222,8 +222,7 @@
   </main>
   <div class="footer">Made with ❤️ by PurpleDevs</div>
   <script type="module">
-    // THEME SUPPORT
-    // Define your theme presets here (expand as needed)
+    // Theme system: define themes as objects. You can expand this list.
     const THEMES = {
       default: {
         '--main': '#a259ff',
@@ -249,6 +248,7 @@
         '--input-bg': '#fff',
         '--bg': 'linear-gradient(135deg, #b9adf8 0%, #f4f0ff 100%)'
       }
+      // Add more themes as needed
     };
     function setThemeFromSettings() {
       const themeName = localStorage.getItem("theme") || "default";
@@ -261,7 +261,7 @@
     }
     setThemeFromSettings();
 
-    // CHAT FUNCTIONALITY
+    // Firebase chat logic
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
       getAuth,
