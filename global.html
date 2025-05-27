@@ -24,6 +24,27 @@
       font-weight: 700;
       user-select: none;
       position: relative;
+      display: flex; /* Added for aligning back button */
+      align-items: center; /* Added for aligning back button */
+      justify-content: center; /* Center the "Chat" text */
+    }
+    /* New style for the back button */
+    .back-btn {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.2rem 0.5rem;
+      border-radius: 5px;
+      transition: background-color 0.2s ease;
+    }
+    .back-btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
     }
     #auth-btns {
       position: absolute;
@@ -151,17 +172,18 @@
       form { flex-wrap: wrap; }
       #message { flex: 1 1 100%; }
       button#send-btn { flex: 1 1 100%; margin-top: 0.5rem; }
+      /* Adjust back button for smaller screens if needed */
+      .back-btn { font-size: 1.2rem; padding: 0.1rem 0.3rem; }
     }
   </style>
 </head>
 <body>
   <header>
-    <div id="user-info" style="position: absolute; left: 1rem; top: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+    <button class="back-btn" onclick="window.location.href='index.html'" title="Go back to main menu">&#8592;</button> <div id="user-info" style="position: absolute; left: 1rem; top: 1rem; display: flex; align-items: center; gap: 0.5rem;">
       <img id="user-pic" src="" alt="Profile" style="width: 32px; height: 32px; border-radius: 50%; display: none;" />
       <span id="user-name" style="font-size: 0.9rem; font-weight: 600; display: none;"></span>
     </div>
-    Chat
-    <div id="auth-btns">
+    Chat <div id="auth-btns">
       <button id="sign-in" class="auth-btn">Sign In</button>
       <button id="sign-out" class="auth-btn" style="display:none;">Sign Out</button>
     </div>
@@ -213,6 +235,12 @@
     const cancelReplyBtn = document.getElementById("cancel-reply");
     const signInBtn = document.getElementById("sign-in");
     const signOutBtn = document.getElementById("sign-out");
+
+    // Get user info elements
+    const userInfoDiv = document.getElementById("user-info");
+    const userPic = document.getElementById("user-pic");
+    const userNameSpan = document.getElementById("user-name");
+
     let replyTo = null;
     const scrollToBottom = () => { chat.scrollTop = chat.scrollHeight; };
     function escapeHtml(text) {
@@ -304,6 +332,12 @@
         signInBtn.style.display = "none";
         signOutBtn.style.display = "inline-block";
         messageInput.placeholder = "Type a message...";
+        // Display user info at top left
+        userInfoDiv.style.display = "flex"; // Make sure the container is visible
+        userPic.src = user.photoURL || "https://via.placeholder.com/32/2c2045/f0eaff?text=U";
+        userPic.style.display = "inline-block"; // Show image
+        userNameSpan.textContent = user.displayName || "Anonymous";
+        userNameSpan.style.display = "inline-block"; // Show name
       } else {
         messageInput.value = "";
         messageInput.placeholder = "Sign in to chat";
@@ -313,8 +347,35 @@
         signOutBtn.style.display = "none";
         replyTo = null;
         replyPreview.style.display = "none";
+        // Hide user info at top left
+        userInfoDiv.style.display = "none";
+        userPic.style.display = "none";
+        userNameSpan.style.display = "none";
       }
     });
+
+    // Handle DM parameters from index.html (if applicable)
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatType = urlParams.get('type');
+    const targetUid = urlParams.get('uid');
+
+    if (chatType === 'dm' && targetUid) {
+        // Here you would typically fetch the target user's info to display
+        // and set up a private chat reference. For this example, we'll just
+        // change the header text to indicate a DM, but a full DM implementation
+        // would involve more Firebase Realtime Database logic (e.g., messages/DM_UID1_UID2)
+        document.querySelector('header').childNodes[3].textContent = `DM with User ${targetUid.substring(0, 4)}...`; // Change "Chat" to "DM with User..."
+        // If you need to fetch target user's name:
+        // onValue(ref(db, `users/${targetUid}/displayName`), (snapshot) => {
+        //     const targetDisplayName = snapshot.val();
+        //     if (targetDisplayName) {
+        //         document.querySelector('header').childNodes[3].textContent = `DM with ${targetDisplayName}`;
+        //     }
+        // }, { onlyOnce: true });
+        // You would also change messagesRef to point to a DM path:
+        // const dmMessagesRef = ref(db, `dms/${myUid}_${targetUid}`); // Simplified, real DMs need careful pathing
+        // onChildAdded(dmMessagesRef, ...);
+    }
   </script>
 </body>
 </html>
