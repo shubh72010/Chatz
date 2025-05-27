@@ -85,9 +85,7 @@
       align-items: center;
       justify-content: flex-end;
       gap: 1.3rem;
-      min-height: 0;
-    }
-    .chat-container {
+ {
       background: var(--settings-bg);
       border-radius: 2rem;
       padding: 1.2rem 1.1rem 0.4rem 1.1rem;
@@ -111,6 +109,7 @@
       margin-bottom: 0.6rem;
       max-height: 55vh;
       padding-right: 2px;
+      scroll-behavior: smooth;
     }
     .message-bubble {
       display: flex;
@@ -174,14 +173,19 @@
       background: var(--main);
       color: #fff;
       border: none;
-      border-radius: 2rem;
-      padding: 0.5rem 1.2rem;
+      border-radius: 999px; /* Extra pill shape */
+      padding: 0.6rem 2rem;
       font-size: 1.2rem;
       font-weight: 700;
       cursor: pointer;
       transition: background 0.2s;
       margin-left: 0.2rem;
       box-shadow: 0 2px 8px #a259ff33;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 52px;
+      min-height: 44px;
     }
     .send-btn:hover { background: var(--accent);}
     .footer {
@@ -200,6 +204,7 @@
       .header-left { min-width: 85px; }
       .chat-input-bar input { font-size: 0.98rem; padding: 0.5rem 0.9rem;}
       .bubble { font-size: 0.95rem; padding: 0.55rem 0.9rem; }
+      .send-btn { min-width: 40px; min-height: 36px; font-size: 1rem; padding: 0.4rem 1.2rem; }
     }
   </style>
 </head>
@@ -276,6 +281,7 @@
         </div>
       `;
       messagesList.appendChild(bubble);
+      // Always scroll to bottom after new message
       messagesList.scrollTop = messagesList.scrollHeight;
     }
 
@@ -294,11 +300,7 @@
       } else {
         chatInput.placeholder = "Type a message...";
         chatInput.style.opacity = 1;
-        chatInput.onclick = null;
-      }
-    });
-
-    // Listen for last 100 messages, real-time
+        chatInput.onclick = null for last 100 messages, real-time
     const chatRef = query(ref(db, "globalChat"), limitToLast(100));
     onChildAdded(chatRef, (snap) => {
       const msg = snap.val();
