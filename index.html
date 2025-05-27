@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz</title>
-  <!-- Instant theme application -->
   <script>
     (function() {
       var theme = localStorage.getItem('chatzTheme') || 'default';
@@ -14,36 +13,55 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <script src="https://kit.fontawesome.com/391827d54c.js" crossorigin="anonymous"></script>
   <style>
+    /* Base variables (can be overridden by themes) */
     :root {
-      --main: #a259ff;
-      --accent: #5f27cd;
-      --danger: #ff5252;
+      --main: #a259ff; /* Primary accent color (purple) */
+      --accent: #5f27cd; /* Darker accent color */
+      --danger: #ff5252; /* Red for danger/errors */
+      /* These will be set by the theme classes */
+      --settings-bg: rgba(44,32,69,0.96); /* Default semi-transparent dark purple */
+      --text: #f0eaff; /* Default light text color */
+      --input-bg: rgba(255,255,255,0.16); /* Default semi-transparent input background */
+      --bg: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%); /* Default gradient background */
+    }
+
+    /* Default Theme (Original) */
+    .theme-default {
       --settings-bg: rgba(44,32,69,0.96);
       --text: #f0eaff;
       --input-bg: rgba(255,255,255,0.16);
-      --dark-bg: #131324;
-      --dark-card: #191938;
-      --dark-input: #191938;
-      --dark-text: #f0eaff;
-      --light-bg: #f7f4fb;
-      --light-card: #fff;
-      --light-input: #f2edfd;
-      --light-text: #2c2045;
       --bg: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%);
     }
-    .theme-default { --main: #a259ff; --accent: #5f27cd; --settings-bg: rgba(44,32,69,0.96); --text: #f0eaff; --input-bg: rgba(255,255,255,0.16); --bg: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%);}
-    .theme-dark    { --main: #a259ff; --accent: #5f27cd; --settings-bg: #191938; --text: #f0eaff; --input-bg: #191938; --bg: #131324;}
-    .theme-light   { --main: #a259ff; --accent: #5f27cd; --settings-bg: #fff; --text: #2c2045; --input-bg: #f2edfd; --bg: #f7f4fb;}
+
+    /* Dark Theme (Made Darker) */
+    .theme-dark {
+      --settings-bg: #1a1a1a; /* Very dark grey, almost black for sidebar/headers */
+      --text: #ffffff; /* Pure white text */
+      --input-bg: #2c2c2c; /* Dark grey for input fields */
+      --bg: #0d0d0d; /* Almost black background */
+    }
+
+    /* Light Theme (Made Lighter) */
+    .theme-light {
+      --settings-bg: #ffffff; /* Pure white for sidebar/headers */
+      --text: #1a1a1a; /* Very dark grey for text */
+      --input-bg: #f0f0f0; /* Very light grey for input fields */
+      --bg: #f8f8f8; /* Almost white background */
+    }
+
+    /* Base styles for HTML and Body */
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
       font-family: 'Poppins', sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      background: var(--bg); /* Applies theme background */
+      color: var(--text); /* Applies theme text color */
       min-height: 100vh;
       overflow: hidden;
     }
+
+    /* Main container layout */
     body, .main-container {
       height: 100vh;
       width: 100vw;
@@ -53,57 +71,283 @@
       flex-direction: row;
     }
     .main-container { flex: 1; min-width: 0; min-height: 0;}
+
+    /* Left Sidebar Container */
     .left-container {
       width: 340px;
       min-width: 220px;
-      background: var(--settings-bg);
+      background: var(--settings-bg); /* Applies theme settings background */
       display: flex;
       flex-direction: column;
-      box-shadow: 2px 0 18px #0002;
+      box-shadow: 2px 0 18px rgba(0,0,0,0.1); /* Soft shadow */
       z-index: 10;
       transition: width 0.2s;
     }
+
+    /* Sidebar Header */
     .sidebar-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 1.2rem 1rem 1rem 1rem;
-      background: var(--settings-bg);
+      background: var(--settings-bg); /* Applies theme settings background */
       min-height: 78px;
       flex-shrink: 0;
     }
     .sidebar-header .user-info { display: flex; align-items: center; gap: 0.8rem;}
     .sidebar-header .user-img { width: 46px; height: 46px; border-radius: 50%; overflow: hidden;}
-    .sidebar-header .user-img img { width: 46px; height: 46px; object-fit: cover; border-radius: 50%; border: 2px solid var(--main); background: #fff;}
-    .sidebar-header .user-name { color: var(--main); font-size: 1.08rem; font-weight: 600; letter-spacing: 0.2px; max-width: 110px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;}
-    .sidebar-header .sign-in-btn { background: var(--main); color: #fff; border: none; border-radius: 2rem; padding: 0.47rem 1.1rem; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px #a259ff33; transition: background 0.2s, box-shadow 0.2s; margin-left: 0.85rem; min-width: 68px;}
-    .sidebar-header .sign-in-btn:hover { background: var(--accent); box-shadow: 0 4px 16px #a259ff44;}
-    .sidebar-header .nav-icons { display: flex; gap: 1.15rem; color: #fff; font-size: 1.2rem; margin-left: 0.75rem;}
+    .sidebar-header .user-img img {
+      width: 46px;
+      height: 46px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid var(--main); /* Border with main accent color */
+      background: #fff; /* Fallback background for image */
+    }
+    .sidebar-header .user-name {
+      color: var(--main); /* User name in accent color */
+      font-size: 1.08rem;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      max-width: 110px;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .sidebar-header .sign-in-btn {
+      background: var(--main); /* Button background with main accent */
+      color: #fff;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.47rem 1.1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(162,89,255,0.2); /* Soft shadow with main color */
+      transition: background 0.2s, box-shadow 0.2s;
+      margin-left: 0.85rem;
+      min-width: 68px;
+    }
+    .sidebar-header .sign-in-btn:hover {
+      background: var(--accent); /* Darker accent on hover */
+      box-shadow: 0 4px 16px rgba(162,89,255,0.27);
+    }
+    .sidebar-header .nav-icons { display: flex; gap: 1.15rem; color: var(--text); font-size: 1.2rem; margin-left: 0.75rem;}
     .sidebar-header .nav-icons li { list-style: none; cursor: pointer; transition: color 0.2s;}
     .sidebar-header .nav-icons li:hover { color: var(--main);}
-    .search-container { display: flex; align-items: center; background: var(--settings-bg); padding: 0.55rem 1rem; border-bottom: 1px solid #a259ff33; gap: 0.85rem; flex-shrink: 0;}
-    .search-container .input { flex: 1; display: flex; align-items: center; background: var(--input-bg); border-radius: 1.2rem; padding: 0.37rem 0.8rem; color: #ccc;}
-    .search-container input { border: none; outline: none; background: transparent; color: var(--main); font-size: 1rem; margin-left: 0.6rem; width: 100%;}
-    .search-container .fa-bars-filter { color: var(--main); font-size: 1.1rem; margin-left: 0.8rem; cursor: pointer;}
-    .chat-list { flex: 1; overflow-y: auto; background: var(--settings-bg); padding-top: 10px; min-height: 0; min-width: 0;}
-    .chat-box { display: flex; align-items: center; padding: 0.62rem 1.05rem 0.62rem 1.05rem; border-bottom: 1px solid #382759; cursor: pointer; transition: background 0.17s; gap: 1.04rem; min-width: 0;}
-    .chat-box.active, .chat-box:hover { background: var(--accent);}
+
+    /* Search Container */
+    .search-container {
+      display: flex;
+      align-items: center;
+      background: var(--settings-bg); /* Applies theme settings background */
+      padding: 0.55rem 1rem;
+      border-bottom: 1px solid rgba(162,89,255,0.2); /* Border with main color transparency */
+      gap: 0.85rem;
+      flex-shrink: 0;
+    }
+    .search-container .input {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: var(--input-bg); /* Applies theme input background */
+      border-radius: 1.2rem;
+      padding: 0.37rem 0.8rem;
+      color: var(--text); /* Icon color */
+    }
+    .search-container input {
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--main); /* Input text color with main accent */
+      font-size: 1rem;
+      margin-left: 0.6rem;
+      width: 100%;
+    }
+    .search-container .fa-bars-filter {
+      color: var(--main); /* Filter icon color with main accent */
+      font-size: 1.1rem;
+      margin-left: 0.8rem;
+      cursor: pointer;
+    }
+
+    /* Chat List */
+    .chat-list {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--settings-bg); /* Applies theme settings background */
+      padding-top: 10px;
+      min-height: 0;
+      min-width: 0;
+    }
+    .chat-box {
+      display: flex;
+      align-items: center;
+      padding: 0.62rem 1.05rem 0.62rem 1.05rem;
+      border-bottom: 1px solid rgba(162,89,255,0.1); /* Soft border */
+      cursor: pointer;
+      transition: background 0.17s;
+      gap: 1.04rem;
+      min-width: 0;
+    }
+    .chat-box.active, .chat-box:hover { background: var(--accent);} /* Accent color on hover/active */
     .chat-box .img-box { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; flex-shrink: 0;}
-    .chat-box .img-box img { width: 38px; height: 38px; object-fit: cover; border-radius: 50%; border: 2px solid var(--main); background: #fff;}
+    .chat-box .img-box img {
+      width: 38px;
+      height: 38px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid var(--main); /* Border with main accent color */
+      background: #fff; /* Fallback background for image */
+    }
     .chat-details { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;}
-    .text-head { display: flex; align-items: center; justify-content: space-between; color: #fff; gap: 0.7rem;}
-    .text-head h4 { margin: 0; font-size: 1.00rem; font-weight: 600; letter-spacing: 0.1px; max-width: 103px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;}
-    .text-message { color: #aaa; display: flex; align-items: center; gap: 0.55rem; font-size: 0.98rem; margin-top: 0.04rem; min-width: 0;}
-    .no-users-msg { color: #ccc; margin: 1.2rem auto 1rem auto; font-size: 1.05rem; text-align: center; display: none;}
-    .right-container { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--bg); position: relative;}
-    .right-header { width: 100%; height: 65px; display: flex; align-items: center; justify-content: flex-end; padding: 0 2.2rem 0 1.5rem; background: var(--settings-bg); color: var(--main); box-shadow: 0 4px 32px #a259ff11; position: relative; z-index: 20; font-size: 1.53rem; font-weight: 800; letter-spacing: 2px; user-select: none; flex-shrink: 0;}
-    .welcome-section { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1.2rem; color: var(--main); font-size: 1.35rem; font-weight: 600; text-align: center; opacity: 0.92; min-width: 0; min-height: 0;}
-    .pill-button { background: var(--main); color: #fff; border: none; border-radius: 2rem; padding: 0.7rem 2.1rem; font-size: 1.23rem; font-weight: 700; box-shadow: 0 2px 12px #a259ff33; cursor: pointer; transition: background 0.2s; margin-top: 1.2rem;}
-    .pill-button:hover { background: var(--accent);}
-    .footer { position: fixed; bottom: 10px; left: 0; width: 100%; text-align: center; color: #aaa; font-size: 0.9rem; opacity: 0.7; z-index: 100; pointer-events:none; user-select: none;}
-    #circle-nav { position: fixed; bottom: 2.5rem; left: 50%; transform: translateX(-50%); display: flex; gap: 1.3rem; z-index: 200; background: rgba(44,32,69,0.9); border-radius: 2.2rem; padding: 1rem 1.2rem; box-shadow: 0 4px 24px #a259ff33;}
-    #circle-nav button { width: 48px; height: 48px; border-radius: 50%; border: none; background: var(--main); color: #fff; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s, box-shadow 0.2s; cursor: pointer; box-shadow: 0 2px 8px #a259ff33;}
-    #circle-nav button:hover { background: var(--accent);}
+    .text-head { display: flex; align-items: center; justify-content: space-between; color: var(--text); gap: 0.7rem;}
+    .text-head h4 {
+      margin: 0;
+      font-size: 1.00rem;
+      font-weight: 600;
+      letter-spacing: 0.1px;
+      max-width: 103px;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .text-message {
+      color: var(--text); /* Message text color */
+      opacity: 0.8; /* Slightly less opaque */
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 0.98rem;
+      margin-top: 0.04rem;
+      min-width: 0;
+    }
+    .no-users-msg {
+      color: var(--text); /* No users message color */
+      opacity: 0.7; /* Slightly less opaque */
+      margin: 1.2rem auto 1rem auto;
+      font-size: 1.05rem;
+      text-align: center;
+      display: none;
+    }
+
+    /* Right Main Content Container */
+    .right-container {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg); /* Applies theme background */
+      position: relative;
+    }
+
+    /* Right Header (Chatz Title) */
+    .right-header {
+      width: 100%;
+      height: 65px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 2.2rem 0 1.5rem;
+      background: var(--settings-bg); /* Applies theme settings background */
+      color: var(--main); /* Chatz title in accent color */
+      box-shadow: 0 4px 32px rgba(162,89,255,0.07); /* Soft shadow */
+      position: relative;
+      z-index: 20;
+      font-size: 1.53rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    /* Welcome Section */
+    .welcome-section {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1.2rem;
+      color: var(--main); /* Welcome text in accent color */
+      font-size: 1.35rem;
+      font-weight: 600;
+      text-align: center;
+      opacity: 0.92;
+      min-width: 0;
+      min-height: 0;
+    }
+    .welcome-section div {
+      color: var(--text); /* Ensure welcome message text adapts to theme */
+    }
+    .welcome-section div b {
+      color: var(--main); /* Global Chat bold text in main accent */
+    }
+
+    /* Pill Button (Global Chat) */
+    .pill-button {
+      background: var(--main); /* Button background with main accent */
+      color: #fff;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.7rem 2.1rem;
+      font-size: 1.23rem;
+      font-weight: 700;
+      box-shadow: 0 2px 12px rgba(162,89,255,0.2); /* Soft shadow */
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 1.2rem;
+    }
+    .pill-button:hover { background: var(--accent);} /* Darker accent on hover */
+
+    /* Footer */
+    .footer {
+      position: fixed;
+      bottom: 10px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      color: var(--text); /* Footer text color */
+      opacity: 0.7;
+      font-size: 0.9rem;
+      z-index: 100;
+      pointer-events:none;
+      user-select: none;
+    }
+
+    /* Circle Navigation (Settings Button) */
+    #circle-nav {
+      position: fixed;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 1.3rem;
+      z-index: 200;
+      background: var(--settings-bg); /* Applies theme settings background */
+      border-radius: 2.2rem;
+      padding: 1rem 1.2rem;
+      box-shadow: 0 4px 24px rgba(162,89,255,0.2); /* Soft shadow */
+    }
+    #circle-nav button {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      background: var(--main); /* Button background with main accent */
+      color: #fff;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(162,89,255,0.2);
+    }
+    #circle-nav button:hover { background: var(--accent);} /* Darker accent on hover */
+
+    /* Responsive adjustments */
     @media (max-width: 1100px) {
       .left-container { width: 210px; min-width: 120px;}
       .sidebar-header .user-img, .sidebar-header .user-img img { width: 38px; height: 38px;}
@@ -134,7 +378,6 @@
 </head>
 <body>
   <div class="main-container">
-    <!-- SIDEBAR (left) -->
     <div class="left-container">
       <div class="sidebar-header">
         <div class="user-info">
@@ -158,7 +401,6 @@
       <div class="chat-list" id="users-list"></div>
       <div class="no-users-msg" id="no-users-msg">No users found</div>
     </div>
-    <!-- MAIN AREA (right) -->
     <div class="right-container">
       <div class="right-header">
         Chatz
@@ -175,6 +417,7 @@
     </div>
   </div>
   <script type="module">
+    // Firebase imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
       getAuth,
@@ -187,6 +430,8 @@
       ref,
       onValue
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    // Firebase configuration (replace with your actual config if different)
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
       authDomain: "chatz-45df4.firebaseapp.com",
@@ -196,10 +441,13 @@
       messagingSenderId: "463847844545",
       appId: "1:463847844545:web:5006247d061c3e0dc28240"
     };
+
+    // Initialize Firebase services
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
 
+    // Get DOM elements
     const signInBtn = document.getElementById("sign-in");
     const userPfp = document.getElementById("user-pfp");
     const displayUsername = document.getElementById("display-username");
@@ -207,28 +455,43 @@
     const noUsersMsg = document.getElementById("no-users-msg");
     const searchInput = document.getElementById("user-search");
 
-    let allUsers = [];
-    let myUid = null;
+    let allUsers = []; // Array to store all fetched users
+    let myUid = null; // Current user's UID
 
+    // Event listener for Sign In button
     signInBtn.onclick = () => {
       const provider = new GoogleAuthProvider();
-      signInWithPopup(auth, provider).catch(e => alert("Sign-in failed: " + e.message));
+      signInWithPopup(auth, provider).catch(e => {
+        // Display a simple alert for sign-in failure (consider a custom modal for production)
+        console.error("Sign-in failed:", e.message);
+      });
     };
 
+    /**
+     * Renders the list of users in the sidebar, applying a filter if provided.
+     * @param {string} filter - Optional string to filter users by nickname or display name.
+     */
     function renderUsers(filter = '') {
-      usersList.innerHTML = "";
+      usersList.innerHTML = ""; // Clear existing list
       let filtered = allUsers;
+
+      // Apply filter if present
       if (filter) {
         const f = filter.toLowerCase();
         filtered = allUsers.filter(u => (u.nickname || u.displayName || 'Anonymous').toLowerCase().includes(f));
       }
+
+      // Display message if no users found after filtering
       if (filtered.length === 0) {
         noUsersMsg.style.display = "block";
       } else {
         noUsersMsg.style.display = "none";
+        // Iterate and create chat boxes for each user
         filtered.forEach(user => {
           const nameToDisplay = user.nickname || user.displayName || "Anonymous";
+          // Placeholder image if no photo URL is available
           const avatarUrl = user.photoURL || "https://via.placeholder.com/38/2c2045/f0eaff?text=U";
+
           const box = document.createElement("div");
           box.className = "chat-box";
           box.innerHTML = `
@@ -244,37 +507,45 @@
               </div>
             </div>
           `;
+          // Attach click listener to navigate to global.html with DM type and UID
           box.onclick = () => window.location.href = `global.html?type=dm&uid=${user.uid}`;
           usersList.appendChild(box);
         });
       }
     }
 
+    // Event listener for search input to filter users
     searchInput.addEventListener('input', e => {
       renderUsers(e.target.value);
     });
 
+    // Firebase Auth state change listener
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        signInBtn.style.display = "none";
-        displayUsername.textContent = user.displayName || "Anonymous";
-        userPfp.src = user.photoURL || "https://via.placeholder.com/46/2c2045/f0eaff?text=?";
-        myUid = user.uid;
+        // User is signed in
+        signInBtn.style.display = "none"; // Hide sign-in button
+        displayUsername.textContent = user.displayName || "Anonymous"; // Display user name
+        userPfp.src = user.photoURL || "https://via.placeholder.com/46/2c2045/f0eaff?text=?"; // Display user profile picture
+        myUid = user.uid; // Store current user's UID
+
+        // Listen for changes in the 'users' node in Realtime Database
         onValue(ref(db, "users"), (snap) => {
           const users = snap.val() || {};
-          allUsers = [];
+          allUsers = []; // Reset allUsers array
+          // Populate allUsers, excluding the current user
           Object.entries(users).forEach(([uid, userData]) => {
-            if (uid === myUid) return;
+            if (uid === myUid) return; // Skip current user
             allUsers.push({ uid, ...userData });
           });
-          renderUsers(searchInput.value);
+          renderUsers(searchInput.value); // Re-render users with current search filter
         });
       } else {
-        signInBtn.style.display = "inline-block";
-        displayUsername.textContent = "Guest";
-        userPfp.src = "https://via.placeholder.com/46/2c2045/f0eaff?text=?";
-        allUsers = [];
-        renderUsers('');
+        // User is signed out
+        signInBtn.style.display = "inline-block"; // Show sign-in button
+        displayUsername.textContent = "Guest"; // Reset display name
+        userPfp.src = "https://via.placeholder.com/46/2c2045/f0eaff?text=?"; // Reset profile picture
+        allUsers = []; // Clear all users
+        renderUsers(''); // Render with no users
       }
     });
   </script>
