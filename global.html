@@ -12,6 +12,7 @@
     })();
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/391827d54c.js" crossorigin="anonymous"></script>
   <style>
     :root {
       --main: #a259ff;
@@ -33,7 +34,6 @@
     .theme-default { --main: #a259ff; --accent: #5f27cd; --settings-bg: rgba(44,32,69,0.96); --text: #f0eaff; --input-bg: rgba(255,255,255,0.16); --bg: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%);}
     .theme-dark    { --main: #a259ff; --accent: #5f27cd; --settings-bg: #191938; --text: #f0eaff; --input-bg: #191938; --bg: #131324;}
     .theme-light   { --main: #a259ff; --accent: #5f27cd; --settings-bg: #fff; --text: #2c2045; --input-bg: #f2edfd; --bg: #f7f4fb;}
-
     body {
       background: var(--bg);
       color: var(--text);
@@ -46,7 +46,7 @@
     header {
       width: 100vw;
       text-align: center;
-      padding: 1.2rem 0 0.8rem 0;
+      padding: 0;
       font-size: 2rem;
       font-weight: 700;
       color: var(--main);
@@ -55,35 +55,201 @@
       letter-spacing: 1.2px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 2rem;
+      justify-content: space-between;
+      gap: 0.6rem;
       position: fixed;
       top: 0; left: 0; right: 0;
       z-index: 10;
       min-height: 60px;
     }
+    .header-left, .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .header-left {
+      min-width: 170px;
+      justify-content: flex-start;
+      padding-left: 1rem;
+    }
+    .header-center {
+      flex: 1;
+      text-align: center;
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--main);
+      letter-spacing: 1.2px;
+      user-select: none;
+    }
+    .header-right {
+      min-width: 170px;
+      justify-content: flex-end;
+      padding-right: 1rem;
+    }
+    .profile-mini {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      background: var(--input-bg);
+      border-radius: 2rem;
+      padding: 0.2rem 0.8rem 0.2rem 0.2rem;
+      font-size: 1rem;
+      color: var(--main);
+    }
+    .profile-mini img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--main);
+      object-fit: cover;
+      background: #fff;
+    }
+    .signout-btn {
+      background: var(--danger);
+      color: #fff;
+      border: none;
+      border-radius: 1.5rem;
+      padding: 0.5rem 1.2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-left: 0.8rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      box-shadow: 0 2px 8px #a259ff33;
+    }
+    .signout-btn:hover {
+      background: #d32f2f;
+    }
+    .settings-gear {
+      margin-left: 0.5rem;
+      color: var(--main);
+      font-size: 1.4em;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .settings-gear:hover { color: var(--accent);}
+    .back-btn {
+      background: var(--main);
+      color: #fff;
+      border: none;
+      border-radius: 1.5rem;
+      padding: 0.5rem 1.2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      box-shadow: 0 2px 8px #a259ff33;
+    }
+    .back-btn:hover {
+      background: var(--accent);
+    }
     main {
       flex: 1;
-      margin-top: 90px;
+      margin-top: 80px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      gap: 2rem;
+      justify-content: flex-end;
+      gap: 1.3rem;
+      min-height: 0;
     }
     .chat-container {
       background: var(--settings-bg);
       border-radius: 2rem;
-      padding: 2rem;
+      padding: 1.2rem 1.1rem 0.4rem 1.1rem;
       box-shadow: 0 4px 32px #a259ff33;
       width: 98vw;
       max-width: 700px;
-      min-height: 400px;
+      min-height: 420px;
       color: var(--text);
       display: flex;
       flex-direction: column;
-      gap: 1.2rem;
+      gap: 0.8rem;
+      min-height: 0;
     }
+    .messages-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      min-height: 0;
+      margin-bottom: 0.6rem;
+      max-height: 55vh;
+      padding-right: 2px;
+    }
+    .message-bubble {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.7rem;
+      margin-bottom: 3px;
+      max-width: 93%;
+    }
+    .message-bubble.own { flex-direction: row-reverse; align-self: flex-end;}
+    .bubble {
+      padding: 0.7rem 1.3rem;
+      border-radius: 1.5rem;
+      background: var(--main);
+      color: #fff;
+      font-size: 1.07rem;
+      font-weight: 500;
+      box-shadow: 0 2px 8px #a259ff18;
+      word-break: break-word;
+      max-width: 400px;
+      min-width: 60px;
+      position: relative;
+    }
+    .message-bubble.own .bubble { background: var(--accent); }
+    .bubble-meta {
+      font-size: 0.85rem;
+      color: #bbb;
+      margin-top: 0.2rem;
+      margin-left: 4px;
+      margin-right: 4px;
+      user-select: none;
+    }
+    .message-bubble.own .bubble-meta { text-align: right; color: #c1b1fc;}
+    .bubble-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--main);
+      background: #fff;
+    }
+    .chat-input-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin-top: 0.9rem;
+      padding-bottom: 0.5rem;
+    }
+    .chat-input-bar input {
+      flex: 1;
+      padding: 0.7rem 1.3rem;
+      border-radius: 1.5rem;
+      border: 2px solid var(--main);
+      background: var(--input-bg);
+      color: var(--main);
+      font-size: 1.08rem;
+      outline: none;
+      transition: border 0.2s, background 0.2s;
+    }
+    .chat-input-bar input:focus { border: 2px solid var(--accent); background: #fff; color: var(--main);}
+    .send-btn {
+      background: var(--main);
+      color: #fff;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.5rem 1.2rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-left: 0.2rem;
+      box-shadow: 0 2px 8px #a259ff33;
+    }
+    .send-btn:hover { background: var(--accent);}
     .footer {
       text-align: center;
       color: #aaa;
@@ -94,29 +260,181 @@
       user-select: none;
     }
     @media (max-width: 700px) {
-      .chat-container { padding: 1rem; min-height: 200px; }
-      header { font-size: 1.2rem; min-height: 44px; }
-      main { margin-top: 60px; }
+      .chat-container { padding: 0.7rem 0.6rem 0.3rem 0.6rem; min-height: 200px; border-radius: 1.2rem;}
+      header { font-size: 1.1rem; min-height: 44px; }
+      main { margin-top: 54px; }
+      .header-left, .header-right { min-width: 85px; }
+      .profile-mini img { width: 27px; height: 27px; }
+      .chat-input-bar input { font-size: 0.98rem; padding: 0.5rem 0.9rem;}
+      .bubble { font-size: 0.95rem; padding: 0.55rem 0.9rem; }
     }
   </style>
 </head>
 <body>
   <header>
-    <button class="back-btn" onclick="window.location.href='index.html'" style="position:absolute;left:1.5rem;top:1.1rem;background:var(--main);color:#fff;border:none;border-radius:1.5rem;padding:0.5rem 1.3rem;font-size:1rem;font-weight:600;cursor:pointer;">&larr; Back</button>
-    Global Chat
+    <div class="header-left">
+      <button class="back-btn" onclick="window.location.href='index.html'">&larr; Back</button>
+    </div>
+    <div class="header-center">Global Chat</div>
+    <div class="header-right" id="profile-bar">
+      <!-- User info and signout/settings, filled by JS -->
+      <button title="Settings" onclick="window.location.href='settings.html'" class="settings-gear"><i class="fa-solid fa-gear"></i></button>
+    </div>
   </header>
   <main>
-    <div class="chat-container" id="chat-messages">
-      <!-- Your global chat messages go here -->
-      <div style="text-align:center;color:var(--text);margin-top:3rem;font-size:1.3rem;opacity:.8;">
-        Global chat UI goes here.<br>
-        (Plug in your Firebase chat logic!)
-      </div>
+    <div class="chat-container">
+      <div class="messages-list" id="messages-list"></div>
+      <form class="chat-input-bar" id="chat-form" autocomplete="off">
+        <input type="text" id="chat-input" placeholder="Type a message..." maxlength="500" autocomplete="off" required />
+        <button type="submit" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+      </form>
     </div>
   </main>
-  <div class="footer">
-    Made with ❤️ by Flakious
-  </div>
-  <!-- Put your Firebase SDK/chat JS here! -->
+  <div class="footer">Made with ❤️ by Flakious</div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInWithPopup,
+      GoogleAuthProvider,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      serverTimestamp,
+      onChildAdded,
+      query,
+      limitToLast
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+      authDomain: "chatz-45df4.firebaseapp.com",
+      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
+      projectId: "chatz-45df4",
+      storageBucket: "chatz-45df4.appspot.com",
+      messagingSenderId: "463847844545",
+      appId: "1:463847844545:web:5006247d061c3e0dc28240"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // DOM
+    const profileBar = document.getElementById('profile-bar');
+    const messagesList = document.getElementById('messages-list');
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+
+    let myUser = null;
+
+    // Render profile bar & sign in/out
+    function renderProfileBar(user) {
+      profileBar.innerHTML = '';
+      if (user) {
+        const miniDiv = document.createElement('div');
+        miniDiv.className = 'profile-mini';
+        miniDiv.innerHTML = `
+          <img src="${user.photoURL || 'https://via.placeholder.com/36/2c2045/f0eaff?text=U'}" alt="User" />
+          <span>${user.displayName || 'Anonymous'}</span>
+        `;
+        profileBar.appendChild(miniDiv);
+
+        const signoutBtn = document.createElement('button');
+        signoutBtn.className = 'signout-btn';
+        signoutBtn.textContent = 'Sign Out';
+        signoutBtn.onclick = () => signOut(auth).then(() => window.location.reload());
+        profileBar.appendChild(signoutBtn);
+
+        const settingsBtn = document.createElement('button');
+        settingsBtn.title = 'Settings';
+        settingsBtn.className = 'settings-gear';
+        settingsBtn.innerHTML = '<i class="fa-solid fa-gear"></i>';
+        settingsBtn.onclick = () => window.location.href = "settings.html";
+        profileBar.appendChild(settingsBtn);
+      } else {
+        const signInBtn = document.createElement('button');
+        signInBtn.className = 'signout-btn';
+        signInBtn.style.background = "var(--main)";
+        signInBtn.textContent = 'Sign In';
+        signInBtn.onclick = () => {
+          const provider = new GoogleAuthProvider();
+          signInWithPopup(auth, provider).catch(e => alert("Sign-in failed: " + e.message));
+        };
+        profileBar.appendChild(signInBtn);
+
+        const settingsBtn = document.createElement('button');
+        settingsBtn.title = 'Settings';
+        settingsBtn.className = 'settings-gear';
+        settingsBtn.innerHTML = '<i class="fa-solid fa-gear"></i>';
+        settingsBtn.onclick = () => window.location.href = "settings.html";
+        profileBar.appendChild(settingsBtn);
+      }
+    }
+
+    // Format timestamp to readable time
+    function formatTime(ts) {
+      if (!ts) return '';
+      const d = new Date(ts);
+      return d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    // Render a new message
+    function renderMessage(msg, isOwn) {
+      const bubble = document.createElement('div');
+      bubble.className = 'message-bubble' + (isOwn ? ' own' : '');
+      bubble.innerHTML = `
+        <img class="bubble-avatar" src="${msg.photoURL || 'https://via.placeholder.com/32/2c2045/f0eaff?text=U'}" alt="A"/>
+        <div>
+          <div class="bubble">${msg.text || ''}</div>
+          <div class="bubble-meta">${msg.nickname || msg.displayName || 'Anonymous'} · ${formatTime(msg.timestamp)}</div>
+        </div>
+      `;
+      messagesList.appendChild(bubble);
+      messagesList.scrollTop = messagesList.scrollHeight;
+    }
+
+    // Listen for auth
+    onAuthStateChanged(auth, (user) => {
+      myUser = user;
+      renderProfileBar(user);
+      chatInput.disabled = !user;
+    });
+
+    // Listen for last 100 messages, real-time
+    const chatRef = query(ref(db, "globalChat"), limitToLast(100));
+    onChildAdded(chatRef, (snap) => {
+      const msg = snap.val();
+      const isOwn = myUser && msg && msg.uid === myUser.uid;
+      renderMessage(msg, isOwn);
+    });
+
+    // Send message
+    chatForm.onsubmit = async (e) => {
+      e.preventDefault();
+      if (!auth.currentUser) {
+        alert("Sign in to send a message!");
+        return;
+      }
+      const text = chatInput.value.trim();
+      if (!text) return;
+      const u = auth.currentUser;
+      const snapshot = await (await import("https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js")).get(ref(db, `users/${u.uid}`));
+      const userDbData = snapshot.exists() ? snapshot.val() : {};
+      await push(ref(db, "globalChat"), {
+        text,
+        uid: u.uid,
+        displayName: u.displayName,
+        photoURL: u.photoURL,
+        nickname: userDbData.nickname || u.displayName || "",
+        timestamp: Date.now()
+      });
+      chatInput.value = '';
+    };
+  </script>
 </body>
 </html>
