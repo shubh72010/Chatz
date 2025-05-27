@@ -3,58 +3,157 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chatz | by Flakious</title>
+  <title>Chatz | Global Chat</title>
+  <script>
+    (function() {
+      // Initially set to default theme. JavaScript will update this on auth state change.
+      document.documentElement.className = 'theme-default';
+    })();
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
+    /* Base variables (these are the fallback/default values when no theme class is active,
+       or explicitly set by .theme-default) */
+    :root {
+      --main: #a259ff; /* Primary accent color (purple) */
+      --accent: #5f27cd; /* Darker accent color */
+      --danger: #ff5252; /* Red for danger/errors */
+      --header-bg: #302d4c;
+      --body-bg: #1e1e2f;
+      --chat-bg: #252438;
+      --message-bg: #3a375a;
+      --input-field-bg: #44415e;
+      --text-color: #f5f5f5;
+      --sender-color: #a7a7fa;
+      --button-bg: #726dff;
+      --button-hover-bg: #5c58e0;
+      --reply-preview-bg: #554fa6;
+      --reply-preview-border: #a3a0ff;
+      --reply-preview-text: #dcdcff;
+    }
+
+    /* Default Theme (explicitly sets the base values, for clarity) */
+    .theme-default {
+      --header-bg: #302d4c;
+      --body-bg: #1e1e2f;
+      --chat-bg: #252438;
+      --message-bg: #3a375a;
+      --input-field-bg: #44415e;
+      --text-color: #f5f5f5;
+      --sender-color: #a7a7fa;
+      --button-bg: #726dff;
+      --button-hover-bg: #5c58e0;
+      --reply-preview-bg: #554fa6;
+      --reply-preview-border: #a3a0ff;
+      --reply-preview-text: #dcdcff;
+    }
+
+    /* Dark Theme (Enhanced Darker) */
+    .theme-dark {
+      --header-bg: #1a1a1a; /* Very dark grey, almost black */
+      --body-bg: #0d0d0d; /* Almost black */
+      --chat-bg: #1a1a1a; /* Same as header, consistent */
+      --message-bg: #2c2c2c; /* Dark grey for messages */
+      --input-field-bg: #3a3a3a; /* Slightly lighter dark grey for input */
+      --text-color: #ffffff; /* White text */
+      --sender-color: #b0b0b0; /* Lighter grey for sender in dark theme */
+      --button-bg: #a259ff; /* Use main accent color for consistency */
+      --button-hover-bg: #5f27cd; /* Use darker accent */
+      --reply-preview-bg: #2a2a2a; /* Darker reply preview */
+      --reply-preview-border: #a259ff; /* Main accent border */
+      --reply-preview-text: #dddddd; /* Lighter text */
+    }
+
+    /* Light Theme (Enhanced Lighter) */
+    .theme-light {
+      --header-bg: #ffffff; /* Pure white */
+      --body-bg: #f8f8f8; /* Almost white */
+      --chat-bg: #ffffff; /* Pure white */
+      --message-bg: #e0e0e0; /* Light grey for messages */
+      --input-field-bg: #f0f0f0; /* Very light grey for input */
+      --text-color: #1a1a1a; /* Very dark grey text */
+      --sender-color: #5f27cd; /* Main accent for sender */
+      --button-bg: #a259ff; /* Use main accent color */
+      --button-hover-bg: #5f27cd; /* Use darker accent */
+      --reply-preview-bg: #cccccc; /* Lighter reply preview */
+      --reply-preview-border: #5f27cd; /* Darker accent border */
+      --reply-preview-text: #444444; /* Darker text */
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #1e1e2f;
-      color: #f5f5f5;
+      background: var(--body-bg); /* Themed */
+      color: var(--text-color); /* Themed */
       display: flex;
       flex-direction: column;
       height: 100vh;
       max-width: 600px;
       margin: 0 auto;
+      transition: background 0.3s, color 0.3s; /* Smooth theme transition */
     }
     header {
-      background: #302d4c;
+      background: var(--header-bg); /* Themed */
       padding: 1rem;
       text-align: center;
       font-size: 1.6rem;
       font-weight: 700;
       user-select: none;
       position: relative;
-      display: flex; /* Added for aligning back button */
-      align-items: center; /* Added for aligning back button */
-      justify-content: center; /* Center the "Chat" text */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s; /* Smooth theme transition */
     }
-    /* New style for the back button */
-    .back-btn {
+    /* User Info & Back Button Container */
+    #user-info {
       position: absolute;
       left: 1rem;
       top: 50%;
       transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      /* display: none; will be set by JS */
+    }
+    .back-btn {
       background: none;
       border: none;
-      color: white;
+      color: var(--text-color); /* Themed */
       font-size: 1.5rem;
       cursor: pointer;
       padding: 0.2rem 0.5rem;
       border-radius: 5px;
-      transition: background-color 0.2s ease;
+      transition: background-color 0.2s ease, color 0.3s; /* Smooth theme transition */
     }
     .back-btn:hover {
       background-color: rgba(255, 255, 255, 0.1);
     }
-    #auth-btns {
+    #user-pic {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      /* display: none; will be set by JS */
+    }
+    #user-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      /* display: none; will be set by JS */
+    }
+
+    /* Header controls container (right) */
+    #header-controls {
       position: absolute;
       right: 1rem;
-      top: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
       display: flex;
       gap: 0.5rem;
+      align-items: center;
     }
-    button.auth-btn {
-      background: #726dff;
+    /* Styles for general header buttons (Sign In / Settings) */
+    .header-btn {
+      background: var(--button-bg); /* Themed */
       border: none;
       color: white;
       font-weight: 600;
@@ -64,7 +163,30 @@
       font-size: 0.9rem;
       transition: background-color 0.2s ease;
     }
-    button.auth-btn:hover { background: #5c58e0; }
+    .header-btn:hover { background: var(--button-hover-bg); }
+
+    /* Theme switcher dropdown */
+    #theme-switcher {
+      padding: 0.3rem;
+      border-radius: 5px;
+      background: var(--input-field-bg); /* Themed */
+      color: var(--text-color); /* Themed */
+      border: 1px solid var(--button-bg); /* Themed border */
+      font-size: 0.9rem;
+      cursor: pointer;
+      appearance: none; /* Remove default dropdown arrow */
+      background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2C114.7L159.2%2C242.5c-4.5%2C4.5-10.6%2C6.8-16.8%2C6.8s-12.3-2.3-16.8-6.8L5.4%2C114.7c-9.1-9.1-9.1-23.7%2C0-32.8s23.7-9.1%2C32.8%2C0l118%2C118l118-118c9.1-9.1%2C23.7-9.1%2C32.8%2C0S296.1%2C105.6%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E'); /* Custom dropdown arrow */
+      background-repeat: no-repeat;
+      background-position: right 0.5rem center;
+      background-size: 0.7em auto;
+      padding-right: 2rem; /* Make space for arrow */
+      transition: background 0.3s, color 0.3s, border 0.3s; /* Smooth theme transition */
+    }
+    #theme-switcher option {
+        background: var(--input-field-bg); /* Themed */
+        color: var(--text-color); /* Themed */
+    }
+
     #chat {
       flex: 1;
       overflow-y: auto;
@@ -73,31 +195,33 @@
       flex-direction: column;
       gap: 0.5rem;
       scroll-behavior: smooth;
-      background: #252438;
+      background: var(--chat-bg); /* Themed */
+      transition: background 0.3s; /* Smooth theme transition */
     }
     .message {
       padding: 0.6rem 1rem;
-      background: #3a375a;
+      background: var(--message-bg); /* Themed */
       border-radius: 1rem;
       max-width: 80%;
       word-wrap: break-word;
       cursor: pointer;
       position: relative;
-      transition: background-color 0.15s ease;
+      transition: background-color 0.15s ease, background 0.3s; /* Smooth theme transition */
     }
     .message .sender {
       font-size: 0.92rem;
       font-weight: 600;
-      color: #a7a7fa;
+      color: var(--sender-color); /* Themed */
       margin-bottom: 2px;
       display: block;
+      transition: color 0.3s; /* Smooth theme transition */
     }
-    .message:hover { background: #4b4781; }
+    .message:hover { background: var(--button-hover-bg); } /* Using a themed hover */
     .own {
-      background: #726dff;
+      background: var(--button-bg); /* Themed (same as send button) */
       align-self: flex-end;
     }
-    .own .sender { color: #fff; }
+    .own .sender { color: #fff; } /* Sender in own message is always white */
     .meta {
       font-size: 0.7rem;
       opacity: 0.6;
@@ -105,17 +229,18 @@
       user-select: none;
     }
     .reply-preview {
-      background: #554fa6;
+      background: var(--reply-preview-bg); /* Themed */
       padding: 0.5rem 1rem;
       margin: 0 1rem 0.5rem 1rem;
-      border-left: 3px solid #a3a0ff;
+      border-left: 3px solid var(--reply-preview-border); /* Themed */
       font-size: 0.85rem;
-      color: #dcdcff;
+      color: var(--reply-preview-text); /* Themed */
       user-select: none;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-radius: 0.5rem;
+      transition: background 0.3s, border-color 0.3s, color 0.3s; /* Smooth theme transition */
     }
     .reply-preview span {
       font-weight: 600;
@@ -127,19 +252,21 @@
     .reply-preview button {
       background: transparent;
       border: none;
-      color: #dcdcff;
+      color: var(--reply-preview-text); /* Themed */
       font-size: 1.2rem;
       cursor: pointer;
       font-weight: bold;
       user-select: none;
+      transition: color 0.3s; /* Smooth theme transition */
     }
     form {
       display: flex;
       flex-wrap: nowrap;
       padding: 1rem;
-      background: #2d2b45;
+      background: var(--header-bg); /* Themed (similar to header for consistency) */
       gap: 0.5rem;
       align-items: center;
+      transition: background 0.3s; /* Smooth theme transition */
     }
     #message {
       flex: 3 1 auto;
@@ -147,16 +274,17 @@
       border-radius: 1rem;
       border: none;
       outline: none;
-      background: #44415e;
-      color: white;
+      background: var(--input-field-bg); /* Themed */
+      color: var(--text-color); /* Themed */
       font-size: 1rem;
+      transition: background 0.3s, color 0.3s; /* Smooth theme transition */
     }
     button#send-btn {
       flex: 0 0 auto;
       padding: 0.6rem 1rem;
       border-radius: 1rem;
       border: none;
-      background: #726dff;
+      background: var(--button-bg); /* Themed */
       color: white;
       font-weight: bold;
       cursor: pointer;
@@ -164,28 +292,38 @@
       transition: background-color 0.2s ease;
     }
     button#send-btn:disabled {
-      background: #44415e;
+      background: var(--input-field-bg); /* Themed for disabled */
       cursor: not-allowed;
+      color: rgba(255, 255, 255, 0.5); /* Lighter text for disabled */
     }
-    button#send-btn:hover:not(:disabled) { background: #5c58e0; }
+    button#send-btn:hover:not(:disabled) { background: var(--button-hover-bg); }
     @media (max-width: 480px) {
       form { flex-wrap: wrap; }
       #message { flex: 1 1 100%; }
       button#send-btn { flex: 1 1 100%; margin-top: 0.5rem; }
-      /* Adjust back button for smaller screens if needed */
       .back-btn { font-size: 1.2rem; padding: 0.1rem 0.3rem; }
+      #header-controls { right: 0.5rem; gap: 0.2rem;}
+      #theme-switcher { font-size: 0.8rem; padding: 0.2rem 1.5rem 0.2rem 0.5rem; background-position: right 0.2rem center;}
+      .header-btn { padding: 0.2rem 0.5rem; font-size: 0.8rem;}
+      header { font-size: 1.3rem; padding: 0.8rem;}
     }
   </style>
 </head>
 <body>
   <header>
-    <button class="back-btn" onclick="window.location.href='index.html'" title="Go back to main menu">&#8592;</button> <div id="user-info" style="position: absolute; left: 1rem; top: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+    <div id="user-info" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); display: none;">
+      <button class="back-btn" onclick="window.location.href='index.html'" title="Go back to main menu">&#8592;</button>
       <img id="user-pic" src="" alt="Profile" style="width: 32px; height: 32px; border-radius: 50%; display: none;" />
       <span id="user-name" style="font-size: 0.9rem; font-weight: 600; display: none;"></span>
     </div>
-    Chat <div id="auth-btns">
-      <button id="sign-in" class="auth-btn">Sign In</button>
-      <button id="sign-out" class="auth-btn" style="display:none;">Sign Out</button>
+
+    Chat <div id="header-controls">
+      <select id="theme-switcher" style="display:none;"> <option value="default">Default</option>
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+      </select>
+      <button id="settings-btn" class="header-btn" style="display:none;" title="Settings">⚙️</button>
+      <button id="sign-in-header-btn" class="header-btn">Sign In</button>
     </div>
   </header>
   <div id="chat"></div>
@@ -209,9 +347,9 @@
       getAuth,
       GoogleAuthProvider,
       signInWithPopup,
-      signOut,
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
       authDomain: "chatz-45df4.firebaseapp.com",
@@ -226,6 +364,8 @@
     const db = getDatabase(app);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
+
+    // DOM elements
     const chat = document.getElementById("chat");
     const form = document.getElementById("chat-form");
     const messageInput = document.getElementById("message");
@@ -233,16 +373,33 @@
     const replyPreview = document.getElementById("reply-preview");
     const replyText = document.getElementById("reply-text");
     const cancelReplyBtn = document.getElementById("cancel-reply");
-    const signInBtn = document.getElementById("sign-in");
-    const signOutBtn = document.getElementById("sign-out");
+    const themeSwitcher = document.getElementById("theme-switcher");
 
-    // Get user info elements
+    // Header controls
+    const signInHeaderBtn = document.getElementById("sign-in-header-btn");
+    const settingsBtn = document.getElementById("settings-btn");
+
+    // User info display (left of header)
     const userInfoDiv = document.getElementById("user-info");
     const userPic = document.getElementById("user-pic");
     const userNameSpan = document.getElementById("user-name");
 
     let replyTo = null;
+
+    // --- Theme Switching Logic ---
+    function applyTheme(themeName) {
+      document.documentElement.className = 'theme-' + themeName;
+      localStorage.setItem('chatzTheme', themeName);
+    }
+
+    // Event listener for theme switcher
+    themeSwitcher.addEventListener('change', (event) => {
+      applyTheme(event.target.value);
+    });
+    // --- End Theme Switching Logic ---
+
     const scrollToBottom = () => { chat.scrollTop = chat.scrollHeight; };
+
     function escapeHtml(text) {
       return text
         .replace(/&/g, "&amp;")
@@ -251,9 +408,11 @@
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
     }
+
     function truncate(str, n) {
       return str.length > n ? str.substr(0, n - 1) + "…" : str;
     }
+
     const messagesRef = ref(db, "messages");
     onChildAdded(messagesRef, (snapshot) => {
       const data = snapshot.val();
@@ -264,7 +423,7 @@
       }
       let replyHTML = "";
       if (data.replyTo) {
-        replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid #a3a0ff; padding-left: 6px; color:#ccc;">
+        replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--reply-preview-border); padding-left: 6px; color:var(--reply-preview-text);">
           Reply to: <strong>${escapeHtml(data.replyTo.name || "Anonymous")}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
         </div>`;
       }
@@ -289,13 +448,19 @@
       chat.appendChild(msgDiv);
       scrollToBottom();
     });
+
     cancelReplyBtn.addEventListener("click", () => {
       replyTo = null;
       replyPreview.style.display = "none";
     });
+
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      if (!auth.currentUser) return alert("You must be signed in to send messages.");
+      if (!auth.currentUser) {
+        // Using console.error instead of alert as per instructions
+        console.error("You must be signed in to send messages.");
+        return;
+      }
       const msg = messageInput.value.trim();
       if (!msg) return;
       const newMsg = {
@@ -315,26 +480,37 @@
           console.error("Error sending message:", err);
         });
     });
-    signInBtn.addEventListener("click", () => {
+
+    signInHeaderBtn.addEventListener("click", () => {
       signInWithPopup(auth, provider).catch((error) => {
         console.error("Sign-in error:", error);
       });
     });
-    signOutBtn.addEventListener("click", () => {
-      signOut(auth).catch((error) => {
-        console.error("Sign-out error:", error);
-      });
+
+    settingsBtn.addEventListener("click", () => {
+      window.location.href = 'settings.html';
     });
+
     onAuthStateChanged(auth, (user) => {
       if (user) {
         messageInput.disabled = false;
         sendBtn.disabled = false;
-        signInBtn.style.display = "none";
-        signOutBtn.style.display = "inline-block";
+
+        // Header controls visibility
+        signInHeaderBtn.style.display = "none"; // Hide Sign In
+        settingsBtn.style.display = "inline-block"; // Show Settings
+        themeSwitcher.style.display = "inline-block"; // Show Theme Switcher
+
+        // Apply stored theme when signed in
+        const storedTheme = localStorage.getItem('chatzTheme') || 'default';
+        applyTheme(storedTheme); // Apply the theme
+        themeSwitcher.value = storedTheme; // Set dropdown to current theme
+
         messageInput.placeholder = "Type a message...";
-        // Display user info at top left
+
+        // Display user info at top left (including back button)
         userInfoDiv.style.display = "flex"; // Make sure the container is visible
-        userPic.src = user.photoURL || "https://via.placeholder.com/32/2c2045/f0eaff?text=U";
+        userPic.src = user.photoURL || "https://via.placeholder.com/32/cccccc/2c2045?text=U";
         userPic.style.display = "inline-block"; // Show image
         userNameSpan.textContent = user.displayName || "Anonymous";
         userNameSpan.style.display = "inline-block"; // Show name
@@ -343,11 +519,20 @@
         messageInput.placeholder = "Sign in to chat";
         messageInput.disabled = true;
         sendBtn.disabled = true;
-        signInBtn.style.display = "inline-block";
-        signOutBtn.style.display = "none";
+
+        // Header controls visibility
+        signInHeaderBtn.style.display = "inline-block"; // Show Sign In
+        settingsBtn.style.display = "none"; // Hide Settings
+        themeSwitcher.style.display = "none"; // Hide Theme Switcher
+
+        // Force default theme when signed out
+        applyTheme('default'); // Always apply default theme when signed out
+        themeSwitcher.value = 'default'; // Reset dropdown
+
         replyTo = null;
         replyPreview.style.display = "none";
-        // Hide user info at top left
+
+        // Hide user info at top left (including back button)
         userInfoDiv.style.display = "none";
         userPic.style.display = "none";
         userNameSpan.style.display = "none";
@@ -360,21 +545,19 @@
     const targetUid = urlParams.get('uid');
 
     if (chatType === 'dm' && targetUid) {
-        // Here you would typically fetch the target user's info to display
-        // and set up a private chat reference. For this example, we'll just
-        // change the header text to indicate a DM, but a full DM implementation
-        // would involve more Firebase Realtime Database logic (e.g., messages/DM_UID1_UID2)
-        document.querySelector('header').childNodes[3].textContent = `DM with User ${targetUid.substring(0, 4)}...`; // Change "Chat" to "DM with User..."
-        // If you need to fetch target user's name:
-        // onValue(ref(db, `users/${targetUid}/displayName`), (snapshot) => {
-        //     const targetDisplayName = snapshot.val();
-        //     if (targetDisplayName) {
-        //         document.querySelector('header').childNodes[3].textContent = `DM with ${targetDisplayName}`;
-        //     }
-        // }, { onlyOnce: true });
-        // You would also change messagesRef to point to a DM path:
-        // const dmMessagesRef = ref(db, `dms/${myUid}_${targetUid}`); // Simplified, real DMs need careful pathing
+        const chatHeader = document.querySelector('header');
+        // Find the "Chat" text node, assuming it's the direct text child of the header
+        const chatTitleNode = Array.from(chatHeader.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim() === 'Chat');
+        if (chatTitleNode) {
+            // In a real app, fetch target user's display name
+            chatTitleNode.textContent = `DM with User ${targetUid.substring(0, 6)}...`;
+        }
+        // IMPORTANT: For actual DM functionality, you would also need to
+        // adjust the `messagesRef` to point to a private chat path, e.g.:
+        // const dmMessagesRef = ref(db, `dms/${auth.currentUser.uid}_${targetUid}`);
         // onChildAdded(dmMessagesRef, ...);
+        // This current code still points to the 'messages' global chat.
+        // A full DM implementation requires more robust handling of chat references.
     }
   </script>
 </body>
