@@ -10,7 +10,6 @@
       --main: #a259ff;
       --accent: #5f27cd;
       --danger: #ff5252;
-      --settings-bg: rgba(44,32,69,0.95);
       --text: #f0eaff;
       --text-dark: #2c2045;
     }
@@ -204,7 +203,6 @@
       z-index: 100;
       pointer-events:none;
     }
-    /* Responsive */
     @media (max-width: 600px) {
       header {
         flex-direction: column;
@@ -235,7 +233,7 @@
     </div>
     <span>Chatz</span>
     <div id="auth-btns">
-      <button id="settings-btn" class="auth-btn" style="display:none;">Settings</button>
+      <button id="settings-btn" class="auth-btn" style="display:none;" onclick="window.location.href='settings.html'">Settings</button>
       <button id="sign-in" class="auth-btn">Sign In</button>
       <button id="sign-out" class="auth-btn" style="display:none;">Sign Out</button>
     </div>
@@ -247,30 +245,9 @@
     </div>
   </main>
   <div class="footer">Made with ❤️ by Flakious</div>
-  <div id="settings-page" style="display:none;">
-    <div class="settings-content">
-      <button id="settings-close-btn" class="settings-close-btn">&times;</button>
-      <h2>Settings</h2>
-      <div class="settings-section">
-        <label>Theme Selection:</label>
-        <div id="theme-dropdown-container">
-            <label for="theme-select" id="theme-dropdown-label">Themes:</label>
-            <select id="theme-select">
-                <option value="default">Purple Mode</option>
-                <option value="dark">Dark Mode</option>
-                <option value="light">Light Mode</option>
-            </select>
-        </div>
-      </div>
-      <div class="settings-section">
-        <label>Account Actions:</label>
-        <button id="set-nickname-btn" class="auth-btn" style="margin-top: 10px;">Set Nickname</button>
-      </div>
-    </div>
-  </div>
   <!-- Bottom circular nav (Settings only) -->
   <div id="circle-nav">
-    <button title="Settings" onclick="document.getElementById('settings-page').style.display='flex'"><span>⚙️</span></button>
+    <button title="Settings" onclick="window.location.href='settings.html'"><span>⚙️</span></button>
   </div>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
@@ -307,10 +284,6 @@
     const signInBtn = document.getElementById("sign-in");
     const signOutBtn = document.getElementById("sign-out");
     const settingsBtn = document.getElementById("settings-btn");
-    const settingsPage = document.getElementById("settings-page");
-    const settingsCloseBtn = document.getElementById("settings-close-btn");
-    const setNicknameBtn = document.getElementById("set-nickname-btn");
-    const themeSelect = document.getElementById("theme-select");
     const headerUserInfo = document.getElementById("header-user-info");
     const userPfp = document.getElementById("user-pfp");
     const displayUsername = document.getElementById("display-username");
@@ -325,39 +298,6 @@
     };
     signOutBtn.onclick = () => {
       signOut(auth).catch(e => alert("Sign-out failed: " + e.message));
-    };
-
-    // Settings modal
-    settingsBtn.onclick = () => { settingsPage.style.display = "flex"; };
-    settingsCloseBtn.onclick = () => { settingsPage.style.display = "none"; };
-
-    // Theme
-    function applyTheme(themeName) {
-      document.body.classList.remove('theme-default', 'theme-dark', 'theme-light');
-      document.body.classList.add(`theme-${themeName}`);
-      localStorage.setItem('chatzTheme', themeName);
-      themeSelect.value = themeName;
-    }
-    themeSelect.addEventListener('change', (event) => applyTheme(event.target.value));
-    document.addEventListener('DOMContentLoaded', () => {
-      const savedTheme = localStorage.getItem('chatzTheme') || 'default';
-      applyTheme(savedTheme);
-    });
-
-    // Nickname
-    setNicknameBtn.onclick = async () => {
-      if (!auth.currentUser) return alert("Sign in to set a nickname.");
-      const newNickname = prompt(`Enter your new nickname (current: ${currentUserNickname || 'None'}):`);
-      if (newNickname === null || newNickname.trim() === "") return;
-      const userRef = ref(db, `users/${auth.currentUser.uid}`);
-      try {
-        await update(userRef, { nickname: newNickname.trim() });
-        currentUserNickname = newNickname.trim();
-        displayUsername.textContent = currentUserNickname;
-        alert("Nickname updated!");
-      } catch (error) {
-        alert("Failed to set nickname.");
-      }
     };
 
     // Center users list population
