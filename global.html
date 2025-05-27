@@ -4,13 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz | Global Chat</title>
-  <!-- Instantly apply theme -->
-  <script>
-    (function() {
-      var theme = localStorage.getItem('chatzTheme') || 'default';
-      document.documentElement.className = 'theme-' + theme;
-    })();
-  </script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <script src="https://kit.fontawesome.com/391827d54c.js" crossorigin="anonymous"></script>
   <style>
@@ -21,19 +14,8 @@
       --settings-bg: rgba(44,32,69,0.96);
       --text: #f0eaff;
       --input-bg: rgba(255,255,255,0.16);
-      --dark-bg: #131324;
-      --dark-card: #191938;
-      --dark-input: #191938;
-      --dark-text: #f0eaff;
-      --light-bg: #f7f4fb;
-      --light-card: #fff;
-      --light-input: #f2edfd;
-      --light-text: #2c2045;
       --bg: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%);
     }
-    .theme-default { --main: #a259ff; --accent: #5f27cd; --settings-bg: rgba(44,32,69,0.96); --text: #f0eaff; --input-bg: rgba(255,255,255,0.16); --bg: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%);}
-    .theme-dark    { --main: #a259ff; --accent: #5f27cd; --settings-bg: #191938; --text: #f0eaff; --input-bg: #191938; --bg: #131324;}
-    .theme-light   { --main: #a259ff; --accent: #5f27cd; --settings-bg: #fff; --text: #2c2045; --input-bg: #f2edfd; --bg: #f7f4fb;}
     body {
       background: var(--bg);
       color: var(--text);
@@ -102,7 +84,7 @@
       min-height: 0;
       padding: 1.2rem 1.1rem 0.4rem 1.1rem;
     }
-    .messages-list {
+    #chat {
       flex: 1;
       overflow-y: auto;
       display: flex;
@@ -114,50 +96,14 @@
       padding-right: 2px;
       scroll-behavior: smooth;
     }
-    .message-bubble {
-      display: flex;
-      align-items: flex-end;
-      gap: 0.7rem;
-      margin-bottom: 3px;
-      max-width: 93%;
-    }
-    .message-bubble.own { flex-direction: row-reverse; align-self: flex-end;}
-    .bubble {
-      padding: 0.7rem 1.3rem;
-      border-radius: 1.5rem;
-      background: var(--main);
-      color: #fff;
-      font-size: 1.07rem;
-      font-weight: 500;
-      box-shadow: 0 2px 8px #a259ff18;
-      word-break: break-word;
-      max-width: 400px;
-      min-width: 60px;
-      position: relative;
-    }
-    .message-bubble.own .bubble { background: var(--accent); }
-    .bubble-meta {
-      font-size: 0.85rem;
-      color: #bbb;
-      margin-top: 0.2rem;
-      margin-left: 4px;
-      margin-right: 4px;
-      user-select: none;
-    }
-    .message-bubble.own .bubble-meta { text-align: right; color: #c1b1fc;}
-    .bubble-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      object-fit: cover;
-      border:-input-bar {
+    .chat-input-bar {
       display: flex;
       align-items: center;
       gap: 0.7rem;
       margin-top: 0.9rem;
       padding-bottom: 0.5rem;
     }
-    .chat-input-bar input {
+    #message {
       flex: 1;
       padding: 0.7rem 1.3rem;
       border-radius: 1.5rem;
@@ -168,12 +114,12 @@
       outline: none;
       transition: border 0.2s, background 0.2s;
     }
-    .chat-input-bar input:focus { border: 2px solid var(--accent); background: #fff; color: var(--main);}
-    .send-btn {
+    #message:focus { border: 2px solid var(--accent); background: #fff; color: var(--main);}
+    .send-btn, #send-btn {
       background: var(--main);
       color: #fff;
       border: none;
-      border-radius: 999px; /* Extra pill shape */
+      border-radius: 999px;
       padding: 0.6rem 2rem;
       font-size: 1.2rem;
       font-weight: 700;
@@ -187,7 +133,7 @@
       min-width: 52px;
       min-height: 44px;
     }
-    .send-btn:hover { background: var(--accent);}
+    .send-btn:hover, #send-btn:hover { background: var(--accent);}
     .footer {
       text-align: center;
       color: #aaa;
@@ -203,8 +149,7 @@
       main { margin-top: 54px; }
       .header-left { min-width: 85px; }
       .chat-input-bar input { font-size: 0.98rem; padding: 0.5rem 0.9rem;}
-      .bubble { font-size: 0.95rem; padding: 0.55rem 0.9rem; }
-      .send-btn { min-width: 40px; min-height: 36px; font-size: 1rem; padding: 0.4rem 1.2rem; }
+      .send-btn, #send-btn { min-width: 40px; min-height: 36px; font-size: 1rem; padding: 0.4rem 1.2rem; }
     }
   </style>
 </head>
@@ -217,122 +162,20 @@
   </header>
   <main>
     <div class="chat-container">
-      <div class="messages-list" id="messages-list"></div>
-      <form class="chat-input-bar" id="chat-form" autocomplete="off">
-        <input type="text" id="chat-input" placeholder="Type a message..." maxlength="500" autocomplete="off" required />
-        <button type="submit" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+      <div id="chat"></div>
+      <form id="chat-form" class="chat-input-bar" autocomplete="off">
+        <input type="text" id="message" placeholder="Type a message..." maxlength="500" autocomplete="off" required />
+        <button type="submit" id="send-btn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
       </form>
+      <div id="reply-preview" style="display:none;">
+        <span id="reply-text"></span>
+        <button id="cancel-reply" type="button">Cancel</button>
+      </div>
     </div>
   </main>
-  <div class="footer">Made with ❤️ by PurpleDevs</div>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signInWithPopup,
-      GoogleAuthProvider
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-    import {
-      getDatabase,
-      ref,
-      push,
-      onChildAdded,
-      query,
-      limitToLast,
-      get
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-
-    // Firebase config (your actual config)
-    const firebaseConfig = {
-      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
-      authDomain: "chatz-45df4.firebaseapp.com",
-      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
-      projectId: "chatz-45df4",
-      storageBucket: "chatz-45df4.appspot.com",
-      messagingSenderId: "463847844545",
-      appId: "1:463847844545:web:5006247d061c3e0dc28240"
-    };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-
-    const messagesList = document.getElementById('messages-list');
-    const chatForm = document.getElementById('chat-form');
-    const chatInput = document.getElementById('chat-input');
-    let myUser = null;
-
-    // Format timestamp to readable time
-    function formatTime(ts) {
-      if (!ts) return '';
-      const d = new Date(ts);
-      return d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    }
-
-    // Render a new message
-    function renderMessage(msg, isOwn) {
-      const bubble = document.createElement('div');
-      bubble.className = 'message-bubble' + (isOwn ? ' own' : '');
-      bubble.innerHTML = `
-        <img class="bubble-avatar" src="${msg.photoURL || 'https://via.placeholder.com/32/2c2045/f0eaff?text=U'}" alt="A"/>
-        <div>
-          <div class="bubble">${msg.text || ''}</div>
-          <div class="bubble-meta">${msg.nickname || msg.displayName || 'Anonymous'} · ${formatTime(msg.timestamp)}</div>
-        </div>
-      `;
-      messagesList.appendChild(bubble);
-      // Always scroll to bottom after new message
-      messagesList.scrollTop = messagesList.scrollHeight;
-    }
-
-    // Listen for auth
-    onAuthStateChanged(auth, (user) => {
-      myUser = user;
-      chatInput.disabled = !user;
-      if (!user) {
-        chatInput.placeholder = "Sign in to chat";
-        chatInput.style.opacity = 0.7;
-        chatInput.onclick = () => {
-          const provider = new GoogleAuthProvider();
-          signInWithPopup(auth, provider).catch(e => alert("Sign-in failed: " + e.message));
-        };
-      } else {
-        chatInput.placeholder = "Type a message...";
-        chatInput.style.opacity = 1;
-        chatInput.onclick = null;
-      }
-    });
-
-    // Listen for last 100 messages, real-time
-    const chatRef = query(ref(db, "globalChat"), limitToLast(100));
-    onChildAdded(chatRef, (snap) => {
-      const msg = snap.val();
-      const isOwn = myUser && msg && msg.uid === myUser.uid;
-      renderMessage(msg, isOwn);
-    });
-
-    // Send message
-    chatForm.onsubmit = async (e) => {
-      e.preventDefault();
-      if (!auth.currentUser) {
-        alert("Sign in to send a message!");
-        return;
-      }
-      const text = chatInput.value.trim();
-      if (!text) return;
-      const u = auth.currentUser;
-      const snapshot = await get(ref(db, `users/${u.uid}`));
-      const userDbData = snapshot.exists() ? snapshot.val() : {};
-      await push(ref(db, "globalChat"), {
-        text,
-        uid: u.uid,
-        displayName: u.displayName,
-        photoURL: u.photoURL,
-        nickname: userDbData.nickname || u.displayName || "",
-        timestamp: Date.now()
-      });
-      chatInput.value = '';
-    };
-  </script>
+  <div class="footer">Made with ❤️ by Flakious</div>
+  <!-- Wire up helpers and chat logic -->
+  <script type="module" src="./firebaseHelpers.js"></script>
+  <script type="module" src="./chatLogic.js"></script>
 </body>
 </html>
