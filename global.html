@@ -3,287 +3,120 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chatz | by Flakious</title>
+  <title>Chatz | Global Chat</title>
+  <!-- Instant theme application -->
+  <script>
+    (function() {
+      var theme = localStorage.getItem('chatzTheme') || 'default';
+      document.documentElement.className = 'theme-' + theme;
+    })();
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
+    :root {
+      --main: #a259ff;
+      --accent: #5f27cd;
+      --danger: #ff5252;
+      --settings-bg: rgba(44,32,69,0.96);
+      --text: #f0eaff;
+      --input-bg: rgba(255,255,255,0.16);
+      --dark-bg: #131324;
+      --dark-card: #191938;
+      --dark-input: #191938;
+      --dark-text: #f0eaff;
+      --light-bg: #f7f4fb;
+      --light-card: #fff;
+      --light-input: #f2edfd;
+      --light-text: #2c2045;
+      --bg: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%);
+    }
+    .theme-default { --main: #a259ff; --accent: #5f27cd; --settings-bg: rgba(44,32,69,0.96); --text: #f0eaff; --input-bg: rgba(255,255,255,0.16); --bg: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%);}
+    .theme-dark    { --main: #a259ff; --accent: #5f27cd; --settings-bg: #191938; --text: #f0eaff; --input-bg: #191938; --bg: #131324;}
+    .theme-light   { --main: #a259ff; --accent: #5f27cd; --settings-bg: #fff; --text: #2c2045; --input-bg: #f2edfd; --bg: #f7f4fb;}
+
     body {
-      margin: 0;
-      padding: 0;
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%);
-      color: #f0eaff;
+      margin: 0;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      height: 100vh;
     }
     header {
+      width: 100vw;
+      text-align: center;
+      padding: 1.2rem 0 0.8rem 0;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--main);
+      background: var(--settings-bg);
+      box-shadow: 0 4px 32px #0002;
+      letter-spacing: 1.2px;
       display: flex;
       align-items: center;
-      gap: 1rem;
-      padding: 1.2rem 2.5rem;
-      background: rgba(44,32,69,0.85);
-      box-shadow: 0 4px 32px #0002;
-      border-bottom: 1px solid #a259ff33;
+      justify-content: center;
+      gap: 2rem;
+      position: fixed;
+      top: 0; left: 0; right: 0;
       z-index: 10;
-      backdrop-filter: blur(12px);
-    }
-    #back-btn {
-      background: #a259ff;
-      color: #fff;
-      border: none;
-      border-radius: 2rem;
-      padding: 0.6rem 1.5rem;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 2px 8px #a259ff33;
-      transition: background 0.2s, box-shadow 0.2s;
-    }
-    #back-btn:hover {
-      background: #5f27cd;
-      box-shadow: 0 4px 16px #a259ff44;
-    }
-    header > span {
-      font-size: 2.1rem;
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: #fff;
-      text-shadow: 0 2px 12px #a259ff55;
-      user-select: none;
+      min-height: 60px;
     }
     main {
       flex: 1;
+      margin-top: 90px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-end;
-      background: transparent;
-      min-width: 0;
-      min-height: 0;
-      position: relative;
+      justify-content: flex-start;
+      gap: 2rem;
     }
-    #chat {
-      flex: 1;
-      width: 100%;
+    .chat-container {
+      background: var(--settings-bg);
+      border-radius: 2rem;
+      padding: 2rem;
+      box-shadow: 0 4px 32px #a259ff33;
+      width: 98vw;
       max-width: 700px;
-      margin: 0 auto;
-      overflow-y: auto;
-      padding: 2rem 1rem 1rem 1rem;
+      min-height: 400px;
+      color: var(--text);
       display: flex;
       flex-direction: column;
-      gap: 1.1rem;
-      font-size: 1.08rem;
+      gap: 1.2rem;
     }
-    .message {
-      background: rgba(255,255,255,0.18);
-      border-radius: 1.2rem;
-      padding: 0.8rem 1.3rem;
-      color: #2c2045;
-      font-weight: 500;
-      box-shadow: 0 2px 12px #a259ff22;
-      word-break: break-word;
-      border-left: 5px solid #a259ff;
-      max-width: 90%;
-    }
-    .message.own {
-      background: linear-gradient(90deg, #a259ff 60%, #5f27cd 100%);
-      color: #fff;
-      border-left: 5px solid #fff;
-      align-self: flex-end;
-      box-shadow: 0 4px 16px #a259ff33;
-    }
-    .meta {
-      font-size: 0.85rem;
+    .footer {
+      text-align: center;
+      color: #aaa;
+      font-size: 0.9rem;
       opacity: 0.7;
-      margin-top: 0.3rem;
-      text-align: right;
+      margin: 2rem 0 1rem 0;
+      pointer-events:none;
+      user-select: none;
     }
-    #chat-form {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      width: 100%;
-      max-width: 700px;
-      margin: 0 auto 2rem auto;
-      padding: 0;
-      background: none;
-      border: none;
-      box-shadow: none;
-    }
-    #message {
-      flex: 1;
-      padding: 0.9rem 1.2rem;
-      border-radius: 2rem;
-      border: 2px solid #a259ff;
-      background: rgba(255,255,255,0.2);
-      color: #2c2045;
-      font-size: 1.1rem;
-      outline: none;
-      transition: border 0.2s, background 0.2s;
-      box-shadow: 0 2px 8px #a259ff22;
-    }
-    #message:focus {
-      border: 2px solid #fff;
-      background: #fff;
-      color: #a259ff;
-    }
-    #send-btn {
-      background: #a259ff;
-      color: #fff;
-      border: none;
-      border-radius: 2rem;
-      padding: 0.7rem 2.2rem;
-      font-size: 1.1rem;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 2px 8px #a259ff33;
-      transition: background 0.2s, box-shadow 0.2s;
-    }
-    #send-btn:disabled {
-      background: #bdbdbd;
-      color: #fff;
-      cursor: not-allowed;
-      opacity: 0.7;
-    }
-    #send-btn:not(:disabled):hover {
-      background: #5f27cd;
-      box-shadow: 0 4px 16px #a259ff44;
+    @media (max-width: 700px) {
+      .chat-container { padding: 1rem; min-height: 200px; }
+      header { font-size: 1.2rem; min-height: 44px; }
+      main { margin-top: 60px; }
     }
   </style>
 </head>
 <body>
   <header>
-    <button id="back-btn" class="auth-btn">&#8592; Back</button>
-    <span>Chatz</span>
+    <button class="back-btn" onclick="window.location.href='index.html'" style="position:absolute;left:1.5rem;top:1.1rem;background:var(--main);color:#fff;border:none;border-radius:1.5rem;padding:0.5rem 1.3rem;font-size:1rem;font-weight:600;cursor:pointer;">&larr; Back</button>
+    Global Chat
   </header>
   <main>
-    <div id="chat"></div>
-    <form id="chat-form">
-      <input type="text" id="message" placeholder="Type a message..." disabled autocomplete="off" required />
-      <button id="send-btn" type="submit" disabled>Send</button>
-    </form>
+    <div class="chat-container" id="chat-messages">
+      <!-- Your global chat messages go here -->
+      <div style="text-align:center;color:var(--text);margin-top:3rem;font-size:1.3rem;opacity:.8;">
+        Global chat UI goes here.<br>
+        (Plug in your Firebase chat logic!)
+      </div>
+    </div>
   </main>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-    import {
-      getDatabase,
-      ref,
-      push,
-      get,
-      onChildAdded
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
-      authDomain: "chatz-45df4.firebaseapp.com",
-      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
-      projectId: "chatz-45df4",
-      storageBucket: "chatz-45df4.appspot.com",
-      messagingSenderId: "463847844545",
-      appId: "1:463847844545:web:5006247d061c3e0dc28240"
-    };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-
-    const chat = document.getElementById("chat");
-    const form = document.getElementById("chat-form");
-    const messageInput = document.getElementById("message");
-    const sendBtn = document.getElementById("send-btn");
-    const backBtn = document.getElementById("back-btn");
-
-    let currentUserNickname = "Guest";
-
-    // Auth state
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        messageInput.disabled = false;
-        sendBtn.disabled = false;
-        currentUserNickname = user.displayName || "Anonymous";
-        loadMessages();
-      } else {
-        messageInput.disabled = true;
-        sendBtn.disabled = true;
-        clearChat();
-      }
-    });
-
-    function getChatRef() {
-      return ref(db, "messages");
-    }
-    function clearChat() {
-      chat.innerHTML = "";
-    }
-    function scrollToBottom() {
-      chat.scrollTop = chat.scrollHeight;
-    }
-    function escapeHtml(text) {
-      return text.replace(/&/g, "&amp;")
-                  .replace(/</g, "&lt;")
-                  .replace(/>/g, "&gt;")
-                  .replace(/"/g, "&quot;")
-                  .replace(/'/g, "&#039;");
-    }
-    function loadMessages() {
-      clearChat();
-      const chatRef = getChatRef();
-      get(chatRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          const messages = snapshot.val();
-          Object.values(messages).forEach((data) => {
-            appendMessageToChat(data);
-          });
-          scrollToBottom();
-        }
-      });
-      onChildAdded(chatRef, (snapshot) => {
-        appendMessageToChat(snapshot.val());
-        scrollToBottom();
-      });
-    }
-    function appendMessageToChat(data) {
-      const msgDiv = document.createElement("div");
-      msgDiv.className = "message";
-      if (auth.currentUser && data.uid === auth.currentUser.uid) msgDiv.classList.add("own");
-      msgDiv.innerHTML = `
-        <strong>${escapeHtml(data.name)}</strong>: ${escapeHtml(data.message)}
-        <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-      `;
-      chat.appendChild(msgDiv);
-    }
-
-    // Send Message
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (!auth.currentUser) return alert("You must be signed in to send messages.");
-      const msg = messageInput.value.trim();
-      if (!msg) return;
-      const newMsg = {
-        uid: auth.currentUser.uid,
-        name: currentUserNickname,
-        message: msg,
-        timestamp: Date.now(),
-      };
-      try {
-        await push(getChatRef(), newMsg);
-        messageInput.value = "";
-      } catch (err) {
-        alert("Failed to send message. Please try again.");
-      }
-    });
-
-    // Back Button
-    if (backBtn) {
-      backBtn.addEventListener("click", () => {
-        window.location.href = "index.html";
-      });
-    }
-  </script>
+  <div class="footer">
+    Made with ❤️ by Flakious
+  </div>
+  <!-- Put your Firebase SDK/chat JS here! -->
 </body>
 </html>
