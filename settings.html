@@ -13,17 +13,24 @@
       --settings-bg: rgba(44,32,69,0.96);
       --text: #f0eaff;
       --input-bg: rgba(255,255,255,0.16);
+      --dark-bg: #131324;
+      --dark-card: #191938;
+      --dark-input: #191938;
+      --dark-text: #f0eaff;
+      --light-bg: #f7f4fb;
+      --light-card: #fff;
+      --light-input: #f0eaff;
+      --light-text: #2c2045;
     }
     body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%);
-      color: var(--text);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      transition: background 0.2s;
     }
     header {
       width: 100vw;
@@ -43,6 +50,7 @@
       top: 0; left: 0; right: 0;
       z-index: 10;
       backdrop-filter: blur(10px);
+      transition: background 0.2s;
     }
     .back-btn {
       position: absolute;
@@ -74,6 +82,7 @@
       flex-direction: column;
       align-items: center;
       gap: 2rem;
+      transition: background 0.2s, color 0.2s;
     }
     .profile-info {
       text-align: center;
@@ -122,7 +131,7 @@
       margin-top: 0.3rem;
       width: 100%;
       box-sizing: border-box;
-      transition: border 0.2s, background 0.2s;
+      transition: border 0.2s, background 0.2s, color 0.2s;
     }
     select:focus, input[type="text"]:focus {
       border: 2px solid var(--accent);
@@ -153,6 +162,99 @@
     .signout-btn:hover {
       background: #d32f2f;
     }
+
+    /* PURPLE THEME */
+    .theme-default body {
+      background: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%) !important;
+      color: var(--text) !important;
+    }
+    .theme-default .settings-card {
+      background: rgba(44,32,69,0.96)!important;
+      color: #fff!important;
+    }
+    .theme-default header {
+      background: rgba(44,32,69,0.85)!important;
+      color: #fff!important;
+    }
+    .theme-default .profile-info .profile-name,
+    .theme-default .section label { color: var(--main)!important; }
+    .theme-default select,
+    .theme-default input[type="text"] {
+      background: rgba(255,255,255,0.16)!important;
+      color: var(--main)!important;
+      border-color: var(--main)!important;
+    }
+    .theme-default .save-btn, .theme-default .signout-btn {
+      background: var(--main)!important;
+      color: #fff!important;
+    }
+
+    /* DARK THEME */
+    .theme-dark body {
+      background: var(--dark-bg)!important;
+      color: var(--dark-text)!important;
+    }
+    .theme-dark .settings-card {
+      background: var(--dark-card)!important;
+      color: var(--dark-text)!important;
+      box-shadow: 0 8px 32px #0004!important;
+    }
+    .theme-dark header {
+      background: #191938!important;
+      color: var(--dark-text)!important;
+    }
+    .theme-dark .profile-info .profile-name,
+    .theme-dark .section label { color: #a259ff!important; }
+    .theme-dark select,
+    .theme-dark input[type="text"] {
+      background: var(--dark-input)!important;
+      color: #a259ff!important;
+      border-color: #5f27cd!important;
+    }
+    .theme-dark select:focus, .theme-dark input[type="text"]:focus {
+      background: #1c1c38!important;
+      color: #a259ff!important;
+      border-color: var(--main)!important;
+    }
+    .theme-dark .save-btn, .theme-dark .signout-btn {
+      background: #a259ff!important;
+      color: #fff!important;
+    }
+
+    /* LIGHT THEME */
+    .theme-light body {
+      background: var(--light-bg)!important;
+      color: var(--light-text)!important;
+    }
+    .theme-light .settings-card {
+      background: var(--light-card)!important;
+      color: var(--light-text)!important;
+      box-shadow: 0 8px 32px #a259ff0d!important;
+    }
+    .theme-light header {
+      background: #fff!important;
+      color: var(--main)!important;
+    }
+    .theme-light .profile-info .profile-name,
+    .theme-light .section label { color: var(--accent)!important; }
+    .theme-light select,
+    .theme-light input[type="text"] {
+      background: #f2edfd!important;
+      color: var(--accent)!important;
+      border-color: var(--main)!important;
+    }
+    .theme-light select:focus, .theme-light input[type="text"]:focus {
+      background: #fff!important;
+      color: var(--main)!important;
+      border-color: var(--accent)!important;
+    }
+    .theme-light .save-btn, .theme-light .signout-btn {
+      background: var(--accent)!important;
+      color: #fff!important;
+    }
+    .theme-light .save-btn:hover, .theme-light .signout-btn:hover {
+      background: var(--main)!important;
+    }
     @media (max-width: 600px) {
       .settings-card {
         padding: 1.2rem 0.7rem 1rem 0.7rem;
@@ -172,15 +274,6 @@
         height: 52px;
       }
     }
-    /* Themes */
-    .theme-default body { background: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%) !important; }
-    .theme-dark body { background: #181429 !important; }
-    .theme-light body { background: #f6f3ff !important; color: #222 !important; }
-    .theme-light .settings-card { background: #fff !important; color: #2c2045 !important; }
-    .theme-light .profile-info .profile-name { color: var(--accent); }
-    .theme-light select, .theme-light input[type="text"] { background: #f2edfd; color: #2c2045; }
-    .theme-light .save-btn, .theme-light .signout-btn { background: var(--accent); }
-    .theme-light .save-btn:hover, .theme-light .signout-btn:hover { background: var(--main); }
   </style>
 </head>
 <body>
