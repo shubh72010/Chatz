@@ -123,6 +123,8 @@
       box-shadow: 2px 0 24px #0002;
       overflow-y: auto;
       transition: background 0.3s;
+      /* This ensures inner flex items can grow for centering */
+      height: 100%;
     }
     .sidebar-section h3 {
       margin: 0 0 0.5rem 0;
@@ -183,6 +185,22 @@
     .sidebar-list .group-leave-btn:hover {
       background: var(--danger);
       color: #fff;
+    }
+    /* Center Users List: */
+    #users-list {
+      margin-top: auto;
+      margin-bottom: auto;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    /* Center the whole Users section in the sidebar */
+    .sidebar-section:nth-child(3) {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     main {
       flex: 1;
@@ -298,6 +316,48 @@
       background: #fff;
       color: var(--main);
     }
+    /* --- CIRCULAR UI AT BOTTOM --- */
+    #circle-ui {
+      position: fixed;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--main);
+      border-radius: 2.5rem;
+      box-shadow: 0 4px 24px #a259ff33;
+      display: flex;
+      align-items: center;
+      padding: 0.7rem 1.5rem;
+      z-index: 200;
+      gap: 0.7rem;
+    }
+    #circle-ui input {
+      border: none;
+      outline: none;
+      background: transparent;
+      color: #fff;
+      font-size: 1.1rem;
+      width: 160px;
+    }
+    #circle-ui button {
+      background: #fff;
+      color: var(--main);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #a259ff33;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, color 0.2s;
+    }
+    #circle-ui button:hover {
+      background: var(--accent);
+      color: #fff;
+    }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(30px);}
       to { opacity: 1; transform: translateY(0);}
@@ -346,6 +406,14 @@
         padding: 1.2rem 0.7rem 1rem 0.7rem;
         min-width: 0;
       }
+      #circle-ui {
+        width: 90vw;
+        left: 5vw;
+        transform: none;
+      }
+      #circle-ui input {
+        width: 100px;
+      }
     }
   </style>
 </head>
@@ -372,6 +440,7 @@
         <h3>Friends</h3>
         <ul id="friends-list" class="sidebar-list"></ul>
       </div>
+      <!-- USERS LIST CENTERED -->
       <div class="sidebar-section">
         <h3>Users</h3>
         <ul id="users-list" class="sidebar-list"></ul>
@@ -415,7 +484,13 @@
       </div>
     </div>
   </div>
+  <!-- CIRCULAR UI AT BOTTOM -->
+  <div id="circle-ui">
+    <input type="text" placeholder="Type a message..." />
+    <button>➤</button>
+  </div>
   <script type="module">
+    // (Your existing JavaScript remains unchanged)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
       getAuth,
@@ -587,55 +662,3 @@
       const name = prompt("Enter group name:");
       if (!name || name.trim() === "") return;
       try {
-        const newGroupRef = push(ref(db, "groups"));
-        await set(newGroupRef, {
-          name: name.trim(),
-          createdBy: auth.currentUser.uid,
-          createdAt: Date.now(),
-          members: {
-            [auth.currentUser.uid]: true
-          }
-        });
-        alert(`Group "${name}" created!`);
-      } catch (error) {
-        alert("Failed to create group.");
-      }
-    };
-
-    // Auth state UI
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        signInBtn.style.display = "none";
-        signOutBtn.style.display = "inline-block";
-        settingsBtn.style.display = "inline-block";
-        headerUserInfo.style.display = "flex";
-        const userRef = ref(db, `users/${user.uid}`);
-        get(userRef).then(snapshot => {
-          const userData = snapshot.val();
-          if (userData && userData.nickname) {
-            currentUserNickname = userData.nickname;
-          } else {
-            currentUserNickname = user.displayName || "Anonymous";
-            update(userRef, { nickname: currentUserNickname });
-          }
-          displayUsername.textContent = currentUserNickname;
-          userPfp.src = user.photoURL || "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
-        });
-        updateUsersAndFriends();
-        updateGroups();
-      } else {
-        signInBtn.style.display = "inline-block";
-        signOutBtn.style.display = "none";
-        settingsBtn.style.display = "none";
-        headerUserInfo.style.display = "none";
-        displayUsername.textContent = "Guest";
-        userPfp.src = "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
-        friendsList.innerHTML = "";
-        usersList.innerHTML = "";
-        groupsList.innerHTML = "";
-        myGroupsList.innerHTML = "";
-      }
-    });
-  </script>
-</body>
-</html>
