@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz | Global Chat</title>
-  <!-- Instant theme application -->
   <script>
     (function() {
       var theme = localStorage.getItem('chatzTheme') || 'default';
@@ -62,13 +61,10 @@
       z-index: 10;
       min-height: 60px;
     }
-    .header-left, .header-right {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
     .header-left {
       min-width: 170px;
+      display: flex;
+      align-items: center;
       justify-content: flex-start;
       padding-left: 1rem;
     }
@@ -80,68 +76,6 @@
       color: var(--main);
       letter-spacing: 1.2px;
       user-select: none;
-    }
-    .header-right {
-      min-width: 170px;
-      justify-content: flex-end;
-      padding-right: 1rem;
-    }
-    .profile-mini {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-      background: var(--input-bg);
-      border-radius: 2rem;
-      padding: 0.2rem 0.8rem 0.2rem 0.2rem;
-      font-size: 1rem;
-      color: var(--main);
-    }
-    .profile-mini img {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: 2px solid var(--main);
-      object-fit: cover;
-      background: #fff;
-    }
-    .signout-btn {
-      background: var(--danger);
-      color: #fff;
-      border: none;
-      border-radius: 1.5rem;
-      padding: 0.5rem 1.2rem;
-      font-size: 1rem;
-      font-weight: 600;
-      margin-left: 0.8rem;
-      cursor: pointer;
-      transition: background 0.2s;
-      box-shadow: 0 2px 8px #a259ff33;
-    }
-    .signout-btn:hover {
-      background: #d32f2f;
-    }
-    .settings-gear {
-      margin-left: 0.5rem;
-      color: var(--main);
-      font-size: 1.4em;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-    .settings-gear:hover { color: var(--accent);}
-    .back-btn {
-      background: var(--main);
-      color: #fff;
-      border: none;
-      border-radius: 1.5rem;
-      padding: 0.5rem 1.2rem;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-      box-shadow: 0 2px 8px #a259ff33;
-    }
-    .back-btn:hover {
-      background: var(--accent);
     }
     main {
       flex: 1;
@@ -263,8 +197,7 @@
       .chat-container { padding: 0.7rem 0.6rem 0.3rem 0.6rem; min-height: 200px; border-radius: 1.2rem;}
       header { font-size: 1.1rem; min-height: 44px; }
       main { margin-top: 54px; }
-      .header-left, .header-right { min-width: 85px; }
-      .profile-mini img { width: 27px; height: 27px; }
+      .header-left { min-width: 85px; }
       .chat-input-bar input { font-size: 0.98rem; padding: 0.5rem 0.9rem;}
       .bubble { font-size: 0.95rem; padding: 0.55rem 0.9rem; }
     }
@@ -276,10 +209,6 @@
       <button class="back-btn" onclick="window.location.href='index.html'">&larr; Back</button>
     </div>
     <div class="header-center">Global Chat</div>
-    <div class="header-right" id="profile-bar">
-      <!-- User info and signout/settings, filled by JS -->
-      <button title="Settings" onclick="window.location.href='settings.html'" class="settings-gear"><i class="fa-solid fa-gear"></i></button>
-    </div>
   </header>
   <main>
     <div class="chat-container">
@@ -297,8 +226,7 @@
       getAuth,
       onAuthStateChanged,
       signInWithPopup,
-      GoogleAuthProvider,
-      signOut
+      GoogleAuthProvider
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
     import {
       getDatabase,
@@ -324,57 +252,10 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // DOM
-    const profileBar = document.getElementById('profile-bar');
     const messagesList = document.getElementById('messages-list');
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
-
     let myUser = null;
-
-    // Render profile bar & sign in/out
-    function renderProfileBar(user) {
-      profileBar.innerHTML = '';
-      if (user) {
-        const miniDiv = document.createElement('div');
-        miniDiv.className = 'profile-mini';
-        miniDiv.innerHTML = `
-          <img src="${user.photoURL || 'https://via.placeholder.com/36/2c2045/f0eaff?text=U'}" alt="User" />
-          <span>${user.displayName || 'Anonymous'}</span>
-        `;
-        profileBar.appendChild(miniDiv);
-
-        const signoutBtn = document.createElement('button');
-        signoutBtn.className = 'signout-btn';
-        signoutBtn.textContent = 'Sign Out';
-        signoutBtn.onclick = () => signOut(auth).then(() => window.location.reload());
-        profileBar.appendChild(signoutBtn);
-
-        const settingsBtn = document.createElement('button');
-        settingsBtn.title = 'Settings';
-        settingsBtn.className = 'settings-gear';
-        settingsBtn.innerHTML = '<i class="fa-solid fa-gear"></i>';
-        settingsBtn.onclick = () => window.location.href = "settings.html";
-        profileBar.appendChild(settingsBtn);
-      } else {
-        const signInBtn = document.createElement('button');
-        signInBtn.className = 'signout-btn';
-        signInBtn.style.background = "var(--main)";
-        signInBtn.textContent = 'Sign In';
-        signInBtn.onclick = () => {
-          const provider = new GoogleAuthProvider();
-          signInWithPopup(auth, provider).catch(e => alert("Sign-in failed: " + e.message));
-        };
-        profileBar.appendChild(signInBtn);
-
-        const settingsBtn = document.createElement('button');
-        settingsBtn.title = 'Settings';
-        settingsBtn.className = 'settings-gear';
-        settingsBtn.innerHTML = '<i class="fa-solid fa-gear"></i>';
-        settingsBtn.onclick = () => window.location.href = "settings.html";
-        profileBar.appendChild(settingsBtn);
-      }
-    }
 
     // Format timestamp to readable time
     function formatTime(ts) {
@@ -401,8 +282,20 @@
     // Listen for auth
     onAuthStateChanged(auth, (user) => {
       myUser = user;
-      renderProfileBar(user);
+      // Optionally, prompt for sign in if not signed in
       chatInput.disabled = !user;
+      if (!user) {
+        chatInput.placeholder = "Sign in to chat";
+        chatInput.style.opacity = 0.7;
+        chatInput.onclick = () => {
+          const provider = new GoogleAuthProvider();
+          signInWithPopup(auth, provider).catch(e => alert("Sign-in failed: " + e.message));
+        };
+      } else {
+        chatInput.placeholder = "Type a message...";
+        chatInput.style.opacity = 1;
+        chatInput.onclick = null;
+      }
     });
 
     // Listen for last 100 messages, real-time
