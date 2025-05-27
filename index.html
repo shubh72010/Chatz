@@ -1,25 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chatz | Home</title>
+  <meta charset="UTF-8 <title>Chatz | Home</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --main: #a259ff;
       --accent: #5f27cd;
       --danger: #ff5252;
-      --sidebar-bg: rgba(44,32,69,0.7);
-      --sidebar-blur: 16px;
       --settings-bg: rgba(44,32,69,0.95);
       --text: #f0eaff;
       --text-dark: #2c2045;
-      --input-bg: rgba(255,255,255,0.2);
-      --input-border: #a259ff;
-      --input-focus: #fff;
-      --scrollbar: #a259ff;
-      --scrollbar-bg: #2c2045;
     }
     html, body {
       height: 100%;
@@ -62,15 +53,7 @@
       padding: 0.3rem 1rem 0.3rem 0.3rem;
       box-shadow: 0 2px 8px #0002;
     }
-    #user-pfp {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: 2px solid var(--main);
-      object-fit: cover;
-      background: #fff;
-    }
-    #display-username {
+   display-username {
       color: var(--main);
       font-weight: 700;
       letter-spacing: 0.5px;
@@ -249,11 +232,11 @@
   </header>
   <main>
     <div class="center-content">
-      <button class="pill-button" onclick="window.location.href='global.html?type=public'">Global Chat</button>
+      <button class="pill-button" onclick="window.location.href='global.html'">Global Chat</button>
       <ul id="users-list" class="center-users-list"></ul>
     </div>
   </main>
-  <div class="footer">Made with ❤️ by Flakious</div>
+  <div class="footer">Made with ❤️ by Flakious and the team</div>
   <div id="settings-page">
     <div class="settings-content">
       <button id="settings-close-btn" class="settings-close-btn">&times;</button>
@@ -275,10 +258,9 @@
       </div>
     </div>
   </div>
-  <!-- Bottom circular nav -->
+  <!-- Bottom circular nav (Settings only) -->
   <div id="circle-nav">
-    <button title="Global" onclick="window.location.href='global.html?type=public'"><span>🌐</span></button>
-    <button title="General Chat" onclick="window.location.href='global.html?type=public'"><span>#</span></button>
+    <button title="Settings" onclick="document.getElementById('settings-page').classList.add('active')"><span>⚙️</span></button>
   </div>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
@@ -317,8 +299,7 @@
     const settingsBtn = document.getElementById("settings-btn");
     const settingsPage = document.getElementById("settings-page");
     const settingsCloseBtn = document.getElementById("settings-close-btn");
-    const setNicknameBtn = document.getElementById("set-nickname-btn");
-    const themeSelect = document.getElementById("theme-select");
+    const-select");
     const headerUserInfo = document.getElementById("header-user-info");
     const userPfp = document.getElementById("user-pfp");
     const displayUsername = document.getElementById("display-username");
