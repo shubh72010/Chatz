@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8 <title>Chatz | Home</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chatz | Home</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -53,7 +55,15 @@
       padding: 0.3rem 1rem 0.3rem 0.3rem;
       box-shadow: 0 2px 8px #0002;
     }
-   display-username {
+    #user-pfp {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--main);
+      object-fit: cover;
+      background:;
+    }
+    #display-username {
       color: var(--main);
       font-weight: 700;
       letter-spacing: 0.5px;
@@ -236,8 +246,8 @@
       <ul id="users-list" class="center-users-list"></ul>
     </div>
   </main>
-  <div class="footer">Made with ❤️ by Flakious and the team</div>
-  <div id="settings-page">
+  <div class="footer">Made with ❤️ by Flakious</div>
+  <div id="settings-page" style="display:none;">
     <div class="settings-content">
       <button id="settings-close-btn" class="settings-close-btn">&times;</button>
       <h2>Settings</h2>
@@ -260,7 +270,7 @@
   </div>
   <!-- Bottom circular nav (Settings only) -->
   <div id="circle-nav">
-    <button title="Settings" onclick="document.getElementById('settings-page').classList.add('active')"><span>⚙️</span></button>
+    <button title="Settings" onclick="document.getElementById('settings-page').style.display='flex'"><span>⚙️</span></button>
   </div>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
@@ -299,7 +309,8 @@
     const settingsBtn = document.getElementById("settings-btn");
     const settingsPage = document.getElementById("settings-page");
     const settingsCloseBtn = document.getElementById("settings-close-btn");
-    const-select");
+    const setNicknameBtn = document.getElementById("set-nickname-btn");
+    const themeSelect = document.getElementById("theme-select");
     const headerUserInfo = document.getElementById("header-user-info");
     const userPfp = document.getElementById("user-pfp");
     const displayUsername = document.getElementById("display-username");
@@ -317,8 +328,8 @@
     };
 
     // Settings modal
-    settingsBtn.onclick = () => settingsPage.classList.add("active");
-    settingsCloseBtn.onclick = () => settingsPage.classList.remove("active");
+    settingsBtn.onclick = () => { settingsPage.style.display = "flex"; };
+    settingsCloseBtn.onclick = () => { settingsPage.style.display = "none"; };
 
     // Theme
     function applyTheme(themeName) {
