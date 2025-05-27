@@ -95,6 +95,45 @@
       padding-right: 2px;
       scroll-behavior: smooth;
     }
+    .message-bubble {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.7rem;
+      margin-bottom: 3px;
+      max-width: 93%;
+    }
+    .message-bubble.own { flex-direction: row-reverse; align-self: flex-end;}
+    .bubble {
+      padding: 0.7rem 1.3rem;
+      border-radius: 1.5rem;
+      background: var(--main);
+      color: #fff;
+      font-size: 1.07rem;
+      font-weight: 500;
+      box-shadow: 0 2px 8px #a259ff18;
+      word-break: break-word;
+      max-width: 400px;
+      min-width: 60px;
+      position: relative;
+    }
+    .message-bubble.own .bubble { background: var(--accent); }
+    .bubble-meta {
+      font-size: 0.85rem;
+      color: #bbb;
+      margin-top: 0.2rem;
+      margin-left: 4px;
+      margin-right: 4px;
+      user-select: none;
+    }
+    .message-bubble.own .bubble-meta { text-align: right; color: #c1b1fc;}
+    .bubble-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--main);
+      background: #fff;
+    }
     .chat-input-bar {
       display: flex;
       align-items: center;
@@ -148,6 +187,7 @@
       main { margin-top: 54px; }
       .header-left { min-width: 85px; }
       .chat-input-bar input { font-size: 0.98rem; padding: 0.5rem 0.9rem;}
+      .bubble { font-size: 0.95rem; padding: 0.55rem 0.9rem; }
       .send-btn, #send-btn { min-width: 40px; min-height: 36px; font-size: 1rem; padding: 0.4rem 1.2rem; }
     }
   </style>
@@ -166,15 +206,126 @@
         <input type="text" id="message" placeholder="Type a message..." maxlength="500" autocomplete="off" required />
         <button type="submit" id="send-btn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
       </form>
-      <div id="reply-preview" style="display:none;">
-        <span id="reply-text"></span>
-        <button id="cancel-reply" type="button">Cancel</button>
-      </div>
     </div>
   </main>
   <div class="footer">Made with ❤️ by PurpleDevs</div>
-  <!-- Wire up helpers and chat logic -->
-  <script type="module" src="./firebaseHelpers.js"></script>
-  <script type="module" src="./chatLogic.js"></script>
+  <!-- Inline JS for full functionality -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInWithPopup,
+      GoogleAuthProvider
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      onChildAdded,
+      query,
+      limitToLast,
+      get
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+      authDomain: "chatz-45df4.firebaseapp.com",
+      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
+      projectId: "chatz-45df4",
+      storageBucket: "chatz-45df4.appspot.com",
+      messagingSenderId: "463847844545",
+      appId: "1:463847844545:web:5006247d061c3e0dc28240"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const chat = document.getElementById('chat');
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message');
+
+    let myUser = null;
+
+    function formatTime(ts) {
+      if (!ts) return '';
+      const d = new Date(ts);
+      return d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    function renderMessage(msg, isOwn) {
+      const bubble = document.createElement('div');
+      bubble.className = 'message-bubble' + (isOwn ? ' own' : '');
+      bubble.innerHTML = `
+        <img class="bubble-avatar" src="${msg.photoURL || 'https://via.placeholder.com/32/2c2045/f0eaff?text=U'}" alt="A"/>
+        <div>
+          <div class="bubble">${msg.text ? escapeHtml(msg.text) : ''}</div>
+          <div class="bubble-meta">${msg.nickname || msg.displayName || 'Anonymous'} · ${formatTime(msg.timestamp)}</div>
+        </div>
+      `;
+      chat.appendChild(bubble);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text.replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      myUser = user;
+      messageInput.disabled = !user;
+      if (!user) {
+        messageInput.placeholder = "Sign in to chat";
+        messageInput.style.opacity = 0.7;
+        messageInput.onclick = () => {
+          const provider = new GoogleAuthProvider();
+          signInWithPopup(auth, provider).catch(e => alert("Sign-in failed: " + e.message));
+        };
+      } else {
+        messageInput.placeholder = "Type a message...";
+        messageInput.style.opacity = 1;
+        messageInput.onclick = null;
+      }
+    });
+
+    const chatRef = query(ref(db, "globalChat"), limitToLast(100));
+    onChildAdded(chatRef, (snap) => {
+      const msg = snap.val();
+      const isOwn = myUser && msg && msg.uid === myUser.uid;
+      renderMessage(msg, isOwn);
+    });
+
+    chatForm.onsubmit = async (e) => {
+      e.preventDefault();
+      if (!auth.currentUser) {
+        alert("Sign in to send a message!");
+        return;
+      }
+      const text = messageInput.value.trim();
+      if (!text) return;
+      const u = auth.currentUser;
+      let nickname = "";
+      try {
+        const snapshot = await get(ref(db, `users/${u.uid}/nickname`));
+        nickname = snapshot.exists() ? snapshot.val() : (u.displayName || "");
+      } catch {
+        nickname = u.displayName || "";
+      }
+      await push(ref(db, "globalChat"), {
+        text,
+        uid: u.uid,
+        displayName: u.displayName,
+        photoURL: u.photoURL,
+        nickname: nickname,
+        timestamp: Date.now()
+      });
+      messageInput.value = '';
+    };
+  </script>
 </body>
 </html>
