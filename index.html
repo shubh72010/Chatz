@@ -657,8 +657,60 @@
       });
     }
 
-    createGroupBtn.onclick = async () => {
+        createGroupBtn.onclick = async () => {
       if (!auth.currentUser) return alert("Sign in to create groups.");
       const name = prompt("Enter group name:");
       if (!name || name.trim() === "") return;
       try {
+        const newGroupRef = push(ref(db, "groups"));
+        await set(newGroupRef, {
+          name: name.trim(),
+          createdBy: auth.currentUser.uid,
+          createdAt: Date.now(),
+          members: {
+            [auth.currentUser.uid]: true
+          }
+        });
+        alert(`Group "${name}" created!`);
+      } catch (error) {
+        alert("Failed to create group.");
+      }
+    };
+
+    // Auth state UI
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        signInBtn.style.display = "none";
+        signOutBtn.style.display = "inline-block";
+        settingsBtn.style.display = "inline-block";
+        headerUserInfo.style.display = "flex";
+        const userRef = ref(db, `users/${user.uid}`);
+        get(userRef).then(snapshot => {
+          const userData = snapshot.val();
+          if (userData && userData.nickname) {
+            currentUserNickname = userData.nickname;
+          } else {
+            currentUserNickname = user.displayName || "Anonymous";
+            update(userRef, { nickname: currentUserNickname });
+          }
+          displayUsername.textContent = currentUserNickname;
+          userPfp.src = user.photoURL || "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
+        });
+        updateUsersAndFriends();
+        updateGroups();
+      } else {
+        signInBtn.style.display = "inline-block";
+        signOutBtn.style.display = "none";
+        settingsBtn.style.display = "none";
+        headerUserInfo.style.display = "none";
+        displayUsername.textContent = "Guest";
+        userPfp.src = "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
+        friendsList.innerHTML = "";
+        usersList.innerHTML = "";
+        groupsList.innerHTML = "";
+        myGroupsList.innerHTML = "";
+      }
+    });
+  </script>
+</body>
+</html>
