@@ -9,7 +9,8 @@
     :root {
       --main: #a259ff;
       --accent: #5f27cd;
-      --danger: #ff5252;
+      --sidebar-bg: #2c2045;
+      --header-bg: #fff;
       --text: #f0eaff;
       --text-dark: #2c2045;
     }
@@ -25,61 +26,44 @@
     }
     body {
       display: flex;
-      flex-direction: column;
       height: 100vh;
       width: 100vw;
-      justify-content: flex-start;
-      align-items: stretch;
+      overflow: hidden;
     }
-    header {
+    .sidebar {
+      width: 300px;
+      min-width: 200px;
+      background: var(--sidebar-bg);
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      padding: 1.2rem 2.5rem 1.2rem 2.5rem;
-      background: rgba(44,32,69,0.85);
-      box-shadow: 0 4px 32px #0002;
-      border-bottom: 1px solid #a259ff33;
-      position: relative;
+      padding: 2.2rem 1.2rem 1.2rem 1.2rem;
+      box-shadow: 2px 0 32px #0002;
       z-index: 10;
-      backdrop-filter: blur(12px);
+      position: relative;
     }
-    #header-user-info {
-      display: none;
+    .account-info {
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 0.7rem;
-      font-weight: 600;
-      font-size: 1.1rem;
-      background: rgba(255,255,255,0.08);
-      border-radius: 2rem;
-      padding: 0.3rem 1rem 0.3rem 0.3rem;
-      box-shadow: 0 2px 8px #0002;
-    }
-    #user-pfp {
-      width: 40px;
-      height: 40px;
+      gap: 1.1rem;
+      width:: 74px;
+      height: 74px;
       border-radius: 50%;
-      border: 2px solid var(--main);
-;
+      border: 3px solid var(--main);
+      object-fit: cover;
+      background: #fff;
+      box-shadow: 0 2px 16px #a259ff44;
     }
     #display-username {
       color: var(--main);
       font-weight: 700;
+      font-size: 1.37rem;
       letter-spacing: 0.5px;
+      text-align: center;
+      word-break: break-word;
     }
-    header > span {
-      font-size: 2.1rem;
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: #fff;
-      text-shadow: 0 2px 12px #a259ff55;
-      user-select: none;
-    }
-    #auth-btns {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-    .auth-btn {
+    #sign-in {
       background: var(--main);
       color: #fff;
       border: none;
@@ -90,10 +74,44 @@
       cursor: pointer;
       box-shadow: 0 2px 8px #a259ff33;
       transition: background 0.2s, box-shadow 0.2s;
+      margin-top: 2rem;
+      width: 100%;
+      display: block;
     }
-    .auth-btn:hover {
+    #sign-in:hover {
       background: var(--accent);
       box-shadow: 0 4px 16px #a259ff44;
+    }
+    .main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: none;
+      min-width: 0;
+      min-height: 0;
+      position: relative;
+      overflow: auto;
+    }
+    header {
+      width: 100%;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 2.5rem 0 1.5rem;
+      background: var(--header-bg);
+      color: var(--main);
+      box-shadow: 0 4px 32px #a259ff11;
+      position: relative;
+      z-index: 20;
+    }
+    .header-title {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--main);
+      text-shadow: 0 2px 12px #a259ff22;
+      user-select: none;
     }
     main {
       flex: 1;
@@ -113,6 +131,7 @@
       justify-content: center;
       height: 70vh;
       gap: 2rem;
+      margin-top: 2.5rem;
     }
     .pill-button {
       background: var(--main);
@@ -129,7 +148,6 @@
     .pill-button:hover {
       background: var(--accent);
     }
-
     .users-card {
       background: rgba(44,32,69,0.93);
       border-radius: 1.7rem;
@@ -240,24 +258,41 @@
       z-index: 100;
       pointer-events:none;
     }
-    @media (max-width: 600px) {
-      header {
-        flex-direction: column;
-        gap: 0.7rem;
-        padding: 1rem 0.5rem;
+    @media (max-width: 900px) {
+      .sidebar {
+        width: 100vw;
+        min-width: unset;
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 1rem 1.2rem 1rem 1.2rem;
+        box-shadow: 0 2px 32px #0002;
+        height: unset;
       }
-      main {
-        margin: 0.2rem;
-        border-radius: 1.2rem;
-        padding: 0.5rem;
+      .account-info {
+        flex-direction: row;
+        gap: 0.7rem;
+        justify-content: flex-start;
+        align-items: center;
+      }
+      .main-area {
+        padding-top: 0.5rem;
+      }
+    }
+    @media (max-width: 600px) {
+      .sidebar {
+        width: 100vw;
+        min-width: unset;
+        padding: 0.7rem 0.5rem 0.7rem 0.5rem;
+      }
+      header {
+        padding: 0 0.7rem 0 1.2rem;
+        height: 54px;
+      }
+      .header-title {
+        font-size: 1.35rem;
       }
       .center-content {
-        height: 65vh;
-      }
-      #circle-nav {
-        width: 90vw;
-        left: 5vw;
-        transform: none;
+        margin-top: 1.2rem;
       }
       .users-card {
         min-width: 0;
@@ -268,29 +303,31 @@
   </style>
 </head>
 <body>
-  <header>
-    <div id="header-user-info" style="display:none;">
-      <img id="user-pfp" src="https://via.placeholder.com/40/2c2045/f0eaff?text=?" alt="Profile Picture" />
+  <div class="sidebar">
+    <div class="account-info" id="header-user-info" style="display:none;">
+      <img id="user-pfp" src="https://via.placeholder.com/74/2c2045/f0eaff?text=?" alt="Profile Picture" />
       <span id="display-username">Guest</span>
     </div>
-    <span>Chatz</span>
-    <div id="auth-btns">
-      <button id="sign-in" class="auth-btn">Sign In</button>
-    </div>
-  </header>
-  <main>
-    <div class="center-content">
-      <button class="pill-button" onclick="window.location.href='global.html'">Global Chat</button>
-      <div class="users-card">
-        <h2>People</h2>
-        <ul id="users-list" class="center-users-list"></ul>
-        <div id="no-users-msg" class="no-users-msg" style="display:none;">No users found</div>
+    <button id="sign-in" class="auth-btn">Sign In</button>
+  </div>
+  <div class="main-area">
+    <header>
+      <span class="header-title">Chatz</span>
+    </header>
+    <main>
+      <div class="center-content">
+        <button class="pill-button" onclick="window.location.href='global.html'">Global Chat</button>
+        <div class="users-card">
+          <h2>People</h2>
+          <ul id="users-list" class="center-users-list"></ul>
+          <div id="no-users-msg" class="no-users-msg" style="display:none;">No users found</div>
+        </div>
       </div>
+    </main>
+    <div class="footer">Made with ❤️ by Flakious</div>
+    <div id="circle-nav">
+      <button title="Settings" onclick="window.location.href='settings.html'"><span>⚙️</span></button>
     </div>
-  </main>
-  <div class="footer">Made with ❤️ by Flakious</div>
-  <div id="circle-nav">
-    <button title="Settings" onclick="window.location.href='settings.html'"><span>⚙️</span></button>
   </div>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
@@ -335,7 +372,6 @@
       signInWithPopup(auth, provider).catch(e => alert("Sign-in failed: " + e.message));
     };
 
-    // Center users list population
     function updateUsersList() {
       usersList.innerHTML = "";
       if (!auth.currentUser) {
@@ -366,19 +402,18 @@
       if (user) {
         signInBtn.style.display = "none";
         headerUserInfo.style.display = "flex";
-        // Use nickname if available, else displayName
         const userRef = ref(db, `users/${user.uid}`);
         get(userRef).then(snapshot => {
           const userData = snapshot.val();
           displayUsername.textContent = (userData && userData.nickname) ? userData.nickname : (user.displayName || "Anonymous");
-          userPfp.src = user.photoURL || "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
+          userPfp.src = user.photoURL || "https://via.placeholder.com/74/2c2045/f0eaff?text=?";
         });
         updateUsersList();
       } else {
-        signInBtn.style.display = "inline-block";
+        signInBtn.style.display = "block";
         headerUserInfo.style.display = "none";
         displayUsername.textContent = "Guest";
-        userPfp.src = "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
+        userPfp.src = "https://via.placeholder.com/74/2c2045/f0eaff?text=?";
         usersList.innerHTML = "";
         if (noUsersMsg) noUsersMsg.style.display = "block";
       }
