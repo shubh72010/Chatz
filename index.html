@@ -59,8 +59,7 @@
       height: 40px;
       border-radius: 50%;
       border: 2px solid var(--main);
-      object-fit: cover;
-      background: #fff;
+;
     }
     #display-username {
       color: var(--main);
@@ -130,10 +129,31 @@
     .pill-button:hover {
       background: var(--accent);
     }
+
+    .users-card {
+      background: rgba(44,32,69,0.93);
+      border-radius: 1.7rem;
+      box-shadow: 0 4px 24px #a259ff33;
+      padding: 1.3rem 2rem 1.5rem 2rem;
+      min-width: 250px;
+      max-width: 350px;
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .users-card h2 {
+      margin: 0 0 0.6rem 0;
+      font-size: 1.3rem;
+      color: var(--main);
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
     .center-users-list {
-      list-style: none;
-      padding: 0;
+      width: 100%;
       margin: 0;
+      padding: 0;
+      list-style: none;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -141,20 +161,38 @@
       font-size: 1.1rem;
     }
     .center-users-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
       background: rgba(255,255,255,0.09);
       border-radius: 1.2rem;
-      padding: 0.5rem 1.7rem;
+      padding: 0.5rem 1.0rem;
       color: var(--text);
       font-weight: 500;
       cursor: pointer;
       transition: background 0.18s, color 0.18s, box-shadow 0.18s;
-      text-align: center;
       min-width: 120px;
+      width: 100%;
+      box-sizing: border-box;
     }
     .center-users-list li:hover {
       background: var(--main);
       color: #fff;
       box-shadow: 0 2px 12px #a259ff33;
+    }
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--main);
+      background: #fff;
+    }
+    .no-users-msg {
+      color: #ccc;
+      margin-top: 1rem;
+      font-size: 1.05rem;
+      text-align: center;
     }
     #circle-nav {
       position: fixed;
@@ -221,6 +259,11 @@
         left: 5vw;
         transform: none;
       }
+      .users-card {
+        min-width: 0;
+        max-width: 95vw;
+        padding: 1rem 0.3rem 1rem 0.3rem;
+      }
     }
   </style>
 </head>
@@ -238,7 +281,11 @@
   <main>
     <div class="center-content">
       <button class="pill-button" onclick="window.location.href='global.html'">Global Chat</button>
-      <ul id="users-list" class="center-users-list"></ul>
+      <div class="users-card">
+        <h2>People</h2>
+        <ul id="users-list" class="center-users-list"></ul>
+        <div id="no-users-msg" class="no-users-msg" style="display:none;">No users found</div>
+      </div>
     </div>
   </main>
   <div class="footer">Made with ❤️ by Flakious</div>
@@ -251,7 +298,6 @@
       getAuth,
       GoogleAuthProvider,
       signInWithPopup,
-      signOut,
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
     import {
@@ -281,6 +327,7 @@
     const userPfp = document.getElementById("user-pfp");
     const displayUsername = document.getElementById("display-username");
     const usersList = document.getElementById("users-list");
+    const noUsersMsg = document.getElementById("no-users-msg");
 
     // Auth
     signInBtn.onclick = () => {
@@ -291,19 +338,26 @@
     // Center users list population
     function updateUsersList() {
       usersList.innerHTML = "";
-      if (!auth.currentUser) return;
+      if (!auth.currentUser) {
+        if (noUsersMsg) noUsersMsg.style.display = "block";
+        return;
+      }
       const myUid = auth.currentUser.uid;
       onValue(ref(db, "users"), (snap) => {
         const users = snap.val() || {};
         usersList.innerHTML = "";
+        let hasOtherUsers = false;
         Object.entries(users).forEach(([uid, user]) => {
           if (uid === myUid) return;
+          hasOtherUsers = true;
           const nameToDisplay = user.nickname || user.displayName || "Anonymous";
+          const avatarUrl = user.photoURL || "https://via.placeholder.com/32/2c2045/f0eaff?text=U";
           const li = document.createElement("li");
-          li.textContent = nameToDisplay;
+          li.innerHTML = `<img class="user-avatar" src="${avatarUrl}" alt="Avatar" /> <span>${nameToDisplay}</span>`;
           li.onclick = () => window.location.href = `global.html?type=dm&uid=${uid}`;
           usersList.appendChild(li);
         });
+        if (noUsersMsg) noUsersMsg.style.display = hasOtherUsers ? "none" : "block";
       });
     }
 
@@ -326,6 +380,7 @@
         displayUsername.textContent = "Guest";
         userPfp.src = "https://via.placeholder.com/40/2c2045/f0eaff?text=?";
         usersList.innerHTML = "";
+        if (noUsersMsg) noUsersMsg.style.display = "block";
       }
     });
   </script>
