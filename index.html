@@ -496,9 +496,14 @@
     });
 
     // Add event listeners for new buttons
-    document.getElementById("global-chat-btn").onclick = () => {
-      window.location.href = "global.html";
-    };
+    const globalChatBtn = document.getElementById("global-chat-btn");
+    if (globalChatBtn) {
+      globalChatBtn.onclick = () => window.location.href = "global.html";
+    }
+    const globalChatBtnMobile = document.getElementById("global-chat-btn-mobile");
+    if (globalChatBtnMobile) {
+      globalChatBtnMobile.onclick = () => window.location.href = "global.html";
+    }
     document.getElementById("settings-btn").onclick = () => {
       window.location.href = "settings.html";
     };
@@ -507,7 +512,6 @@
     const usersListMobile = document.getElementById("users-list-mobile");
     const noUsersMsgMobile = document.getElementById("no-users-msg-mobile");
     const signInBtnMobile = document.getElementById("sign-in-mobile");
-    const globalChatBtnMobile = document.getElementById("global-chat-btn-mobile");
     const settingsBtnMobile = document.getElementById("settings-btn-mobile");
 
     // Render users for mobile
@@ -549,9 +553,15 @@
     });
 
     // Mobile buttons
-    globalChatBtnMobile.onclick = () => window.location.href = "global.html";
-    settingsBtnMobile.onclick = () => window.location.href = "settings.html";
-    signInBtnMobile.onclick = () => signInBtn.onclick();
+    if (globalChatBtnMobile) {
+      globalChatBtnMobile.onclick = () => window.location.href = "global.html";
+    }
+    if (settingsBtnMobile) {
+      settingsBtnMobile.onclick = () => window.location.href = "settings.html";
+    }
+    if (signInBtnMobile) {
+      signInBtnMobile.onclick = () => signInBtn.onclick();
+    }
   </script>
 </body>
 </html>
