@@ -23,34 +23,27 @@
       --light-text: #2c2045;
     }
     body {
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+      background: var(--bg-gradient);
+      color: #f5f5f5;
       margin: 0;
-      font-family: 'Poppins', sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
+      justify-content: flex-start;
     }
     header {
-      width: 100vw;
-      text-align: center;
-      padding: 1.2rem 0 0.8rem 0;
-      font-size: 2rem;
-      font-weight: 700;
+      width: 100%;
+      background: var(--header-bg);
       color: #fff;
-      background: rgba(44,32,69,0.85);
-      box-shadow: 0 4px 32px #0002;
-      letter-spacing: 1.2px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 2rem;
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 10;
-      backdrop-filter: blur(10px);
-      transition: background 0.2s;
+      padding: 1rem 2rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      border-radius: 0 0 1.2rem 1.2rem;
+      box-shadow: var(--header-shadow);
+      text-align: center;
+      margin-bottom: 2rem;
     }
     .back-btn {
       position: absolute;
@@ -72,42 +65,15 @@
     .settings-card {
       margin-top: 110px;
       background: var(--settings-bg);
-      border-radius: 2.5rem;
-      box-shadow: 0 8px 32px #a259ff33;
-      padding: 2.2rem 2.5rem 2rem 2.5rem;
-      max-width: 420px;
-      width: 90vw;
-      color: #fff;
+      border-radius: 1.2rem;
+      box-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
+      padding: 2rem 2.5rem;
+      max-width: 400px;
+      width: 100%;
+      margin: 2rem auto;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 2rem;
-      transition: background 0.2s, color 0.2s;
-    }
-    .profile-info {
-      text-align: center;
-      margin-bottom: 1.3rem;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      gap: 0.7rem;
-    }
-    .profile-info img {
-      border-radius: 50%;
-      border: 2px solid var(--main);
-      width: 68px;
-      height: 68px;
-      box-shadow: 0 2px 12px #a259ff44;
-      object-fit: cover;
-      background: #fff;
-    }
-    .profile-info .profile-name {
-      margin-top: 0.4rem;
-      font-weight: 700;
-      color: var(--main);
-      font-size: 1.12rem;
-      word-break: break-word;
+      gap: 1.5rem;
     }
     .section {
       width: 100%;
@@ -120,48 +86,33 @@
       display: block;
     }
     select, input[type="text"] {
-      padding: 0.5rem 1.2rem;
-      border-radius: 1.2rem;
-      border: 2px solid var(--main);
-      background: var(--input-bg);
-      color: var(--main);
-      font-size: 1rem;
-      font-weight: 600;
-      outline: none;
-      margin-top: 0.3rem;
       width: 100%;
-      box-sizing: border-box;
-      transition: border 0.2s, background 0.2s, color 0.2s;
+      padding: 0.7rem 1.1rem;
+      border-radius: 1.2rem;
+      border: 1.5px solid var(--input-border);
+      background: var(--input-bg);
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      outline: none;
+      transition: border 0.18s;
     }
     select:focus, input[type="text"]:focus {
-      border: 2px solid var(--accent);
-      background: #fff;
-      color: var(--main);
+      border: 1.5px solid var(--main);
     }
-    .save-btn, .signout-btn {
+    .save-btn {
       background: var(--main);
-      color: #fff;
       border: none;
-      border-radius: 2rem;
-      padding: 0.7rem 2rem;
-      font-size: 1.1rem;
+      color: white;
       font-weight: 600;
+      padding: 0.6rem 1.5rem;
+      border-radius: 1.2rem;
       cursor: pointer;
-      box-shadow: 0 2px 8px #a259ff33;
-      margin-top: 0.8rem;
-      transition: background 0.2s;
-      width: 100%;
+      font-size: 1.1rem;
+      transition: background 0.18s;
+      margin-top: 1rem;
     }
-    .save-btn:hover, .signout-btn:hover {
-      background: var(--accent);
-    }
-    .signout-btn {
-      background: var(--danger);
-      margin-top: 1.6rem;
-    }
-    .signout-btn:hover {
-      background: #d32f2f;
-    }
+    .save-btn:hover { background: var(--main-dark); }
 
     /* PURPLE THEME */
     .theme-default body {
@@ -275,52 +226,49 @@
       }
     }
   </style>
+  <script>
+    // Theme sync
+    (function() {
+      const theme = localStorage.getItem('chatzTheme') || 'default';
+      document.documentElement.className = 'theme-' + theme;
+    })();
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'chatzTheme') {
+        const theme = e.newValue || 'default';
+        document.documentElement.className = 'theme-' + theme;
+      }
+    });
+  </script>
 </head>
 <body>
-  <header>
-    <button class="back-btn" onclick="window.location.href='index.html'">&larr; Back</button>
-    Settings
-  </header>
+  <header>Chatz Settings</header>
+  <button class="back-btn" onclick="window.location.href='index.html'">&larr; Back</button>
   <div class="settings-card">
-    <div class="profile-info" id="profile-info">
-      <img id="settings-pfp" src="https://via.placeholder.com/64/2c2045/f0eaff?text=?" alt="Profile" />
-      <div class="profile-name" id="settings-name"></div>
+    <div class="section">
+      <label for="theme-select">Theme</label>
+      <select id="theme-select">
+        <option value="default">Purple</option>
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+      </select>
     </div>
-    <form id="settings-form" autocomplete="off">
-      <div class="section">
-        <label for="theme-select">Theme</label>
-        <select id="theme-select">
-          <option value="default">Purple Mode</option>
-          <option value="dark">Dark Mode</option>
-          <option value="light">Light Mode</option>
-        </select>
-      </div>
-      <div class="section" id="nickname-section" style="display:none;">
-        <label for="nickname-input">Nickname</label>
-        <input type="text" id="nickname-input" placeholder="Enter new nickname" maxlength="32" />
-        <button type="button" class="save-btn" id="save-nickname-btn">Save Nickname</button>
-      </div>
-      <div class="section">
-        <label for="nickname">Nickname</label>
-        <input type="text" id="nickname" placeholder="Enter your nickname" maxlength="24" />
-      </div>
-      <button type="button" class="signout-btn" id="signout-btn" style="display:none;">Sign Out</button>
-    </form>
+    <div class="section">
+      <label for="nickname">Nickname</label>
+      <input type="text" id="nickname" placeholder="Enter your nickname" maxlength="24" />
+    </div>
+    <button class="save-btn" id="save-btn">Save</button>
   </div>
   <script type="module">
-    // Firebase initialization
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
       getAuth,
-      onAuthStateChanged,
-      signOut
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
     import {
       getDatabase,
       ref,
-      update,
-      get,
-      set
+      set,
+      get
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -336,97 +284,44 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // Theme logic
     const themeSelect = document.getElementById('theme-select');
-    function applyTheme(themeName) {
-      document.documentElement.classList.remove('theme-default', 'theme-dark', 'theme-light');
-      document.documentElement.classList.add(`theme-${themeName}`);
-      localStorage.setItem('chatzTheme', themeName);
-      themeSelect.value = themeName;
-    }
-    themeSelect.addEventListener('change', (event) => applyTheme(event.target.value));
+    const nicknameInput = document.getElementById('nickname');
+    const saveBtn = document.getElementById('save-btn');
+
+    // Load theme from localStorage
     document.addEventListener('DOMContentLoaded', () => {
       const savedTheme = localStorage.getItem('chatzTheme') || 'default';
-      applyTheme(savedTheme);
+      themeSelect.value = savedTheme;
     });
 
-    // User/nickname/profile logic
-    const nicknameSection = document.getElementById('nickname-section');
-    const nicknameInput = document.getElementById('nickname-input');
-    const saveNicknameBtn = document.getElementById('save-nickname-btn');
-    const profileInfo = document.getElementById('profile-info');
-    const settingsPfp = document.getElementById('settings-pfp');
-    const settingsName = document.getElementById('settings-name');
-    let currentUserUid = null;
-    let currentNickname = "";
-
-    onAuthStateChanged(auth, (user) => {
-      const signoutBtn = document.getElementById('signout-btn');
-      if (user) {
-        currentUserUid = user.uid;
-        signoutBtn.style.display = "";
-        nicknameSection.style.display = "";
-        profileInfo.style.display = "flex";
-        settingsPfp.src = user.photoURL || "https://via.placeholder.com/64/2c2045/f0eaff?text=?";
-        settingsName.textContent = user.displayName || "";
-        // Preload nickname
-        const userRef = ref(db, `users/${user.uid}`);
-        get(userRef).then(snapshot => {
-          const userData = snapshot.val();
-          currentNickname = userData && userData.nickname ? userData.nickname : (user.displayName || "");
-          nicknameInput.value = currentNickname;
-        });
-      } else {
-        document.getElementById('signout-btn').style.display = "none";
-        nicknameSection.style.display = "none";
-        profileInfo.style.display = "none";
-        currentUserUid = null;
-      }
+    themeSelect.addEventListener('change', (event) => {
+      const theme = event.target.value;
+      document.documentElement.className = 'theme-' + theme;
+      localStorage.setItem('chatzTheme', theme);
     });
 
-    saveNicknameBtn.onclick = async () => {
-      if (!currentUserUid) return alert("Sign in to set a nickname.");
-      const newNickname = nicknameInput.value.trim();
-      if (!newNickname) return alert("Please enter a nickname.");
-      if (newNickname === currentNickname) return alert("This is already your nickname!");
-      const userRef = ref(db, `users/${currentUserUid}`);
-      try {
-        await update(userRef, { nickname: newNickname });
-        currentNickname = newNickname;
-        alert("Nickname updated!");
-      } catch (error) {
-        alert("Failed to set nickname.");
-      }
-    };
-
-    // Save button for nickname in settings form
-    document.getElementById('save-btn').onclick = async () => {
-      const nickname = document.getElementById('nickname').value.trim();
-      const user = auth.currentUser;
-      if (user) {
-        await set(ref(db, "users/" + user.uid + "/nickname"), nickname);
-        alert("Settings saved!");
-      }
-    };
-
-    // Sign out
-    document.getElementById('signout-btn').onclick = () => {
-      signOut(auth).then(() => window.location.href = "index.html");
-    };
-
-    // Load nickname on settings page load
-    import { getAuth, onAuthStateChanged } from "firebase/auth";
-    import { getDatabase, ref, get } from "firebase/database";
-
-    const auth = getAuth();
-    const db = getDatabase();
-
+    // Load nickname if signed in
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         const snap = await get(ref(db, "users/" + user.uid + "/nickname"));
-        document.getElementById('nickname').value = snap.exists() ? snap.val() : "";
+        nicknameInput.value = snap.exists() ? snap.val() : "";
       }
     });
+
+    saveBtn.onclick = async () => {
+      const theme = themeSelect.value;
+      document.documentElement.className = 'theme-' + theme;
+      localStorage.setItem('chatzTheme', theme);
+
+      const user = auth.currentUser;
+      if (user) {
+        const nickname = nicknameInput.value.trim();
+        await set(ref(db, "users/" + user.uid + "/nickname"), nickname);
+        alert("Settings saved!");
+      } else {
+        alert("Sign in to save nickname.");
+      }
+    };
   </script>
 </body>
 </html>

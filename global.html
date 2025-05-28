@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz | by Flakious</title>
   <style>
+    /* Use the same theme CSS as index.html for consistency */
     :root {
       --main: #726dff;
       --main-dark: #554fa6;
@@ -86,11 +87,8 @@
       background: var(--header-bg);
       color: #fff;
       padding: 1rem 2rem 1rem 1.5rem;
-      text-align: left;
       font-size: 1.5rem;
       font-weight: 700;
-      user-select: none;
-      position: relative;
       border-radius: 0 0 1.2rem 1.2rem;
       box-shadow: var(--header-shadow);
       display: flex;
@@ -172,17 +170,6 @@
     .message.own {
       align-self: flex-end;
       flex-direction: row-reverse;
-    }
-    .message .avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #44415e;
-      border: 2px solid var(--main-dark);
-      margin-bottom: 2px;
-      flex-shrink: 0;
-      display: none; /* Enable if you want avatars per message */
     }
     .bubble {
       padding: 0.7rem 1.2rem;
@@ -306,6 +293,19 @@
       .reply-preview { margin: 0 0.5rem 0.5rem 0.5rem; }
     }
   </style>
+  <script>
+    // Theme sync
+    (function() {
+      const theme = localStorage.getItem('chatzTheme') || 'default';
+      document.documentElement.className = 'theme-' + theme;
+    })();
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'chatzTheme') {
+        const theme = e.newValue || 'default';
+        document.documentElement.className = 'theme-' + theme;
+      }
+    });
+  </script>
 </head>
 <body>
   <header>
@@ -389,12 +389,6 @@
       if (auth.currentUser && data.uid === auth.currentUser.uid) {
         msgDiv.classList.add("own");
       }
-      // Optionally show avatars per message (like Discord)
-      // const avatar = document.createElement("img");
-      // avatar.className = "avatar";
-      // avatar.src = data.photoURL || "https://via.placeholder.com/32/726dff/fff?text=U";
-      // msgDiv.appendChild(avatar);
-
       let replyHTML = "";
       if (data.replyTo) {
         replyHTML = `<div style="font-size:0.8rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--reply-border); padding-left: 6px; color:#ccc;">
@@ -440,7 +434,6 @@
         name: auth.currentUser.displayName || "Anonymous",
         message: msg,
         timestamp: Date.now(),
-        // photoURL: auth.currentUser.photoURL || undefined // Uncomment if you want avatars per message
       };
       if (replyTo) newMsg.replyTo = replyTo;
       push(messagesRef, newMsg)
@@ -459,7 +452,7 @@
       });
     });
     backBtn.addEventListener("click", () => {
-      window.history.back();
+      window.location.href = "index.html";
     });
     onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -468,7 +461,6 @@
         signInBtn.style.display = "none";
         backBtn.style.display = "inline-block";
         messageInput.placeholder = "Type a message...";
-        // Show user info
         userPic.style.display = "block";
         userName.style.display = "block";
         userPic.src = user.photoURL || "https://via.placeholder.com/38/726dff/fff?text=U";
@@ -482,24 +474,8 @@
         backBtn.style.display = "none";
         replyTo = null;
         replyPreview.style.display = "none";
-        // Hide user info
         userPic.style.display = "none";
         userName.style.display = "none";
-      }
-    });
-  </script>
-  <script>
-    // Apply theme from localStorage on page load
-    (function() {
-      const theme = localStorage.getItem('chatzTheme') || 'default';
-      document.documentElement.className = 'theme-' + theme;
-    })();
-  </script>
-  <script>
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'chatzTheme') {
-        const theme = e.newValue || 'default';
-        document.documentElement.className = 'theme-' + theme;
       }
     });
   </script>
