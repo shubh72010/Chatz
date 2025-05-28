@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chatz | Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --main: #a259ff;
+      --accent: #5f27cd;
+      --danger: #ff5252;
+      --settings-bg: rgba(44,32,69,0.96);
+      --text: #f0eaff;
+      --input-bg: rgba(255,255,255,0.16);
+      --dark-bg: #131324;
+      --dark-card: #191938;
+      --dark-input: #191938;
+      --dark-text: #f0eaff;
+      --light-bg: #f7f4fb;
+      --light-card: #fff;
+      --light-input: #f0eaff;
+      --light-text: #2c2045;
+    }
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    header {
+      width: 100vw;
+      text-align: center;
+      padding: 1.2rem 0 0.8rem 0;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(44,32,69,0.85);
+      box-shadow: 0 4px 32px #0002;
+      letter-spacing: 1.2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+      transition: background 0.2s;
+    }
+    .back-btn {
+      position: absolute;
+      left: 1.5rem;
+      background: var(--main);
+      color: #fff;
+      border: none;
+      border-radius: 1.5rem;
+      padding: 0.6rem 1.3rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #a259ff33;
+      transition: background 0.2s;
+    }
+    .back-btn:hover {
+      background: var(--accent);
+    }
+    .settings-card {
+      margin-top: 110px;
+      background: var(--settings-bg);
+      border-radius: 2.5rem;
+      box-shadow: 0 8px 32px #a259ff33;
+      padding: 2.2rem 2.5rem 2rem 2.5rem;
+      max-width: 420px;
+      width: 90vw;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      transition: background 0.2s, color 0.2s;
+    }
+    .profile-info {
+      text-align: center;
+      margin-bottom: 1.3rem;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      gap: 0.7rem;
+    }
+    .profile-info img {
+      border-radius: 50%;
+      border: 2px solid var(--main);
+      width: 68px;
+      height: 68px;
+      box-shadow: 0 2px 12px #a259ff44;
+      object-fit: cover;
+      background: #fff;
+    }
+    .profile-info .profile-name {
+      margin-top: 0.4rem;
+      font-weight: 700;
+      color: var(--main);
+      font-size: 1.12rem;
+      word-break: break-word;
+    }
+    .section {
+      width: 100%;
+      margin-bottom: 1.2rem;
+    }
+    .section label {
+      font-weight: 600;
+      color: var(--main);
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    select, input[type="text"] {
+      padding: 0.5rem 1.2rem;
+      border-radius: 1.2rem;
+      border: 2px solid var(--main);
+      background: var(--input-bg);
+      color: var(--main);
+      font-size: 1rem;
+      font-weight: 600;
+      outline: none;
+      margin-top: 0.3rem;
+      width: 100%;
+      box-sizing: border-box;
+      transition: border 0.2s, background 0.2s, color 0.2s;
+    }
+    select:focus, input[type="text"]:focus {
+      border: 2px solid var(--accent);
+      background: #fff;
+      color: var(--main);
+    }
+    .save-btn, .signout-btn {
+      background: var(--main);
+      color: #fff;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.7rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #a259ff33;
+      margin-top: 0.8rem;
+      transition: background 0.2s;
+      width: 100%;
+    }
+    .save-btn:hover, .signout-btn:hover {
+      background: var(--accent);
+    }
+    .signout-btn {
+      background: var(--danger);
+      margin-top: 1.6rem;
+    }
+    .signout-btn:hover {
+      background: #d32f2f;
+    }
+
+    /* PURPLE THEME */
+    .theme-default body {
+      background: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%) !important;
+      color: var(--text) !important;
+    }
+    .theme-default .settings-card {
+      background: rgba(44,32,69,0.96)!important;
+      color: #fff!important;
+    }
+    .theme-default header {
+      background: rgba(44,32,69,0.85)!important;
+      color: #fff!important;
+    }
+    .theme-default .profile-info .profile-name,
+    .theme-default .section label { color: var(--main)!important; }
+    .theme-default select,
+    .theme-default input[type="text"] {
+      background: rgba(255,255,255,0.16)!important;
+      color: var(--main)!important;
+      border-color: var(--main)!important;
+    }
+    .theme-default .save-btn, .theme-default .signout-btn {
+      background: var(--main)!important;
+      color: #fff!important;
+    }
+
+    /* DARK THEME */
+    .theme-dark body {
+      background: var(--dark-bg)!important;
+      color: var(--dark-text)!important;
+    }
+    .theme-dark .settings-card {
+      background: var(--dark-card)!important;
+      color: var(--dark-text)!important;
+      box-shadow: 0 8px 32px #0004!important;
+    }
+    .theme-dark header {
+      background: #191938!important;
+      color: var(--dark-text)!important;
+    }
+    .theme-dark .profile-info .profile-name,
+    .theme-dark .section label { color: #a259ff!important; }
+    .theme-dark select,
+    .theme-dark input[type="text"] {
+      background: var(--dark-input)!important;
+      color: #a259ff!important;
+      border-color: #5f27cd!important;
+    }
+    .theme-dark select:focus, .theme-dark input[type="text"]:focus {
+      background: #1c1c38!important;
+      color: #a259ff!important;
+      border-color: var(--main)!important;
+    }
+    .theme-dark .save-btn, .theme-dark .signout-btn {
+      background: #a259ff!important;
+      color: #fff!important;
+    }
+
+    /* LIGHT THEME */
+    .theme-light body {
+      background: var(--light-bg)!important;
+      color: var(--light-text)!important;
+    }
+    .theme-light .settings-card {
+      background: var(--light-card)!important;
+      color: var(--light-text)!important;
+      box-shadow: 0 8px 32px #a259ff0d!important;
+    }
+    .theme-light header {
+      background: #fff!important;
+      color: var(--main)!important;
+    }
+    .theme-light .profile-info .profile-name,
+    .theme-light .section label { color: var(--accent)!important; }
+    .theme-light select,
+    .theme-light input[type="text"] {
+      background: #f2edfd!important;
+      color: var(--accent)!important;
+      border-color: var(--main)!important;
+    }
+    .theme-light select:focus, .theme-light input[type="text"]:focus {
+      background: #fff!important;
+      color: var(--main)!important;
+      border-color: var(--accent)!important;
+    }
+    .theme-light .save-btn, .theme-light .signout-btn {
+      background: var(--accent)!important;
+      color: #fff!important;
+    }
+    .theme-light .save-btn:hover, .theme-light .signout-btn:hover {
+      background: var(--main)!important;
+    }
+    @media (max-width: 600px) {
+      .settings-card {
+        padding: 1.2rem 0.7rem 1rem 0.7rem;
+        margin-top: 80px;
+      }
+      header {
+        font-size: 1.4rem;
+        padding: 0.8rem 0 0.6rem 0;
+      }
+      .back-btn {
+        left: 0.5rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+      }
+      .profile-info img {
+        width: 52px;
+        height: 52px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <button class="back-btn" onclick="window.location.href='index.html'">&larr; Back</button>
+    Settings
+  </header>
+  <div class="settings-card">
+    <div class="profile-info" id="profile-info">
+      <img id="settings-pfp" src="https://via.placeholder.com/64/2c2045/f0eaff?text=?" alt="Profile" />
+      <div class="profile-name" id="settings-name"></div>
+    </div>
+    <form id="settings-form" autocomplete="off">
+      <div class="section">
+        <label for="theme-select">Theme</label>
+        <select id="theme-select">
+          <option value="default">Purple Mode</option>
+          <option value="dark">Dark Mode</option>
+          <option value="light">Light Mode</option>
+        </select>
+      </div>
+      <div class="section" id="nickname-section" style="display:none;">
+        <label for="nickname-input">Nickname</label>
+        <input type="text" id="nickname-input" placeholder="Enter new nickname" maxlength="32" />
+        <button type="button" class="save-btn" id="save-nickname-btn">Save Nickname</button>
+      </div>
+      <button type="button" class="signout-btn" id="signout-btn" style="display:none;">Sign Out</button>
+    </form>
+  </div>
+  <script type="module">
+    // Firebase initialization
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      update,
+      get
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+      authDomain: "chatz-45df4.firebaseapp.com",
+      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
+      projectId: "chatz-45df4",
+      storageBucket: "chatz-45df4.appspot.com",
+      messagingSenderId: "463847844545",
+      appId: "1:463847844545:web:5006247d061c3e0dc28240"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // Theme logic
+    const themeSelect = document.getElementById('theme-select');
+    function applyTheme(themeName) {
+      document.documentElement.classList.remove('theme-default', 'theme-dark', 'theme-light');
+      document.documentElement.classList.add(`theme-${themeName}`);
+      localStorage.setItem('chatzTheme', themeName);
+      themeSelect.value = themeName;
+    }
+    themeSelect.addEventListener('change', (event) => applyTheme(event.target.value));
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('chatzTheme') || 'default';
+      applyTheme(savedTheme);
+    });
+
+    // User/nickname/profile logic
+    const nicknameSection = document.getElementById('nickname-section');
+    const nicknameInput = document.getElementById('nickname-input');
+    const saveNicknameBtn = document.getElementById('save-nickname-btn');
+    const profileInfo = document.getElementById('profile-info');
+    const settingsPfp = document.getElementById('settings-pfp');
+    const settingsName = document.getElementById('settings-name');
+    let currentUserUid = null;
+    let currentNickname = "";
+
+    onAuthStateChanged(auth, (user) => {
+      const signoutBtn = document.getElementById('signout-btn');
+      if (user) {
+        currentUserUid = user.uid;
+        signoutBtn.style.display = "";
+        nicknameSection.style.display = "";
+        profileInfo.style.display = "flex";
+        settingsPfp.src = user.photoURL || "https://via.placeholder.com/64/2c2045/f0eaff?text=?";
+        settingsName.textContent = user.displayName || "";
+        // Preload nickname
+        const userRef = ref(db, `users/${user.uid}`);
+        get(userRef).then(snapshot => {
+          const userData = snapshot.val();
+          currentNickname = userData && userData.nickname ? userData.nickname : (user.displayName || "");
+          nicknameInput.value = currentNickname;
+        });
+      } else {
+        document.getElementById('signout-btn').style.display = "none";
+        nicknameSection.style.display = "none";
+        profileInfo.style.display = "none";
+        currentUserUid = null;
+      }
+    });
+
+    saveNicknameBtn.onclick = async () => {
+      if (!currentUserUid) return alert("Sign in to set a nickname.");
+      const newNickname = nicknameInput.value.trim();
+      if (!newNickname) return alert("Please enter a nickname.");
+      if (newNickname === currentNickname) return alert("This is already your nickname!");
+      const userRef = ref(db, `users/${currentUserUid}`);
+      try {
+        await update(userRef, { nickname: newNickname });
+        currentNickname = newNickname;
+        alert("Nickname updated!");
+      } catch (error) {
+        alert("Failed to set nickname.");
+      }
+    };
+
+    // Sign out
+    document.getElementById('signout-btn').onclick = () => {
+      signOut(auth).then(() => window.location.href = "index.html");
+    };
+  </script>
+</body>
+</html>
