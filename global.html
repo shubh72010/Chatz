@@ -322,5 +322,13 @@
       document.documentElement.className = 'theme-' + theme;
     })();
   </script>
+  <script>
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'chatzTheme') {
+        const theme = e.newValue || 'default';
+        document.documentElement.className = 'theme-' + theme;
+      }
+    });
+  </script>
 </body>
 </html>
