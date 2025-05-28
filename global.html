@@ -163,7 +163,7 @@
     Chat
     <div id="auth-btns">
       <button id="sign-in" class="auth-btn">Sign In</button>
-      <button id="sign-out" class="auth-btn" style="display:none;">Sign Out</button>
+      <button id="back-btn" class="auth-btn" style="display:none;">&larr; Back</button>
     </div>
   </header>
   <div id="chat"></div>
@@ -212,7 +212,7 @@
     const replyText = document.getElementById("reply-text");
     const cancelReplyBtn = document.getElementById("cancel-reply");
     const signInBtn = document.getElementById("sign-in");
-    const signOutBtn = document.getElementById("sign-out");
+    const backBtn = document.getElementById("back-btn");
     let replyTo = null;
     const scrollToBottom = () => { chat.scrollTop = chat.scrollHeight; };
     function escapeHtml(text) {
@@ -292,17 +292,16 @@
         console.error("Sign-in error:", error);
       });
     });
-    signOutBtn.addEventListener("click", () => {
-      signOut(auth).catch((error) => {
-        console.error("Sign-out error:", error);
-      });
+    backBtn.addEventListener("click", () => {
+      // Add your back navigation logic here
+      window.history.back();
     });
     onAuthStateChanged(auth, (user) => {
       if (user) {
         messageInput.disabled = false;
         sendBtn.disabled = false;
         signInBtn.style.display = "none";
-        signOutBtn.style.display = "inline-block";
+        backBtn.style.display = "inline-block";
         messageInput.placeholder = "Type a message...";
       } else {
         messageInput.value = "";
@@ -310,7 +309,7 @@
         messageInput.disabled = true;
         sendBtn.disabled = true;
         signInBtn.style.display = "inline-block";
-        signOutBtn.style.display = "none";
+        backBtn.style.display = "none";
         replyTo = null;
         replyPreview.style.display = "none";
       }
