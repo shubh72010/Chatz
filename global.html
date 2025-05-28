@@ -5,96 +5,193 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz | by Flakious</title>
   <style>
+    :root {
+      --main: #726dff;
+      --main-dark: #554fa6;
+      --main-light: #a3a0ff;
+      --bg: #23272f;
+      --bg-light: #2e323c;
+      --bg-gradient: linear-gradient(135deg, #726dff 0%, #554fa6 100%);
+      --bubble-own: #726dff;
+      --bubble-other: #2e323c;
+      --bubble-own-text: #fff;
+      --bubble-other-text: #e6e6fa;
+      --header-bg: #23272f;
+      --header-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
+      --input-bg: #292d36;
+      --input-border: #44415e;
+      --input-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+      --reply-bg: #554fa6;
+      --reply-border: #a3a0ff;
+      --scrollbar-thumb: #726dff55;
+      --scrollbar-track: #23272f;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #1e1e2f;
+      font-family: 'Segoe UI', 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-gradient);
       color: #f5f5f5;
       display: flex;
       flex-direction: column;
       height: 100vh;
-      max-width: 600px;
-      margin: 0 auto;
+      margin: 0;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
     }
     header {
-      background: #302d4c;
-      padding: 1rem;
-      text-align: center;
-      font-size: 1.6rem;
+      background: var(--header-bg);
+      color: #fff;
+      padding: 1rem 2rem 1rem 1.5rem;
+      text-align: left;
+      font-size: 1.5rem;
       font-weight: 700;
       user-select: none;
       position: relative;
+      border-radius: 0 0 1.2rem 1.2rem;
+      box-shadow: var(--header-shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 2;
+    }
+    #user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+    #user-pic {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #44415e;
+      border: 2px solid var(--main);
+      display: none;
+    }
+    #user-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--main-light);
+      display: none;
     }
     #auth-btns {
-      position: absolute;
-      right: 1rem;
-      top: 1rem;
       display: flex;
       gap: 0.5rem;
+      align-items: center;
     }
     button.auth-btn {
-      background: #726dff;
+      background: var(--main);
       border: none;
       color: white;
       font-weight: 600;
-      padding: 0.3rem 0.8rem;
-      border-radius: 0.4rem;
+      padding: 0.4rem 1.1rem;
+      border-radius: 1.2rem;
       cursor: pointer;
-      font-size: 0.9rem;
-      transition: background-color 0.2s ease;
+      font-size: 1rem;
+      transition: background 0.18s, box-shadow 0.18s;
+      box-shadow: 0 2px 8px 0 rgba(114,109,255,0.08);
+      outline: none;
     }
-    button.auth-btn:hover { background: #5c58e0; }
+    button.auth-btn:hover { background: var(--main-dark); }
     #chat {
       flex: 1;
       overflow-y: auto;
-      padding: 1rem;
+      padding: 2.2rem 0.5rem 1.2rem 0.5rem;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
-      scroll-behavior: smooth;
-      background: #252438;
+      gap: 0.7rem;
+      background: transparent;
+      min-height: 0;
+      min-width: 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    }
+    #chat::-webkit-scrollbar {
+      width: 8px;
+    }
+    #chat::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 8px;
+    }
+    #chat::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
     }
     .message {
-      padding: 0.6rem 1rem;
-      background: #3a375a;
-      border-radius: 1rem;
+      display: flex;
+      align-items: flex-end;
+      gap: 0.7rem;
       max-width: 80%;
-      word-wrap: break-word;
-      cursor: pointer;
+      margin-bottom: 0.2rem;
       position: relative;
-      transition: background-color 0.15s ease;
+      transition: background 0.15s;
     }
-    .message .sender {
+    .message.own {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .message .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #44415e;
+      border: 2px solid var(--main-dark);
+      margin-bottom: 2px;
+      flex-shrink: 0;
+      display: none; /* Enable if you want avatars per message */
+    }
+    .bubble {
+      padding: 0.7rem 1.2rem;
+      border-radius: 1.3rem;
+      background: var(--bubble-other);
+      color: var(--bubble-other-text);
+      font-size: 1.07rem;
+      box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
+      position: relative;
+      min-width: 0;
+      word-break: break-word;
+      transition: background 0.15s;
+    }
+    .message.own .bubble {
+      background: var(--bubble-own);
+      color: var(--bubble-own-text);
+      border-bottom-right-radius: 0.4rem;
+      border-bottom-left-radius: 1.3rem;
+    }
+    .message:not(.own) .bubble {
+      border-bottom-left-radius: 0.4rem;
+      border-bottom-right-radius: 1.3rem;
+    }
+    .sender {
       font-size: 0.92rem;
       font-weight: 600;
-      color: #a7a7fa;
+      color: var(--main-light);
       margin-bottom: 2px;
       display: block;
+      opacity: 0.85;
     }
-    .message:hover { background: #4b4781; }
-    .own {
-      background: #726dff;
-      align-self: flex-end;
-    }
-    .own .sender { color: #fff; }
+    .message.own .sender { color: #fff; }
     .meta {
-      font-size: 0.7rem;
-      opacity: 0.6;
+      font-size: 0.75rem;
+      opacity: 0.5;
       margin-top: 0.2rem;
       user-select: none;
+      text-align: right;
     }
     .reply-preview {
-      background: #554fa6;
-      padding: 0.5rem 1rem;
-      margin: 0 1rem 0.5rem 1rem;
-      border-left: 3px solid #a3a0ff;
-      font-size: 0.85rem;
+      background: var(--reply-bg);
+      padding: 0.5rem 1.1rem;
+      margin: 0 1.2rem 0.7rem 1.2rem;
+      border-left: 3px solid var(--reply-border);
+      font-size: 0.93rem;
       color: #dcdcff;
       user-select: none;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-radius: 0.5rem;
+      border-radius: 0.7rem;
+      box-shadow: 0 2px 8px 0 rgba(114,109,255,0.08);
     }
     .reply-preview span {
       font-weight: 600;
@@ -111,56 +208,69 @@
       cursor: pointer;
       font-weight: bold;
       user-select: none;
+      margin-left: 1rem;
     }
     form {
       display: flex;
       flex-wrap: nowrap;
-      padding: 1rem;
-      background: #2d2b45;
-      gap: 0.5rem;
+      padding: 1.1rem 1.2rem 1.1rem 1.2rem;
+      background: var(--input-bg);
+      gap: 0.7rem;
       align-items: center;
+      border-radius: 1.2rem 1.2rem 0 0;
+      box-shadow: var(--input-shadow);
+      z-index: 2;
     }
     #message {
       flex: 3 1 auto;
-      padding: 0.6rem 1rem;
-      border-radius: 1rem;
-      border: none;
+      padding: 0.7rem 1.2rem;
+      border-radius: 1.3rem;
+      border: 1.5px solid var(--input-border);
       outline: none;
-      background: #44415e;
+      background: #23232f;
       color: white;
-      font-size: 1rem;
+      font-size: 1.07rem;
+      transition: border 0.18s;
+    }
+    #message:focus {
+      border: 1.5px solid var(--main);
+      background: #23232f;
     }
     button#send-btn {
       flex: 0 0 auto;
-      padding: 0.6rem 1rem;
-      border-radius: 1rem;
+      padding: 0.7rem 1.3rem;
+      border-radius: 1.3rem;
       border: none;
-      background: #726dff;
+      background: var(--main);
       color: white;
       font-weight: bold;
       cursor: pointer;
-      font-size: 1rem;
-      transition: background-color 0.2s ease;
+      font-size: 1.07rem;
+      transition: background 0.18s, box-shadow 0.18s;
+      box-shadow: 0 2px 8px 0 rgba(114,109,255,0.08);
+      outline: none;
     }
     button#send-btn:disabled {
       background: #44415e;
       cursor: not-allowed;
+      opacity: 0.7;
     }
-    button#send-btn:hover:not(:disabled) { background: #5c58e0; }
-    @media (max-width: 480px) {
-      form { flex-wrap: wrap; }
-      #message { flex: 1 1 100%; }
-      button#send-btn { flex: 1 1 100%; margin-top: 0.5rem; }
+    button#send-btn:hover:not(:disabled) { background: var(--main-dark); }
+    @media (max-width: 600px) {
+      header { font-size: 1.1rem; padding: 0.7rem 0.7rem; }
+      #chat { padding: 1.1rem 0.2rem 0.7rem 0.2rem; }
+      form { padding: 0.7rem 0.7rem; }
+      .reply-preview { margin: 0 0.5rem 0.5rem 0.5rem; }
     }
   </style>
 </head>
 <body>
   <header>
-    <div id="user-info" style="position: absolute; left: 1rem; top: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-      <img id="user-pic" src="" alt="Profile" style="width: 32px; height: 32px; border-radius: 50%; display: none;" />
-      <span id="user-name" style="font-size: 0.9rem; font-weight: 600; display: none;"></span>
+    <div id="user-info">
+      <img id="user-pic" src="" alt="Profile" />
+      <span id="user-name"></span>
     </div>
-    Chat
+    <span style="margin-left:1rem;letter-spacing:1px;">Chatz</span>
     <div id="auth-btns">
       <button id="sign-in" class="auth-btn">Sign In</button>
       <button id="back-btn" class="auth-btn" style="display:none;">&larr; Back</button>
@@ -187,7 +297,6 @@
       getAuth,
       GoogleAuthProvider,
       signInWithPopup,
-      signOut,
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
     const firebaseConfig = {
@@ -213,7 +322,10 @@
     const cancelReplyBtn = document.getElementById("cancel-reply");
     const signInBtn = document.getElementById("sign-in");
     const backBtn = document.getElementById("back-btn");
+    const userPic = document.getElementById("user-pic");
+    const userName = document.getElementById("user-name");
     let replyTo = null;
+
     const scrollToBottom = () => { chat.scrollTop = chat.scrollHeight; };
     function escapeHtml(text) {
       return text
@@ -234,18 +346,28 @@
       if (auth.currentUser && data.uid === auth.currentUser.uid) {
         msgDiv.classList.add("own");
       }
+      // Optionally show avatars per message (like Discord)
+      // const avatar = document.createElement("img");
+      // avatar.className = "avatar";
+      // avatar.src = data.photoURL || "https://via.placeholder.com/32/726dff/fff?text=U";
+      // msgDiv.appendChild(avatar);
+
       let replyHTML = "";
       if (data.replyTo) {
-        replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid #a3a0ff; padding-left: 6px; color:#ccc;">
+        replyHTML = `<div style="font-size:0.8rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--reply-border); padding-left: 6px; color:#ccc;">
           Reply to: <strong>${escapeHtml(data.replyTo.name || "Anonymous")}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
         </div>`;
       }
-      msgDiv.innerHTML = `
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.innerHTML = `
         ${replyHTML}
         <span class="sender">${escapeHtml(data.name || "Anonymous")}</span>
         ${escapeHtml(data.message)}
         <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
       `;
+      msgDiv.appendChild(bubble);
+
       msgDiv.addEventListener("click", () => {
         if (!auth.currentUser) return;
         if (data.uid === auth.currentUser.uid) return;
@@ -275,6 +397,7 @@
         name: auth.currentUser.displayName || "Anonymous",
         message: msg,
         timestamp: Date.now(),
+        // photoURL: auth.currentUser.photoURL || undefined // Uncomment if you want avatars per message
       };
       if (replyTo) newMsg.replyTo = replyTo;
       push(messagesRef, newMsg)
@@ -293,7 +416,6 @@
       });
     });
     backBtn.addEventListener("click", () => {
-      // Add your back navigation logic here
       window.history.back();
     });
     onAuthStateChanged(auth, (user) => {
@@ -303,6 +425,11 @@
         signInBtn.style.display = "none";
         backBtn.style.display = "inline-block";
         messageInput.placeholder = "Type a message...";
+        // Show user info
+        userPic.style.display = "block";
+        userName.style.display = "block";
+        userPic.src = user.photoURL || "https://via.placeholder.com/38/726dff/fff?text=U";
+        userName.textContent = user.displayName || "Anonymous";
       } else {
         messageInput.value = "";
         messageInput.placeholder = "Sign in to chat";
@@ -312,6 +439,9 @@
         backBtn.style.display = "none";
         replyTo = null;
         replyPreview.style.display = "none";
+        // Hide user info
+        userPic.style.display = "none";
+        userName.style.display = "none";
       }
     });
   </script>
