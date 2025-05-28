@@ -217,6 +217,44 @@
       letter-spacing: 2px;
       margin: 2rem 0 1rem 0;
     }
+    .global-chat-btn {
+      width: 90%;
+      margin: 1rem auto 0.5rem auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background: var(--main);
+      color: #fff;
+      border: none;
+      border-radius: 1.2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding: 0.6rem 0;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+    .global-chat-btn:hover {
+      background: var(--main-dark);
+    }
+    .sidebar-bottom {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      padding: 1.2rem 0 0.7rem 0;
+    }
+    .settings-btn {
+      background: none;
+      border: none;
+      color: var(--main);
+      font-size: 2rem;
+      cursor: pointer;
+      transition: color 0.18s;
+    }
+    .settings-btn:hover {
+      color: var(--main-dark);
+    }
     @media (max-width: 850px) {
       .hamburger { display: block; }
       .left-container {
@@ -232,6 +270,7 @@
       .left-container.open { transform: translateX(0); }
       .main-container { flex-direction: column; }
       .right-container { width: 100vw; }
+      .sidebar-bottom { padding-bottom: 2.2rem; }
     }
   </style>
   <script>
@@ -251,7 +290,6 @@
 <body>
   <header>
     <span>Chatz</span>
-    <button class="back-btn" onclick="window.location.href='settings.html'">&larr; Back</button>
   </header>
   <div class="main-container">
     <div class="left-container" id="left-container">
@@ -265,8 +303,18 @@
         </div>
         <button class="sign-in-btn" id="sign-in">Sign In</button>
       </div>
+      <!-- Global Chat Button -->
+      <button id="global-chat-btn" class="global-chat-btn">
+        <i class="fa fa-globe"></i> Global Chat
+      </button>
       <div class="chat-list" id="users-list"></div>
       <div class="no-users-msg" id="no-users-msg" style="display:none;">No users found.</div>
+      <!-- Settings Gear at bottom -->
+      <div class="sidebar-bottom">
+        <button id="settings-btn" class="settings-btn" title="Settings">
+          <i class="fa fa-gear"></i>
+        </button>
+      </div>
     </div>
     <div class="right-container">
       <div class="right-header">Chatz</div>
@@ -380,6 +428,14 @@
         leftContainer.classList.remove("open");
       }
     });
+
+    // Add event listeners for new buttons
+    document.getElementById("global-chat-btn").onclick = () => {
+      window.location.href = "global.html";
+    };
+    document.getElementById("settings-btn").onclick = () => {
+      window.location.href = "settings.html";
+    };
   </script>
 </body>
 </html>
