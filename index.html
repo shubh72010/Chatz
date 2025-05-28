@@ -272,6 +272,58 @@
       .right-container { width: 100vw; }
       .sidebar-bottom { padding-bottom: 2.2rem; }
     }
+
+    /* Hide mobile by default, show on small screens */
+    .mobile-ui { display: none; }
+    .desktop-ui { display: flex; }
+
+    @media (max-width: 850px) {
+      .desktop-ui { display: none !important; }
+      .mobile-ui { display: block !important; width: 100vw; }
+      .mobile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--header-bg);
+        color: #fff;
+        padding: 1rem 1.2rem;
+        font-size: 1.3rem;
+        font-weight: 700;
+        border-radius: 0 0 1.2rem 1.2rem;
+        box-shadow: var(--header-shadow);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .global-chat-btn {
+        width: 90vw;
+        margin: 1.2rem auto 0.7rem auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: var(--main);
+        color: #fff;
+        border: none;
+        border-radius: 1.2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        padding: 0.6rem 0;
+        cursor: pointer;
+        transition: background 0.18s;
+      }
+      .chat-list {
+        width: 95vw;
+        margin: 1rem auto 0 auto;
+        background: var(--bg-light);
+        border-radius: 1.2rem;
+        box-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
+        padding: 0.5rem 0;
+        max-height: 60vh;
+        overflow-y: auto;
+      }
+      .sidebar-bottom, .sidebar-header, .right-container, .main-header { display: none !important; }
+    }
   </style>
   <script>
     // Theme sync
@@ -288,28 +340,25 @@
   </script>
 </head>
 <body>
-  <header>
-    <span>Chatz</span>
+  <header class="main-header">
+    <span class="logo">Chatz</span>
+    <button class="sign-in-btn" id="sign-in">Sign In</button>
   </header>
-  <div class="main-container">
-    <div class="left-container" id="left-container">
+
+  <!-- Desktop layout -->
+  <div class="main-container desktop-ui">
+    <div class="left-container">
       <div class="sidebar-header">
-        <button id="hamburger" class="hamburger" aria-label="Toggle user list">
-          <i class="fa fa-bars"></i>
-        </button>
         <div class="user-info">
           <div class="user-img"><img id="user-pfp" src="https://via.placeholder.com/46/2c2045/f0eaff?text=?" alt="Profile Picture" /></div>
           <span class="user-name" id="display-username">Guest</span>
         </div>
-        <button class="sign-in-btn" id="sign-in">Sign In</button>
+        <button id="global-chat-btn" class="global-chat-btn">
+          <i class="fa fa-globe"></i> Global Chat
+        </button>
       </div>
-      <!-- Global Chat Button -->
-      <button id="global-chat-btn" class="global-chat-btn">
-        <i class="fa fa-globe"></i> Global Chat
-      </button>
       <div class="chat-list" id="users-list"></div>
       <div class="no-users-msg" id="no-users-msg" style="display:none;">No users found.</div>
-      <!-- Settings Gear at bottom -->
       <div class="sidebar-bottom">
         <button id="settings-btn" class="settings-btn" title="Settings">
           <i class="fa fa-gear"></i>
@@ -321,6 +370,23 @@
       <div style="color:#aaa;text-align:center;">Select a user to start chatting</div>
     </div>
   </div>
+
+  <!-- Mobile layout -->
+  <div class="mobile-ui">
+    <div class="mobile-header">
+      <span class="logo">Chatz</span>
+      <button id="settings-btn-mobile" class="settings-btn" title="Settings">
+        <i class="fa fa-gear"></i>
+      </button>
+    </div>
+    <button id="global-chat-btn-mobile" class="global-chat-btn">
+      <i class="fa fa-globe"></i> Global Chat
+    </button>
+    <div class="chat-list" id="users-list-mobile"></div>
+    <div class="no-users-msg" id="no-users-msg-mobile" style="display:none;">No users found.</div>
+    <button class="sign-in-btn" id="sign-in-mobile" style="margin:1.5rem auto 0 auto;display:block;">Sign In</button>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
@@ -436,6 +502,56 @@
     document.getElementById("settings-btn").onclick = () => {
       window.location.href = "settings.html";
     };
+
+    // Mobile logic
+    const usersListMobile = document.getElementById("users-list-mobile");
+    const noUsersMsgMobile = document.getElementById("no-users-msg-mobile");
+    const signInBtnMobile = document.getElementById("sign-in-mobile");
+    const globalChatBtnMobile = document.getElementById("global-chat-btn-mobile");
+    const settingsBtnMobile = document.getElementById("settings-btn-mobile");
+
+    // Render users for mobile
+    function renderUsersMobile() {
+      usersListMobile.innerHTML = "";
+      if (allUsers.length === 0) {
+        noUsersMsgMobile.style.display = "block";
+      } else {
+        noUsersMsgMobile.style.display = "none";
+        allUsers.forEach(user => {
+          const nameToDisplay = user.nickname || user.displayName || "Anonymous";
+          const avatarUrl = user.photoURL || "https://via.placeholder.com/38/2c2045/f0eaff?text=U";
+          const box = document.createElement("div");
+          box.className = "chat-box";
+          box.innerHTML = `
+            <div class="img-box">
+              <img src="${avatarUrl}" alt="Avatar" />
+            </div>
+            <div class="chat-details">
+              <h4>${nameToDisplay}</h4>
+              <p>Start chat</p>
+            </div>
+          `;
+          box.onclick = () => window.location.href = `global.html?type=dm&uid=${user.uid}`;
+          usersListMobile.appendChild(box);
+        });
+      }
+    }
+
+    // Sync users for both UIs
+    onValue(ref(db, "users"), (snap) => {
+      const users = snap.val() || {};
+      allUsers = [];
+      Object.entries(users).forEach(([uid, userData]) => {
+        allUsers.push({ uid, ...userData });
+      });
+      renderUsers();
+      renderUsersMobile();
+    });
+
+    // Mobile buttons
+    globalChatBtnMobile.onclick = () => window.location.href = "global.html";
+    settingsBtnMobile.onclick = () => window.location.href = "settings.html";
+    signInBtnMobile.onclick = () => signInBtn.onclick();
   </script>
 </body>
 </html>
