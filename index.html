@@ -495,53 +495,7 @@
       }
     });
 
-    // Add event listeners for new buttons
-    const globalChatBtn = document.getElementById("global-chat-btn");
-    if (globalChatBtn) {
-      globalChatBtn.onclick = () => window.location.href = "global.html";
-    }
-    const globalChatBtnMobile = document.getElementById("global-chat-btn-mobile");
-    if (globalChatBtnMobile) {
-      globalChatBtnMobile.onclick = () => window.location.href = "global.html";
-    }
-    document.getElementById("settings-btn").onclick = () => {
-      window.location.href = "settings.html";
-    };
-
-    // Mobile logic
-    const usersListMobile = document.getElementById("users-list-mobile");
-    const noUsersMsgMobile = document.getElementById("no-users-msg-mobile");
-    const signInBtnMobile = document.getElementById("sign-in-mobile");
-    const settingsBtnMobile = document.getElementById("settings-btn-mobile");
-
-    // Render users for mobile
-    function renderUsersMobile() {
-      usersListMobile.innerHTML = "";
-      if (allUsers.length === 0) {
-        noUsersMsgMobile.style.display = "block";
-      } else {
-        noUsersMsgMobile.style.display = "none";
-        allUsers.forEach(user => {
-          const nameToDisplay = user.nickname || user.displayName || "Anonymous";
-          const avatarUrl = user.photoURL || "https://via.placeholder.com/38/2c2045/f0eaff?text=U";
-          const box = document.createElement("div");
-          box.className = "chat-box";
-          box.innerHTML = `
-            <div class="img-box">
-              <img src="${avatarUrl}" alt="Avatar" />
-            </div>
-            <div class="chat-details">
-              <h4>${nameToDisplay}</h4>
-              <p>Start chat</p>
-            </div>
-          `;
-          box.onclick = () => window.location.href = `global.html?type=dm&uid=${user.uid}`;
-          usersListMobile.appendChild(box);
-        });
-      }
-    }
-
-    // Sync users for both UIs
+    // Only ONE onValue for users!
     onValue(ref(db, "users"), (snap) => {
       const users = snap.val() || {};
       allUsers = [];
@@ -552,13 +506,26 @@
       renderUsersMobile();
     });
 
+    // Desktop buttons
+    const globalChatBtn = document.getElementById("global-chat-btn");
+    if (globalChatBtn) {
+      globalChatBtn.onclick = () => window.location.href = "global.html";
+    }
+    const settingsBtn = document.getElementById("settings-btn");
+    if (settingsBtn) {
+      settingsBtn.onclick = () => window.location.href = "settings.html";
+    }
+
     // Mobile buttons
+    const globalChatBtnMobile = document.getElementById("global-chat-btn-mobile");
     if (globalChatBtnMobile) {
       globalChatBtnMobile.onclick = () => window.location.href = "global.html";
     }
+    const settingsBtnMobile = document.getElementById("settings-btn-mobile");
     if (settingsBtnMobile) {
       settingsBtnMobile.onclick = () => window.location.href = "settings.html";
     }
+    const signInBtnMobile = document.getElementById("sign-in-mobile");
     if (signInBtnMobile) {
       signInBtnMobile.onclick = () => signInBtn.onclick();
     }
