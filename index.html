@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz</title>
   <script>
+    // Apply theme from localStorage on page load
     (function() {
-      // Initially set to default theme. JavaScript will update this on auth state change.
-      document.documentElement.className = 'theme-default';
+      const theme = localStorage.getItem('chatzTheme') || 'default';
+      document.documentElement.className = 'theme-' + theme;
     })();
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
