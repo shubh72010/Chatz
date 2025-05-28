@@ -142,27 +142,6 @@
     .sidebar-header .nav-icons li { list-style: none; cursor: pointer; transition: color 0.2s;}
     .sidebar-header .nav-icons li:hover { color: var(--main);}
 
-    /* Theme switcher dropdown in sidebar header */
-    #theme-switcher {
-      padding: 0.3rem;
-      border-radius: 5px;
-      background: var(--input-bg); /* Themed */
-      color: var(--text-color); /* Themed */
-      border: 1px solid var(--button-bg); /* Themed border */
-      font-size: 0.9rem;
-      cursor: pointer;
-      appearance: none; /* Remove default dropdown arrow */
-      background-repeat: no-repeat;
-      background-position: right 0.5rem center;
-      background-size: 0.7em auto;
-      padding-right: 2rem; /* Make space for arrow */
-      transition: background 0.3s, color 0.3s, border 0.3s; /* Smooth theme transition */
-    }
-    #theme-switcher option {
-        background: var(--input-bg); /* Themed */
-        color: var(--text-color); /* Themed */
-    }
-
     .search-container {
       display: flex;
       align-items: center;
@@ -368,8 +347,6 @@
       .sidebar-header .sign-in-btn { min-width: 48px; font-size: 0.9rem; padding: 0.35rem 0.7rem;}
       .pill-button { padding: 0.5rem 1.05rem; font-size: 1rem;}
       .welcome-section { font-size: 1.05rem; }
-      /* Adjust theme switcher for small screens */
-      #theme-switcher { font-size: 0.8rem; padding: 0.2rem 1.5rem 0.2rem 0.5rem; background-position: right 0.2rem center;}
     }
   </style>
 </head>
@@ -387,11 +364,6 @@
           <li title="Messages"><i class="fa-solid fa-message"></i></li>
           <li title="More"><i class="fa-solid fa-ellipsis-vertical"></i></li>
         </ul>
-        <select id="theme-switcher" style="display:none;">
-          <option value="default">Default</option>
-          <option value="dark">Dark</option>
-          <option value="light">Light</option>
-        </select>
       </div>
       <div class="search-container">
         <div class="input">
@@ -405,7 +377,7 @@
     </div>
     <div class="right-container">
       <div class="right-header">
-        Chatz
+        <span style="color:var(--main);font-weight:900;letter-spacing:2px;font-size:1.7rem;">Chatz</span>
       </div>
       <div class="welcome-section" id="welcome-section">
         <div>👋 Welcome to Chatz</div>
@@ -451,30 +423,9 @@
     const usersList = document.getElementById("users-list");
     const noUsersMsg = document.getElementById("no-users-msg");
     const searchInput = document.getElementById("user-search");
-    const themeSwitcher = document.getElementById("theme-switcher"); // Get the theme switcher element
 
     let allUsers = [];
     let myUid = null;
-
-    // --- Theme Switching Logic ---
-    function applyTheme(themeName) {
-      document.documentElement.className = 'theme-' + themeName;
-      localStorage.setItem('chatzTheme', themeName);
-
-      // Dynamically update the dropdown arrow color based on the current theme's text color
-      const computedStyle = getComputedStyle(document.documentElement);
-      const textColor = computedStyle.getPropertyValue('--text-color').trim();
-      const encodedTextColor = encodeURIComponent(textColor);
-
-      const svgArrow = `url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22${encodedTextColor}%22%20d%3D%22M287%2C114.7L159.2%2C242.5c-4.5%2C4.5-10.6%2C6.8-16.8%2C6.8s-12.3-2.3-16.8-6.8L5.4%2C114.7c-9.1-9.1-9.1-23.7%2C0-32.8s23.7-9.1%2C32.8%2C0l118%2C118l118-118c9.1-9.1%2C23.7-9.1%2C32.8%2C0S296.1%2C105.6%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E')`;
-      themeSwitcher.style.backgroundImage = svgArrow;
-    }
-
-    // Event listener for theme switcher
-    themeSwitcher.addEventListener('change', (event) => {
-      applyTheme(event.target.value);
-    });
-    // --- End Theme Switching Logic ---
 
     signInBtn.onclick = () => {
       const provider = new GoogleAuthProvider();
@@ -527,12 +478,6 @@
         userPfp.src = user.photoURL || "https://via.placeholder.com/46/2c2045/f0eaff?text=?";
         myUid = user.uid;
 
-        // Show theme switcher and apply stored theme
-        themeSwitcher.style.display = "inline-block";
-        const storedTheme = localStorage.getItem('chatzTheme') || 'default';
-        applyTheme(storedTheme);
-        themeSwitcher.value = storedTheme;
-
         onValue(ref(db, "users"), (snap) => {
           const users = snap.val() || {};
           allUsers = [];
@@ -548,11 +493,6 @@
         userPfp.src = "https://via.placeholder.com/46/2c2045/f0eaff?text=?";
         allUsers = [];
         renderUsers('');
-
-        // Hide theme switcher and force default theme
-        themeSwitcher.style.display = "none";
-        applyTheme('default');
-        themeSwitcher.value = 'default';
       }
     });
   </script>
