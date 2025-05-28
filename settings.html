@@ -300,6 +300,10 @@
         <input type="text" id="nickname-input" placeholder="Enter new nickname" maxlength="32" />
         <button type="button" class="save-btn" id="save-nickname-btn">Save Nickname</button>
       </div>
+      <div class="section">
+        <label for="nickname">Nickname</label>
+        <input type="text" id="nickname" placeholder="Enter your nickname" maxlength="24" />
+      </div>
       <button type="button" class="signout-btn" id="signout-btn" style="display:none;">Sign Out</button>
     </form>
   </div>
@@ -315,7 +319,8 @@
       getDatabase,
       ref,
       update,
-      get
+      get,
+      set
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -394,10 +399,34 @@
       }
     };
 
+    // Save button for nickname in settings form
+    document.getElementById('save-btn').onclick = async () => {
+      const nickname = document.getElementById('nickname').value.trim();
+      const user = auth.currentUser;
+      if (user) {
+        await set(ref(db, "users/" + user.uid + "/nickname"), nickname);
+        alert("Settings saved!");
+      }
+    };
+
     // Sign out
     document.getElementById('signout-btn').onclick = () => {
       signOut(auth).then(() => window.location.href = "index.html");
     };
+
+    // Load nickname on settings page load
+    import { getAuth, onAuthStateChanged } from "firebase/auth";
+    import { getDatabase, ref, get } from "firebase/database";
+
+    const auth = getAuth();
+    const db = getDatabase();
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const snap = await get(ref(db, "users/" + user.uid + "/nickname"));
+        document.getElementById('nickname').value = snap.exists() ? snap.val() : "";
+      }
+    });
   </script>
 </body>
 </html>

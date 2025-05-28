@@ -3,435 +3,345 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chatz</title>
-  <script>
-    // Apply theme from localStorage on page load
-    (function() {
-      const theme = localStorage.getItem('chatzTheme') || 'default';
-      document.documentElement.className = 'theme-' + theme;
-    })();
-  </script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
-  <script src="https://kit.fontawesome.com/391827d54c.js" crossorigin="anonymous"></script>
+  <title>Chatz | by Flakious</title>
   <style>
-    /* Base variables (these are the fallback/default values when no theme class is active,
-       or explicitly set by .theme-default) */
     :root {
-      --main: #a259ff; /* Primary accent color (purple) */
-      --accent: #5f27cd; /* Darker accent color */
-      --danger: #ff5252; /* Red for danger/errors */
-      /* Default theme specific colors (will be overridden by theme classes) */
-      --settings-bg: rgba(44,32,69,0.96); /* Background for sidebar and headers */
-      --body-bg: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%); /* Main app background */
-      --card-bg: #191938; /* Background for chat list items/cards */
-      --input-bg: rgba(255,255,255,0.16); /* Input field background */
-      --text-color: #f0eaff; /* Global text color */
-      --border-color: #a259ff33; /* General border color */
-      --button-bg: #a259ff; /* Button background */
-      --button-hover-bg: #5f27cd; /* Button hover background */
+      --main: #726dff;
+      --main-dark: #554fa6;
+      --main-light: #a3a0ff;
+      --bg: #23272f;
+      --bg-light: #2e323c;
+      --bg-gradient: linear-gradient(135deg, #726dff 0%, #554fa6 100%);
+      --bubble-own: #726dff;
+      --bubble-other: #2e323c;
+      --bubble-own-text: #fff;
+      --bubble-other-text: #e6e6fa;
+      --header-bg: #23272f;
+      --header-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
+      --input-bg: #292d36;
+      --input-border: #44415e;
+      --input-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+      --reply-bg: #554fa6;
+      --reply-border: #a3a0ff;
+      --scrollbar-thumb: #726dff55;
+      --scrollbar-track: #23272f;
     }
 
-    /* Default Theme */
-    .theme-default {
-      --settings-bg: rgba(44,32,69,0.96);
-      --body-bg: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%);
-      --card-bg: #191938;
-      --input-bg: rgba(255,255,255,0.16);
-      --text-color: #f0eaff;
-      --border-color: #a259ff33;
-      --button-bg: #a259ff;
-      --button-hover-bg: #5f27cd;
-    }
-
-    /* Dark Theme (Enhanced Darker) */
+    /* DARK THEME */
     .theme-dark {
-      --settings-bg: #1a1a1a; /* Very dark grey, almost black for sidebar/headers */
-      --body-bg: #0d0d0d; /* Almost black background */
-      --card-bg: #1a1a1a; /* Darker background for cards */
-      --input-bg: #2c2c2c; /* Dark grey for input fields */
-      --text-color: #ffffff; /* Pure white text */
-      --border-color: rgba(255, 255, 255, 0.05); /* Lighter border for dark theme */
-      --button-bg: #a259ff;
-      --button-hover-bg: #5f27cd;
+      --main: #23272f;
+      --main-dark: #181b20;
+      --main-light: #44415e;
+      --bg: #181b20;
+      --bg-light: #23272f;
+      --bg-gradient: linear-gradient(135deg, #181b20 0%, #23272f 100%);
+      --bubble-own: #44415e;
+      --bubble-other: #23272f;
+      --bubble-own-text: #fff;
+      --bubble-other-text: #e6e6fa;
+      --header-bg: #181b20;
+      --input-bg: #23232f;
+      --input-border: #44415e;
+      --reply-bg: #23272f;
+      --reply-border: #726dff;
+      --scrollbar-thumb: #44415e;
+      --scrollbar-track: #181b20;
     }
 
-    /* Light Theme (Enhanced Lighter) */
+    /* LIGHT THEME */
     .theme-light {
-      --settings-bg: #ffffff; /* Pure white for sidebar/headers */
-      --body-bg: #f8f8f8; /* Almost white background */
-      --card-bg: #ffffff; /* White background for cards */
-      --input-bg: #f0f0f0; /* Very light grey for input fields */
-      --text-color: #1a1a1a; /* Very dark grey text */
-      --border-color: rgba(0, 0, 0, 0.1); /* Darker border for light theme */
-      --button-bg: #a259ff;
-      --button-hover-bg: #5f27cd;
+      --main: #7b5cff;
+      --main-dark: #5a3ec8;
+      --main-light: #b3aaff;
+      --bg: #f4f6fb;
+      --bg-light: #fff;
+      --bg-gradient: linear-gradient(135deg, #e9e6ff 0%, #f4f6fb 100%);
+      --bubble-own: #7b5cff;
+      --bubble-other: #e9e6ff;
+      --bubble-own-text: #fff;
+      --bubble-other-text: #23272f;
+      --header-bg: #fff;
+      --input-bg: #f4f6fb;
+      --input-border: #b3aaff;
+      --reply-bg: #e9e6ff;
+      --reply-border: #7b5cff;
+      --scrollbar-thumb: #b3aaff;
+      --scrollbar-track: #f4f6fb;
     }
 
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: 'Poppins', sans-serif;
-      background: var(--body-bg); /* Applies theme background */
-      color: var(--text-color); /* Applies theme text color */
-      min-height: 100vh;
-      overflow: hidden;
-      transition: background 0.3s, color 0.3s; /* Smooth theme transition */
-    }
-    body, .main-container {
-      height: 100vh;
-      width: 100vw;
-      min-width: 0;
-      min-height: 0;
-      display: flex;
-      flex-direction: row;
-    }
-    .main-container { flex: 1; min-width: 0; min-height: 0;}
-    .left-container {
-      width: 340px;
-      min-width: 220px;
-      background: var(--settings-bg); /* Applies theme settings background */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-gradient);
+      color: #f5f5f5;
       display: flex;
       flex-direction: column;
-      box-shadow: 2px 0 18px rgba(0,0,0,0.1);
-      z-index: 10;
-      transition: width 0.2s, background 0.3s; /* Smooth theme transition */
+      height: 100vh;
+      margin: 0;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
     }
-    .sidebar-header {
+    header {
+      background: var(--header-bg);
+      color: #fff;
+      padding: 1rem 2rem 1rem 1.5rem;
+      text-align: left;
+      font-size: 1.5rem;
+      font-weight: 700;
+      user-select: none;
+      position: relative;
+      border-radius: 0 0 1.2rem 1.2rem;
+      box-shadow: var(--header-shadow);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1.2rem 1rem 1rem 1rem;
-      background: var(--settings-bg); /* Applies theme settings background */
-      min-height: 78px;
-      flex-shrink: 0;
-      transition: background 0.3s; /* Smooth theme transition */
+      z-index: 2;
     }
-    .sidebar-header .user-info { display: flex; align-items: center; gap: 0.8rem;}
-    .sidebar-header .user-img { width: 46px; height: 46px; border-radius: 50%; overflow: hidden;}
-    .sidebar-header .user-img img { width: 46px; height: 46px; object-fit: cover; border-radius: 50%; border: 2px solid var(--main); background: #fff;}
-    .sidebar-header .user-name {
-      color: var(--main);
-      font-size: 1.08rem;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-      max-width: 110px;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-    .sidebar-header .sign-in-btn {
-      background: var(--button-bg); /* Themed */
-      color: #fff;
-      border: none;
-      border-radius: 2rem;
-      padding: 0.47rem 1.1rem;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(162,89,255,0.2);
-      transition: background 0.2s, box-shadow 0.2s;
-      margin-left: 0.85rem;
-      min-width: 68px;
-    }
-    .sidebar-header .sign-in-btn:hover {
-      background: var(--button-hover-bg); /* Themed hover */
-      box-shadow: 0 4px 16px rgba(162,89,255,0.27);
-    }
-    .sidebar-header .nav-icons { display: flex; gap: 1.15rem; color: var(--text-color); font-size: 1.2rem; margin-left: 0.75rem;}
-    .sidebar-header .nav-icons li { list-style: none; cursor: pointer; transition: color 0.2s;}
-    .sidebar-header .nav-icons li:hover { color: var(--main);}
-
-    /* Theme switcher dropdown in sidebar header */
-    #theme-switcher {
-      padding: 0.3rem;
-      border-radius: 5px;
-      background: var(--input-bg); /* Themed */
-      color: var(--text-color); /* Themed */
-      border: 1px solid var(--button-bg); /* Themed border */
-      font-size: 0.9rem;
-      cursor: pointer;
-      appearance: none; /* Remove default dropdown arrow */
-      background-repeat: no-repeat;
-      background-position: right 0.5rem center;
-      background-size: 0.7em auto;
-      padding-right: 2rem; /* Make space for arrow */
-      transition: background 0.3s, color 0.3s, border 0.3s; /* Smooth theme transition */
-    }
-    #theme-switcher option {
-        background: var(--input-bg); /* Themed */
-        color: var(--text-color); /* Themed */
-    }
-
-    .search-container {
+    #user-info {
       display: flex;
       align-items: center;
-      background: var(--settings-bg); /* Themed */
-      padding: 0.55rem 1rem;
-      border-bottom: 1px solid var(--border-color); /* Themed */
-      gap: 0.85rem;
-      flex-shrink: 0;
-      transition: background 0.3s, border-color 0.3s; /* Smooth theme transition */
+      gap: 0.7rem;
     }
-    .search-container .input {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      background: var(--input-bg); /* Themed */
-      border-radius: 1.2rem;
-      padding: 0.37rem 0.8rem;
-      color: var(--text-color); /* Themed */
-      transition: background 0.3s, color 0.3s; /* Smooth theme transition */
-    }
-    .search-container input {
-      border: none;
-      outline: none;
-      background: transparent;
-      color: var(--main);
-      font-size: 1rem;
-      margin-left: 0.6rem;
-      width: 100%;
-    }
-    .search-container .fa-bars-filter { color: var(--main); font-size: 1.1rem; margin-left: 0.8rem; cursor: pointer;}
-    .chat-list {
-      flex: 1;
-      overflow-y: auto;
-      background: var(--settings-bg); /* Themed */
-      padding-top: 10px;
-      min-height: 0;
-      min-width: 0;
-      transition: background 0.3s; /* Smooth theme transition */
-    }
-    .chat-box {
-      display: flex;
-      align-items: center;
-      padding: 0.62rem 1.05rem 0.62rem 1.05rem;
-      border-bottom: 1px solid var(--border-color); /* Themed */
-      cursor: pointer;
-      transition: background 0.17s, border-color 0.3s; /* Smooth theme transition */
-      gap: 1.04rem;
-      min-width: 0;
-    }
-    .chat-box.active, .chat-box:hover { background: var(--accent);}
-    .chat-box .img-box { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; flex-shrink: 0;}
-    .chat-box .img-box img { width: 38px; height: 38px; object-fit: cover; border-radius: 50%; border: 2px solid var(--main); background: #fff;}
-    .chat-details { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;}
-    .text-head { display: flex; align-items: center; justify-content: space-between; color: var(--text-color); gap: 0.7rem;}
-    .text-head h4 { margin: 0; font-size: 1.00rem; font-weight: 600; letter-spacing: 0.1px; max-width: 103px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;}
-    .text-message {
-      color: var(--text-color); /* Themed */
-      opacity: 0.8;
-      display: flex;
-      align-items: center;
-      gap: 0.55rem;
-      font-size: 0.98rem;
-      margin-top: 0.04rem;
-      min-width: 0;
-    }
-    .no-users-msg {
-      color: var(--text-color); /* Themed */
-      opacity: 0.7;
-      margin: 1.2rem auto 1rem auto;
-      font-size: 1.05rem;
-      text-align: center;
+    #user-pic {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #44415e;
+      border: 2px solid var(--main);
       display: none;
     }
-    .right-container {
-      flex: 1;
-      min-width: 0;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-      background: var(--body-bg); /* Themed */
-      position: relative;
-      transition: background 0.3s; /* Smooth theme transition */
-    }
-    .right-header {
-      width: 100%;
-      height: 65px;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding: 0 2.2rem 0 1.5rem;
-      background: var(--settings-bg); /* Themed */
-      color: var(--main);
-      box-shadow: 0 4px 32px rgba(162,89,255,0.07);
-      position: relative;
-      z-index: 20;
-      font-size: 1.53rem;
-      font-weight: 800;
-      letter-spacing: 2px;
-      user-select: none;
-      flex-shrink: 0;
-      transition: background 0.3s; /* Smooth theme transition */
-    }
-    .welcome-section {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 1.2rem;
-      color: var(--main);
-      font-size: 1.35rem;
+    #user-name {
+      font-size: 1rem;
       font-weight: 600;
-      text-align: center;
-      opacity: 0.92;
-      min-width: 0;
-      min-height: 0;
+      color: var(--main-light);
+      display: none;
     }
-    .welcome-section div {
-      color: var(--text-color); /* Themed */
-    }
-    .welcome-section div b {
-      color: var(--main);
-    }
-    .pill-button {
-      background: var(--button-bg); /* Themed */
-      color: #fff;
-      border: none;
-      border-radius: 2rem;
-      padding: 0.7rem 2.1rem;
-      font-size: 1.23rem;
-      font-weight: 700;
-      box-shadow: 0 2px 12px rgba(162,89,255,0.2);
-      cursor: pointer;
-      transition: background 0.2s;
-      margin-top: 1.2rem;
-    }
-    .pill-button:hover { background: var(--button-hover-bg);}
-    .footer {
-      position: fixed;
-      bottom: 10px;
-      left: 0;
-      width: 100%;
-      text-align: center;
-      color: var(--text-color); /* Themed */
-      opacity: 0.7;
-      font-size: 0.9rem;
-      z-index: 100;
-      pointer-events:none;
-      user-select: none;
-    }
-    #circle-nav {
-      position: fixed;
-      bottom: 2.5rem;
-      left: 50%;
-      transform: translateX(-50%);
+    #auth-btns {
       display: flex;
-      gap: 1.3rem;
-      z-index: 200;
-      background: var(--settings-bg); /* Themed */
-      border-radius: 2.2rem;
-      padding: 1rem 1.2rem;
-      box-shadow: 0 4px 24px rgba(162,89,255,0.2);
-      transition: background 0.3s; /* Smooth theme transition */
-    }
-    #circle-nav button {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      border: none;
-      background: var(--button-bg); /* Themed */
-      color: #fff;
-      font-size: 1.5rem;
-      display: flex;
+      gap: 0.5rem;
       align-items: center;
-      justify-content: center;
-      transition: background 0.2s, box-shadow 0.2s;
+    }
+    button.auth-btn {
+      background: var(--main);
+      border: none;
+      color: white;
+      font-weight: 600;
+      padding: 0.4rem 1.1rem;
+      border-radius: 1.2rem;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(162,89,255,0.2);
+      font-size: 1rem;
+      transition: background 0.18s, box-shadow 0.18s;
+      box-shadow: 0 2px 8px 0 rgba(114,109,255,0.08);
+      outline: none;
     }
-    #circle-nav button:hover { background: var(--button-hover-bg);}
-    @media (max-width: 1100px) {
-      .left-container { width: 210px; min-width: 120px;}
-      .sidebar-header .user-img, .sidebar-header .user-img img { width: 38px; height: 38px;}
-      .sidebar-header .user-name { font-size: 0.95rem; max-width: 60px; }
-      .chat-box .img-box { width: 32px; height: 32px;}
-      .chat-box .img-box img { width: 32px; height: 32px;}
-      .text-head h4 { font-size: 0.92rem; max-width: 78px; }
-      .right-header { font-size: 1.05rem; padding: 0 0.9rem 0 0.9rem; height: 46px;}
+    button.auth-btn:hover { background: var(--main-dark); }
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2.2rem 0.5rem 1.2rem 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      background: transparent;
+      min-height: 0;
+      min-width: 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
     }
-    @media (max-width: 850px) {
-      .main-container { flex-direction: column; }
-      .left-container { width: 100vw; min-width: unset; flex-direction: row; max-height: 66px; }
-      .sidebar-header { padding: 0.7rem 0.7rem; min-height: unset; }
-      .sidebar-header .user-name { display: none; }
-      .sidebar-header .user-img img { width: 32px; height: 32px;}
-      .chat-list { display: none; }
-      .search-container { display: none; }
-      .right-header { font-size: 1.1rem; padding: 0 0.7rem 0 0.7rem; height: 42px; }
+    #chat::-webkit-scrollbar {
+      width: 8px;
     }
+    #chat::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 8px;
+    }
+    #chat::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+    }
+    .message {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.7rem;
+      max-width: 80%;
+      margin-bottom: 0.2rem;
+      position: relative;
+      transition: background 0.15s;
+    }
+    .message.own {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .message .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #44415e;
+      border: 2px solid var(--main-dark);
+      margin-bottom: 2px;
+      flex-shrink: 0;
+      display: none; /* Enable if you want avatars per message */
+    }
+    .bubble {
+      padding: 0.7rem 1.2rem;
+      border-radius: 1.3rem;
+      background: var(--bubble-other);
+      color: var(--bubble-other-text);
+      font-size: 1.07rem;
+      box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
+      position: relative;
+      min-width: 0;
+      word-break: break-word;
+      transition: background 0.15s;
+    }
+    .message.own .bubble {
+      background: var(--bubble-own);
+      color: var(--bubble-own-text);
+      border-bottom-right-radius: 0.4rem;
+      border-bottom-left-radius: 1.3rem;
+    }
+    .message:not(.own) .bubble {
+      border-bottom-left-radius: 0.4rem;
+      border-bottom-right-radius: 1.3rem;
+    }
+    .sender {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--main-light);
+      margin-bottom: 2px;
+      display: block;
+      opacity: 0.85;
+    }
+    .message.own .sender { color: #fff; }
+    .meta {
+      font-size: 0.75rem;
+      opacity: 0.5;
+      margin-top: 0.2rem;
+      user-select: none;
+      text-align: right;
+    }
+    .reply-preview {
+      background: var(--reply-bg);
+      padding: 0.5rem 1.1rem;
+      margin: 0 1.2rem 0.7rem 1.2rem;
+      border-left: 3px solid var(--reply-border);
+      font-size: 0.93rem;
+      color: #dcdcff;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 0.7rem;
+      box-shadow: 0 2px 8px 0 rgba(114,109,255,0.08);
+    }
+    .reply-preview span {
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 80%;
+    }
+    .reply-preview button {
+      background: transparent;
+      border: none;
+      color: #dcdcff;
+      font-size: 1.2rem;
+      cursor: pointer;
+      font-weight: bold;
+      user-select: none;
+      margin-left: 1rem;
+    }
+    form {
+      display: flex;
+      flex-wrap: nowrap;
+      padding: 1.1rem 1.2rem 1.1rem 1.2rem;
+      background: var(--input-bg);
+      gap: 0.7rem;
+      align-items: center;
+      border-radius: 1.2rem 1.2rem 0 0;
+      box-shadow: var(--input-shadow);
+      z-index: 2;
+    }
+    #message {
+      flex: 3 1 auto;
+      padding: 0.7rem 1.2rem;
+      border-radius: 1.3rem;
+      border: 1.5px solid var(--input-border);
+      outline: none;
+      background: #23232f;
+      color: white;
+      font-size: 1.07rem;
+      transition: border 0.18s;
+    }
+    #message:focus {
+      border: 1.5px solid var(--main);
+      background: #23232f;
+    }
+    button#send-btn {
+      flex: 0 0 auto;
+      padding: 0.7rem 1.3rem;
+      border-radius: 1.3rem;
+      border: none;
+      background: var(--main);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1.07rem;
+      transition: background 0.18s, box-shadow 0.18s;
+      box-shadow: 0 2px 8px 0 rgba(114,109,255,0.08);
+      outline: none;
+    }
+    button#send-btn:disabled {
+      background: #44415e;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    button#send-btn:hover:not(:disabled) { background: var(--main-dark); }
     @media (max-width: 600px) {
-      html, body, .main-container, .right-container { min-width: 0; }
-      .footer { font-size: 0.8rem; }
-      .sidebar-header .sign-in-btn { min-width: 48px; font-size: 0.9rem; padding: 0.35rem 0.7rem;}
-      .pill-button { padding: 0.5rem 1.05rem; font-size: 1rem;}
-      .welcome-section { font-size: 1.05rem; }
-      /* Adjust theme switcher for small screens */
-      #theme-switcher { font-size: 0.8rem; padding: 0.2rem 1.5rem 0.2rem 0.5rem; background-position: right 0.2rem center;}
+      header { font-size: 1.1rem; padding: 0.7rem 0.7rem; }
+      #chat { padding: 1.1rem 0.2rem 0.7rem 0.2rem; }
+      form { padding: 0.7rem 0.7rem; }
+      .reply-preview { margin: 0 0.5rem 0.5rem 0.5rem; }
     }
   </style>
 </head>
 <body>
-  <div class="main-container">
-    <div class="left-container">
-      <div class="sidebar-header">
-        <div class="user-info">
-          <div class="user-img"><img id="user-pfp" src="https://via.placeholder.com/46/2c2045/f0eaff?text=?" alt="Profile Picture" /></div>
-          <span class="user-name" id="display-username">Guest</span>
-        </div>
-        <button class="sign-in-btn" id="sign-in">Sign In</button>
-        <ul class="nav-icons">
-          <li title="Users"><i class="fa-solid fa-users"></i></li>
-          <li title="Messages"><i class="fa-solid fa-message"></i></li>
-          <li title="More"><i class="fa-solid fa-ellipsis-vertical"></i></li>
-        </ul>
-        <select id="theme-switcher" style="display:none;">
-          <option value="default">Default</option>
-          <option value="dark">Dark</option>
-          <option value="light">Light</option>
-        </select>
-      </div>
-      <div class="search-container">
-        <div class="input">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" id="user-search" placeholder="Search or start new chat">
-        </div>
-        <i class="fa-sharp fa-solid fa-bars-filter"></i>
-      </div>
-      <div class="chat-list" id="users-list"></div>
-      <div class="no-users-msg" id="no-users-msg">No users found</div>
+  <header>
+    <div id="user-info">
+      <img id="user-pic" src="" alt="Profile" />
+      <span id="user-name"></span>
     </div>
-    <div class="right-container">
-      <div class="right-header">
-        Chatz
-      </div>
-      <div class="welcome-section" id="welcome-section">
-        <div>👋 Welcome to Chatz</div>
-        <div style="font-size:1.02rem;font-weight:400;">Select a user on the left to start chatting.<br>Or join the <b style="color:var(--main);">Global Chat</b>!</div>
-        <button class="pill-button" onclick="window.location.href='global.html'">Global Chat</button>
-      </div>
-      <div class="footer">Made with ❤️ by PurpleDevs.</div>
-      <div id="circle-nav">
-        <button title="Settings" onclick="window.location.href='settings.html'"><span>⚙️</span></button>
-      </div>
+    <span style="margin-left:1rem;letter-spacing:1px;">Chatz</span>
+    <div id="auth-btns">
+      <button id="sign-in" class="auth-btn">Sign In</button>
+      <button id="back-btn" class="auth-btn" style="display:none;">&larr; Back</button>
     </div>
+  </header>
+  <div id="chat"></div>
+  <div id="reply-preview" class="reply-preview" style="display:none;">
+    <span id="reply-text"></span>
+    <button id="cancel-reply" title="Cancel reply">&times;</button>
   </div>
+  <form id="chat-form">
+    <input type="text" id="message" placeholder="Type a message..." disabled autocomplete="off" required />
+    <button id="send-btn" type="submit" disabled>Send</button>
+  </form>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      onChildAdded
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
     import {
       getAuth,
       GoogleAuthProvider,
       signInWithPopup,
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-    import {
-      getDatabase,
-      ref,
-      onValue
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
       authDomain: "chatz-45df4.firebaseapp.com",
@@ -439,120 +349,157 @@
       projectId: "chatz-45df4",
       storageBucket: "chatz-45df4.appspot.com",
       messagingSenderId: "463847844545",
-      appId: "1:463847844545:web:5006247d061c3e0dc28240"
+      appId: "1:463847844545:web:5006247d061c3e0dc28240",
+      measurementId: "G-2VHETC9V8B"
     };
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getDatabase(app);
-
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("chat-form");
+    const messageInput = document.getElementById("message");
+    const sendBtn = document.getElementById("send-btn");
+    const replyPreview = document.getElementById("reply-preview");
+    const replyText = document.getElementById("reply-text");
+    const cancelReplyBtn = document.getElementById("cancel-reply");
     const signInBtn = document.getElementById("sign-in");
-    const userPfp = document.getElementById("user-pfp");
-    const displayUsername = document.getElementById("display-username");
-    const usersList = document.getElementById("users-list");
-    const noUsersMsg = document.getElementById("no-users-msg");
-    const searchInput = document.getElementById("user-search");
-    const themeSwitcher = document.getElementById("theme-switcher"); // Get the theme switcher element
+    const backBtn = document.getElementById("back-btn");
+    const userPic = document.getElementById("user-pic");
+    const userName = document.getElementById("user-name");
+    let replyTo = null;
 
-    let allUsers = [];
-    let myUid = null;
-
-    // --- Theme Switching Logic ---
-    function applyTheme(themeName) {
-      document.documentElement.className = 'theme-' + themeName;
-      localStorage.setItem('chatzTheme', themeName);
-
-      // Dynamically update the dropdown arrow color based on the current theme's text color
-      const computedStyle = getComputedStyle(document.documentElement);
-      const textColor = computedStyle.getPropertyValue('--text-color').trim();
-      const encodedTextColor = encodeURIComponent(textColor);
-
-      const svgArrow = `url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22${encodedTextColor}%22%20d%3D%22M287%2C114.7L159.2%2C242.5c-4.5%2C4.5-10.6%2C6.8-16.8%2C6.8s-12.3-2.3-16.8-6.8L5.4%2C114.7c-9.1-9.1-9.1-23.7%2C0-32.8s23.7-9.1%2C32.8%2C0l118%2C118l118-118c9.1-9.1%2C23.7-9.1%2C32.8%2C0S296.1%2C105.6%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E')`;
-      themeSwitcher.style.backgroundImage = svgArrow;
+    const scrollToBottom = () => { chat.scrollTop = chat.scrollHeight; };
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
-
-    // Event listener for theme switcher
-    themeSwitcher.addEventListener('change', (event) => {
-      applyTheme(event.target.value);
-    });
-    // --- End Theme Switching Logic ---
-
-    signInBtn.onclick = () => {
-      const provider = new GoogleAuthProvider();
-      signInWithPopup(auth, provider).catch(e => console.error("Sign-in failed: " + e.message));
-    };
-
-    function renderUsers(filter = '') {
-      usersList.innerHTML = "";
-      let filtered = allUsers;
-      if (filter) {
-        const f = filter.toLowerCase();
-        filtered = allUsers.filter(u => (u.nickname || u.displayName || 'Anonymous').toLowerCase().includes(f));
+    function truncate(str, n) {
+      return str.length > n ? str.substr(0, n - 1) + "…" : str;
+    }
+    const messagesRef = ref(db, "messages");
+    onChildAdded(messagesRef, (snapshot) => {
+      const data = snapshot.val();
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "message";
+      if (auth.currentUser && data.uid === auth.currentUser.uid) {
+        msgDiv.classList.add("own");
       }
-      if (filtered.length === 0) {
-        noUsersMsg.style.display = "block";
-      } else {
-        noUsersMsg.style.display = "none";
-        filtered.forEach(user => {
-          const nameToDisplay = user.nickname || user.displayName || "Anonymous";
-          const avatarUrl = user.photoURL || "https://via.placeholder.com/38/2c2045/f0eaff?text=U";
-          const box = document.createElement("div");
-          box.className = "chat-box";
-          box.innerHTML = `
-            <div class="img-box">
-              <img src="${avatarUrl}" alt="Avatar" />
-            </div>
-            <div class="chat-details">
-              <div class="text-head">
-                <h4>${nameToDisplay}</h4>
-              </div>
-              <div class="text-message">
-                <p>Start chat</p>
-              </div>
-            </div>
-          `;
-          box.onclick = () => window.location.href = `global.html?type=dm&uid=${user.uid}`;
-          usersList.appendChild(box);
+      // Optionally show avatars per message (like Discord)
+      // const avatar = document.createElement("img");
+      // avatar.className = "avatar";
+      // avatar.src = data.photoURL || "https://via.placeholder.com/32/726dff/fff?text=U";
+      // msgDiv.appendChild(avatar);
+
+      let replyHTML = "";
+      if (data.replyTo) {
+        replyHTML = `<div style="font-size:0.8rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--reply-border); padding-left: 6px; color:#ccc;">
+          Reply to: <strong>${escapeHtml(data.replyTo.name || "Anonymous")}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
+        </div>`;
+      }
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.innerHTML = `
+        ${replyHTML}
+        <span class="sender">${escapeHtml(data.name || "Anonymous")}</span>
+        ${escapeHtml(data.message)}
+        <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+      `;
+      msgDiv.appendChild(bubble);
+
+      msgDiv.addEventListener("click", () => {
+        if (!auth.currentUser) return;
+        if (data.uid === auth.currentUser.uid) return;
+        replyTo = {
+          id: snapshot.key,
+          name: data.name,
+          message: data.message,
+        };
+        replyText.textContent = `${replyTo.name || "Anonymous"}: ${truncate(replyTo.message, 50)}`;
+        replyPreview.style.display = "flex";
+        messageInput.focus();
+      });
+      chat.appendChild(msgDiv);
+      scrollToBottom();
+    });
+    cancelReplyBtn.addEventListener("click", () => {
+      replyTo = null;
+      replyPreview.style.display = "none";
+    });
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!auth.currentUser) return alert("You must be signed in to send messages.");
+      const msg = messageInput.value.trim();
+      if (!msg) return;
+      const newMsg = {
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || "Anonymous",
+        message: msg,
+        timestamp: Date.now(),
+        // photoURL: auth.currentUser.photoURL || undefined // Uncomment if you want avatars per message
+      };
+      if (replyTo) newMsg.replyTo = replyTo;
+      push(messagesRef, newMsg)
+        .then(() => {
+          messageInput.value = "";
+          replyTo = null;
+          replyPreview.style.display = "none";
+        })
+        .catch((err) => {
+          console.error("Error sending message:", err);
         });
-      }
-    }
-
-    searchInput.addEventListener('input', e => {
-      renderUsers(e.target.value);
     });
-
+    signInBtn.addEventListener("click", () => {
+      signInWithPopup(auth, provider).catch((error) => {
+        console.error("Sign-in error:", error);
+      });
+    });
+    backBtn.addEventListener("click", () => {
+      window.history.back();
+    });
     onAuthStateChanged(auth, (user) => {
       if (user) {
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
         signInBtn.style.display = "none";
-        displayUsername.textContent = user.displayName || "Anonymous";
-        userPfp.src = user.photoURL || "https://via.placeholder.com/46/2c2045/f0eaff?text=?";
-        myUid = user.uid;
-
-        // Show theme switcher and apply stored theme
-        themeSwitcher.style.display = "inline-block";
-        const storedTheme = localStorage.getItem('chatzTheme') || 'default';
-        applyTheme(storedTheme);
-        themeSwitcher.value = storedTheme;
-
-        onValue(ref(db, "users"), (snap) => {
-          const users = snap.val() || {};
-          allUsers = [];
-          Object.entries(users).forEach(([uid, userData]) => {
-            if (uid === myUid) return;
-            allUsers.push({ uid, ...userData });
-          });
-          renderUsers(searchInput.value);
-        });
+        backBtn.style.display = "inline-block";
+        messageInput.placeholder = "Type a message...";
+        // Show user info
+        userPic.style.display = "block";
+        userName.style.display = "block";
+        userPic.src = user.photoURL || "https://via.placeholder.com/38/726dff/fff?text=U";
+        userName.textContent = user.displayName || "Anonymous";
       } else {
+        messageInput.value = "";
+        messageInput.placeholder = "Sign in to chat";
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
         signInBtn.style.display = "inline-block";
-        displayUsername.textContent = "Guest";
-        userPfp.src = "https://via.placeholder.com/46/2c2045/f0eaff?text=?";
-        allUsers = [];
-        renderUsers('');
-
-        // Hide theme switcher and force default theme
-        themeSwitcher.style.display = "none";
-        applyTheme('default');
-        themeSwitcher.value = 'default';
+        backBtn.style.display = "none";
+        replyTo = null;
+        replyPreview.style.display = "none";
+        // Hide user info
+        userPic.style.display = "none";
+        userName.style.display = "none";
+      }
+    });
+  </script>
+  <script>
+    // Apply theme from localStorage on page load
+    (function() {
+      const theme = localStorage.getItem('chatzTheme') || 'default';
+      document.documentElement.className = 'theme-' + theme;
+    })();
+  </script>
+  <script>
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'chatzTheme') {
+        const theme = e.newValue || 'default';
+        document.documentElement.className = 'theme-' + theme;
       }
     });
   </script>
