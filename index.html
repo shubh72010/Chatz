@@ -136,7 +136,7 @@
       font-weight: 600;
       color: var(--main-light);
     }
-    .sign-in-btn, .back-btn {
+    .sign-in-btn {
       background: var(--main);
       border: none;
       color: white;
@@ -148,16 +148,26 @@
       transition: background 0.18s;
       margin-left: 0.5rem;
     }
-    .sign-in-btn:hover, .back-btn:hover { background: var(--main-dark); }
-    .hamburger {
-      display: none;
-      background: none;
+    .sign-in-btn:hover { background: var(--main-dark); }
+    .global-chat-btn {
+      width: 90%;
+      margin: 1rem auto 0.5rem auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background: var(--main);
+      color: #fff;
       border: none;
-      color: var(--main);
-      font-size: 1.7rem;
-      margin-right: 0.7rem;
+      border-radius: 1.2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding: 0.6rem 0;
       cursor: pointer;
-      z-index: 1001;
+      transition: background 0.18s;
+    }
+    .global-chat-btn:hover {
+      background: var(--main-dark);
     }
     .chat-list {
       flex: 1;
@@ -200,43 +210,6 @@
       text-align: center;
       margin-top: 2rem;
     }
-    .right-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg);
-    }
-    .right-header {
-      width: 100%;
-      text-align: center;
-      font-size: 2rem;
-      font-weight: 900;
-      color: var(--main);
-      letter-spacing: 2px;
-      margin: 2rem 0 1rem 0;
-    }
-    .global-chat-btn {
-      width: 90%;
-      margin: 1rem auto 0.5rem auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      background: var(--main);
-      color: #fff;
-      border: none;
-      border-radius: 1.2rem;
-      font-size: 1.1rem;
-      font-weight: 600;
-      padding: 0.6rem 0;
-      cursor: pointer;
-      transition: background 0.18s;
-    }
-    .global-chat-btn:hover {
-      background: var(--main-dark);
-    }
     .sidebar-bottom {
       width: 100%;
       display: flex;
@@ -255,99 +228,32 @@
     .settings-btn:hover {
       color: var(--main-dark);
     }
-    @media (max-width: 850px) {
-      .hamburger { display: block; }
-      .left-container {
-        position: fixed;
-        left: 0;
-        top: 0;
-        height: 100vh;
-        z-index: 1000;
-        transform: translateX(-100%);
-        transition: transform 0.25s cubic-bezier(.4,2,.6,1);
-        box-shadow: 2px 0 18px rgba(0,0,0,0.18);
-      }
-      .left-container.open { transform: translateX(0); }
-      .main-container { flex-direction: column; }
-      .right-container { width: 100vw; }
-      .sidebar-bottom { padding-bottom: 2.2rem; }
+    .right-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
     }
-
-    /* Hide mobile by default, show on small screens */
-    .mobile-ui { display: none; }
-    .desktop-ui { display: flex; }
-
-    @media (max-width: 850px) {
-      .desktop-ui { display: none !important; }
-      .mobile-ui { display: block !important; width: 100vw; }
-      .mobile-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: var(--header-bg);
-        color: #fff;
-        padding: 1rem 1.2rem;
-        font-size: 1.3rem;
-        font-weight: 700;
-        border-radius: 0 0 1.2rem 1.2rem;
-        box-shadow: var(--header-shadow);
-        position: sticky;
-        top: 0;
-        z-index: 10;
-      }
-      .global-chat-btn {
-        width: 90vw;
-        margin: 1.2rem auto 0.7rem auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        background: var(--main);
-        color: #fff;
-        border: none;
-        border-radius: 1.2rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-        padding: 0.6rem 0;
-        cursor: pointer;
-        transition: background 0.18s;
-      }
-      .chat-list {
-        width: 95vw;
-        margin: 1rem auto 0 auto;
-        background: var(--bg-light);
-        border-radius: 1.2rem;
-        box-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
-        padding: 0.5rem 0;
-        max-height: 60vh;
-        overflow-y: auto;
-      }
-      .sidebar-bottom, .sidebar-header, .right-container, .main-header { display: none !important; }
+    .right-header {
+      width: 100%;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--main);
+      letter-spacing: 2px;
+      margin: 2rem 0 1rem 0;
     }
   </style>
-  <script>
-    // Theme sync
-    (function() {
-      const theme = localStorage.getItem('chatzTheme') || 'default';
-      document.documentElement.className = 'theme-' + theme;
-    })();
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'chatzTheme') {
-        const theme = e.newValue || 'default';
-        document.documentElement.className = 'theme-' + theme;
-      }
-    });
-  </script>
 </head>
 <body>
-  <header class="main-header">
-    <span class="logo">Chatz</span>
+  <header>
+    <span>Chatz</span>
     <button class="sign-in-btn" id="sign-in">Sign In</button>
   </header>
-
-  <!-- Desktop layout -->
-  <div class="main-container desktop-ui">
-    <div class="left-container">
+  <div class="main-container">
+    <div class="left-container" id="left-container">
       <div class="sidebar-header">
         <div class="user-info">
           <div class="user-img"><img id="user-pfp" src="https://via.placeholder.com/46/2c2045/f0eaff?text=?" alt="Profile Picture" /></div>
@@ -370,23 +276,6 @@
       <div style="color:#aaa;text-align:center;">Select a user to start chatting</div>
     </div>
   </div>
-
-  <!-- Mobile layout -->
-  <div class="mobile-ui">
-    <div class="mobile-header">
-      <span class="logo">Chatz</span>
-      <button id="settings-btn-mobile" class="settings-btn" title="Settings">
-        <i class="fa fa-gear"></i>
-      </button>
-    </div>
-    <button id="global-chat-btn-mobile" class="global-chat-btn">
-      <i class="fa fa-globe"></i> Global Chat
-    </button>
-    <div class="chat-list" id="users-list-mobile"></div>
-    <div class="no-users-msg" id="no-users-msg-mobile" style="display:none;">No users found.</div>
-    <button class="sign-in-btn" id="sign-in-mobile" style="margin:1.5rem auto 0 auto;display:block;">Sign In</button>
-  </div>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
@@ -419,8 +308,6 @@
     const displayUsername = document.getElementById("display-username");
     const usersList = document.getElementById("users-list");
     const noUsersMsg = document.getElementById("no-users-msg");
-    const hamburger = document.getElementById("hamburger");
-    const leftContainer = document.getElementById("left-container");
 
     let allUsers = [];
     let myUid = null;
@@ -480,32 +367,6 @@
       }
     });
 
-    // Hamburger menu logic
-    hamburger.addEventListener("click", () => {
-      leftContainer.classList.toggle("open");
-    });
-    document.addEventListener("click", (e) => {
-      if (
-        window.innerWidth <= 850 &&
-        leftContainer.classList.contains("open") &&
-        !leftContainer.contains(e.target) &&
-        e.target !== hamburger
-      ) {
-        leftContainer.classList.remove("open");
-      }
-    });
-
-    // Only ONE onValue for users!
-    onValue(ref(db, "users"), (snap) => {
-      const users = snap.val() || {};
-      allUsers = [];
-      Object.entries(users).forEach(([uid, userData]) => {
-        allUsers.push({ uid, ...userData });
-      });
-      renderUsers();
-      renderUsersMobile();
-    });
-
     // Desktop buttons
     const globalChatBtn = document.getElementById("global-chat-btn");
     if (globalChatBtn) {
@@ -514,20 +375,6 @@
     const settingsBtn = document.getElementById("settings-btn");
     if (settingsBtn) {
       settingsBtn.onclick = () => window.location.href = "settings.html";
-    }
-
-    // Mobile buttons
-    const globalChatBtnMobile = document.getElementById("global-chat-btn-mobile");
-    if (globalChatBtnMobile) {
-      globalChatBtnMobile.onclick = () => window.location.href = "global.html";
-    }
-    const settingsBtnMobile = document.getElementById("settings-btn-mobile");
-    if (settingsBtnMobile) {
-      settingsBtnMobile.onclick = () => window.location.href = "settings.html";
-    }
-    const signInBtnMobile = document.getElementById("sign-in-mobile");
-    if (signInBtnMobile) {
-      signInBtnMobile.onclick = () => signInBtn.onclick();
     }
   </script>
 </body>
