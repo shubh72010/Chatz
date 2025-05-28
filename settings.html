@@ -334,8 +334,8 @@
     // Theme logic
     const themeSelect = document.getElementById('theme-select');
     function applyTheme(themeName) {
-      document.body.classList.remove('theme-default', 'theme-dark', 'theme-light');
-      document.body.classList.add(`theme-${themeName}`);
+      document.documentElement.classList.remove('theme-default', 'theme-dark', 'theme-light');
+      document.documentElement.classList.add(`theme-${themeName}`);
       localStorage.setItem('chatzTheme', themeName);
       themeSelect.value = themeName;
     }
