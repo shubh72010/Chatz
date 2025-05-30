@@ -345,7 +345,8 @@
           const snapshot = await get(userRef);
           if (snapshot.exists()) {
             // Update existing user data
-            await update(userRef, {
+            await set(userRef, {
+              ...snapshot.val(),
               nickname: nickname,
               lastActive: Date.now()
             });
@@ -369,6 +370,11 @@
           }, 2000);
 
           console.log("Settings saved successfully:", { nickname, theme });
+
+          // Wait for data to be saved before redirecting
+          setTimeout(() => {
+            window.location.href = "global.html";
+          }, 1000);
         } catch (error) {
           console.error("Error saving settings:", error);
           alert("Failed to save settings. Please try again.");
