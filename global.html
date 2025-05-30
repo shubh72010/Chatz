@@ -382,7 +382,9 @@
       getDatabase,
       ref,
       push,
-      onChildAdded
+      onChildAdded,
+      onValue,
+      serverTimestamp
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
     import {
       getAuth,
@@ -430,6 +432,53 @@
       return str.length > n ? str.substr(0, n - 1) + "…" : str;
     }
     const messagesRef = ref(db, "messages");
+    
+    // Load existing messages
+    onValue(messagesRef, (snapshot) => {
+      chat.innerHTML = ''; // Clear existing messages
+      const messages = snapshot.val();
+      if (messages) {
+        Object.entries(messages).forEach(([key, data]) => {
+          const msgDiv = document.createElement("div");
+          msgDiv.className = "message";
+          if (auth.currentUser && data.uid === auth.currentUser.uid) {
+            msgDiv.classList.add("own");
+          }
+          let replyHTML = "";
+          if (data.replyTo) {
+            replyHTML = `<div style="font-size:0.8rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--reply-border); padding-left: 6px; color:#ccc;">
+              Reply to: <strong>${escapeHtml(data.replyTo.name || "Anonymous")}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
+            </div>`;
+          }
+          const bubble = document.createElement("div");
+          bubble.className = "bubble";
+          bubble.innerHTML = `
+            ${replyHTML}
+            <span class="sender">${escapeHtml(data.name || "Anonymous")}</span>
+            ${escapeHtml(data.message)}
+            <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+          `;
+          msgDiv.appendChild(bubble);
+
+          msgDiv.addEventListener("click", () => {
+            if (!auth.currentUser) return;
+            if (data.uid === auth.currentUser.uid) return;
+            replyTo = {
+              id: key,
+              name: data.name,
+              message: data.message,
+            };
+            replyText.textContent = `${replyTo.name || "Anonymous"}: ${truncate(replyTo.message, 50)}`;
+            replyPreview.style.display = "flex";
+            messageInput.focus();
+          });
+          chat.appendChild(msgDiv);
+        });
+        scrollToBottom();
+      }
+    });
+
+    // Listen for new messages
     onChildAdded(messagesRef, (snapshot) => {
       const data = snapshot.val();
       const msgDiv = document.createElement("div");
