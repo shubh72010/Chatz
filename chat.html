@@ -439,6 +439,12 @@
     let typingTimeout = null;
     let userDataCache = {};
     let replyTo = null;
+    let chatId = null;
+
+    // Get chat ID for two users
+    function getChatId(uid1, uid2) {
+      return [uid1, uid2].sort().join('_');
+    }
 
     // Escape HTML to prevent XSS
     function escapeHtml(text) {
@@ -457,6 +463,7 @@
         onValue(otherUserRef, (snapshot) => {
           const data = snapshot.val();
           if (data) {
+            otherUser = data;
             otherUserPic.src = data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.nickname || data.displayName || 'U')}&background=726dff&color=fff`;
             otherUserName.textContent = data.nickname || data.displayName || "Anonymous";
             otherUserStatus.textContent = data.online ? "Online" : "Offline";
@@ -465,19 +472,22 @@
         });
 
         // Create or get chat ID
-        const chatRef = ref(db, `chats/${user.uid}/${otherUserId}`);
+        chatId = getChatId(user.uid, otherUserId);
+        const chatRef = ref(db, `chats/${chatId}`);
         const snapshot = await get(chatRef);
-        if (snapshot.exists()) {
-          otherUser = user;
-        } else {
+        if (!snapshot.exists()) {
           // Create new chat
-          otherUser = user;
-          await set(chatRef, { chatId: user.uid + otherUserId });
-          await set(ref(db, `chats/${otherUserId}/${user.uid}`), { chatId: otherUserId + user.uid });
+          await set(chatRef, {
+            participants: {
+              [user.uid]: true,
+              [otherUserId]: true
+            },
+            createdAt: serverTimestamp()
+          });
         }
 
         // Load messages
-        const messagesRef = ref(db, `messages/${user.uid + otherUserId}`);
+        const messagesRef = ref(db, `chats/${chatId}/messages`);
         const messagesQuery = query(messagesRef, orderByChild('timestamp'));
         
         onValue(messagesQuery, (snapshot) => {
@@ -490,7 +500,7 @@
         });
 
         // Listen for typing status
-        const typingRef = ref(db, `typing/${user.uid + otherUserId}/${otherUserId}`);
+        const typingRef = ref(db, `chats/${chatId}/typing/${otherUserId}`);
         onValue(typingRef, (snapshot) => {
           if (snapshot.exists() && snapshot.val()) {
             typingIndicator.classList.add('active');
@@ -498,6 +508,13 @@
           } else {
             typingIndicator.classList.remove('active');
           }
+        });
+
+        // Cache user data
+        onValue(ref(db, 'users'), (snapshot) => {
+          snapshot.forEach((childSnapshot) => {
+            userDataCache[childSnapshot.key] = childSnapshot.val();
+          });
         });
       } else {
         window.location.href = 'index.html';
@@ -507,10 +524,9 @@
     // Send message
     sendBtn.onclick = async () => {
       const message = messageInput.value.trim();
-      if (!message || !currentUser || !otherUser) return;
+      if (!message || !currentUser || !otherUser || !chatId) return;
 
       try {
-        const chatId = getChatId(currentUser.uid, otherUser.uid);
         const messageRef = push(ref(db, `chats/${chatId}/messages`));
         const messageData = {
           text: message,
@@ -529,6 +545,15 @@
         }
 
         await set(messageRef, messageData);
+
+        // Update last message in chat
+        await update(ref(db, `chats/${chatId}`), {
+          lastMessage: {
+            text: message,
+            timestamp: serverTimestamp(),
+            senderId: currentUser.uid
+          }
+        });
 
         messageInput.value = '';
         cancelReply();
@@ -549,10 +574,10 @@
 
     // Typing indicator
     messageInput.oninput = () => {
-      if (!currentUser || !otherUser) return;
+      if (!currentUser || !chatId) return;
 
       // Set typing status
-      const typingRef = ref(db, `typing/${currentUser.uid + otherUser.uid}/${otherUser.uid}`);
+      const typingRef = ref(db, `chats/${chatId}/typing/${currentUser.uid}`);
       set(typingRef, true);
 
       // Clear previous timeout
@@ -624,6 +649,7 @@
           ${replyHTML}
           ${escapeHtml(message.text)}
           <div class="message-time">${timestamp}</div>
+          ${isOwn ? `<div class="message-status">${getMessageStatus(message.status)}</div>` : ''}
         </div>
       `;
 
@@ -638,6 +664,16 @@
       chatMessages.appendChild(messageDiv);
     }
 
+    // Get message status icon
+    function getMessageStatus(status) {
+      switch (status) {
+        case 'sent': return '✓';
+        case 'delivered': return '✓✓';
+        case 'read': return '✓✓';
+        default: return '';
+      }
+    }
+
     // Scroll to bottom
     function scrollToBottom() {
       chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -645,14 +681,14 @@
 
     // Handle visibility change
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && otherUser) {
+      if (document.visibilityState === 'visible' && chatId) {
         // Mark messages as read
-        const messagesRef = ref(db, `messages/${otherUser.uid + currentUser.uid}`);
+        const messagesRef = ref(db, `chats/${chatId}/messages`);
         get(messagesRef).then((snapshot) => {
           snapshot.forEach((childSnapshot) => {
             const message = childSnapshot.val();
             if (message.senderId === otherUserId && message.status !== 'read') {
-              update(ref(db, `messages/${otherUser.uid + currentUser.uid}/${childSnapshot.key}`), {
+              update(ref(db, `chats/${chatId}/messages/${childSnapshot.key}`), {
                 status: 'read'
               });
             }
