@@ -374,6 +374,9 @@
     // Handle sign in
     signInBtn.onclick = () => {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
       signInWithPopup(auth, provider)
         .then(async (result) => {
           const user = result.user;
@@ -383,7 +386,7 @@
             const snapshot = await get(userRef);
             
             if (!snapshot.exists()) {
-              // If user doesn't exist, create new user data
+              // If user doesn't exist, create new user data with Google profile info
               await set(userRef, {
                 displayName: user.displayName,
                 email: user.email,
@@ -392,9 +395,11 @@
                 createdAt: serverTimestamp()
               });
             } else {
-              // If user exists, update lastActive
+              // If user exists, update lastActive and ensure profile info is current
               await update(userRef, {
-                lastActive: serverTimestamp()
+                lastActive: serverTimestamp(),
+                displayName: user.displayName,
+                photoURL: user.photoURL
               });
             }
           } catch (error) {
