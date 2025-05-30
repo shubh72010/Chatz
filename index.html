@@ -391,19 +391,19 @@
           usersGrid.innerHTML = "";
 
           usersArray.forEach(user => {
-            console.log("Processing user:", user); // Debug log
+            console.log("Processing user:", user);
             const card = document.createElement("div");
             card.className = "user-card";
             
-            // Ensure we have valid data
-            const displayName = user.displayName || 'User';
+            // Get the actual Google account information
+            const displayName = user.displayName || user.email?.split('@')[0] || 'User';
             const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=726dff&color=fff&size=64`;
             
             card.innerHTML = `
               <img src="${photoURL}" 
                    alt="${displayName}" 
                    class="user-card-img" 
-                   onerror="this.src='https://ui-avatars.com/api/?name=U&background=726dff&color=fff&size=64'" />
+                   onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=726dff&color=fff&size=64'" />
               <div class="user-card-info">
                 <div class="user-card-name">${displayName}</div>
                 <div class="user-card-status">Click to start chat</div>
