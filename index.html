@@ -331,7 +331,8 @@
     import {
       getDatabase,
       ref,
-      onValue
+      onValue,
+      set
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -343,39 +344,45 @@
       messagingSenderId: "463847844545",
       appId: "1:463847844545:web:5006247d061c3e0dc28240"
     };
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
 
     const signInBtn = document.getElementById("sign-in");
-    const userPfp = document.getElementById("user-pfp");
-    const displayUsername = document.getElementById("display-username");
-    const usersList = document.getElementById("users-list");
-    const noUsersMsg = document.getElementById("no-users-msg");
-
+    const usersGrid = document.getElementById("users-grid");
+    const noUsersContainer = document.getElementById("no-users-container");
     let allUsers = [];
     let myUid = null;
 
     signInBtn.onclick = () => {
       const provider = new GoogleAuthProvider();
-      signInWithPopup(auth, provider).catch(e => alert("Sign-in failed: " + e.message));
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          // Update user data in database
+          const user = result.user;
+          set(ref(db, `users/${user.uid}`), {
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
+            lastActive: Date.now()
+          });
+        })
+        .catch(e => alert("Sign-in failed: " + e.message));
     };
 
     function renderUsers() {
-      const usersGrid = document.getElementById("users-grid");
-      const noUsersContainer = document.getElementById("no-users-container");
-      
       if (allUsers.length === 0) {
         noUsersContainer.style.display = "flex";
         usersGrid.style.display = "none";
       } else {
         noUsersContainer.style.display = "none";
         usersGrid.style.display = "grid";
-        
-        // Clear existing users
         usersGrid.innerHTML = "";
         
         allUsers.forEach(user => {
+          if (user.uid === myUid) return; // Skip current user
+          
           const nameToDisplay = user.displayName || user.nickname || "Anonymous";
           const avatarUrl = user.photoURL || "https://via.placeholder.com/64/2c2045/f0eaff?text=U";
           const email = user.email || "";
@@ -396,28 +403,28 @@
       }
     }
 
-    // Always fetch and render all users, regardless of auth state
-    onValue(ref(db, "users"), (snap) => {
-      const users = snap.val() || {};
-      allUsers = [];
-      Object.entries(users).forEach(([uid, userData]) => {
-        allUsers.push({ uid, ...userData });
-      });
-      renderUsers();
-    });
-
+    // Listen for auth state changes
     onAuthStateChanged(auth, (user) => {
       if (user) {
         signInBtn.style.display = "none";
-        displayUsername.textContent = user.displayName || "Anonymous";
-        userPfp.src = user.photoURL || "https://via.placeholder.com/46/2c2045/f0eaff?text=?";
         myUid = user.uid;
+        
+        // Update user's last active timestamp
+        set(ref(db, `users/${user.uid}/lastActive`), Date.now());
       } else {
         signInBtn.style.display = "inline-block";
-        displayUsername.textContent = "Guest";
-        userPfp.src = "https://via.placeholder.com/46/2c2045/f0eaff?text=?";
         myUid = null;
       }
+    });
+
+    // Listen for users data changes
+    onValue(ref(db, "users"), (snapshot) => {
+      const users = snapshot.val() || {};
+      allUsers = Object.entries(users).map(([uid, userData]) => ({
+        uid,
+        ...userData
+      }));
+      renderUsers();
     });
 
     // Desktop buttons
