@@ -70,45 +70,60 @@
       --scrollbar-track: #f4f6fb;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+
     body {
       margin: 0;
       font-family: 'Segoe UI', 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--bg-gradient);
+      background: var(--bg);
       color: #f5f5f5;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
+
     header {
       background: var(--header-bg);
       color: #fff;
       padding: 1rem 2rem;
       font-size: 1.5rem;
       font-weight: 700;
-      border-radius: 0 0 1.2rem 1.2rem;
       box-shadow: var(--header-shadow);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
     }
+
     .main-container {
       display: flex;
       flex: 1;
       min-height: 0;
       min-width: 0;
+      margin-top: 4rem;
+      height: calc(100vh - 4rem);
     }
+
     .left-container {
       width: 320px;
       background: var(--bg-light);
-      border-right: 1.5px solid var(--main-dark);
+      border-right: 1px solid var(--main-dark);
       display: flex;
       flex-direction: column;
-      min-width: 220px;
+      min-width: 280px;
       max-width: 100vw;
       transition: transform 0.25s;
       z-index: 1000;
     }
+
     .sidebar-header {
       display: flex;
       align-items: center;
@@ -117,12 +132,14 @@
       border-bottom: 1px solid var(--main-dark);
       background: var(--header-bg);
     }
+
     .user-info {
       display: flex;
       align-items: center;
       gap: 0.7rem;
       flex: 1;
     }
+
     .user-img img {
       width: 38px;
       height: 38px;
@@ -131,24 +148,30 @@
       background: #44415e;
       border: 2px solid var(--main);
     }
+
     .user-name {
       font-size: 1rem;
       font-weight: 600;
       color: var(--main-light);
     }
+
     .sign-in-btn {
       background: var(--main);
       border: none;
       color: white;
       font-weight: 600;
       padding: 0.4rem 1.1rem;
-      border-radius: 1.2rem;
+      border-radius: 0.5rem;
       cursor: pointer;
-      font-size: 1rem;
-      transition: background 0.18s;
-      margin-left: 0.5rem;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
     }
-    .sign-in-btn:hover { background: var(--main-dark); }
+
+    .sign-in-btn:hover { 
+      background: var(--main-dark);
+      transform: translateY(-1px);
+    }
+
     .global-chat-btn {
       width: 90%;
       margin: 1rem auto 0.5rem auto;
@@ -159,22 +182,26 @@
       background: var(--main);
       color: #fff;
       border: none;
-      border-radius: 1.2rem;
-      font-size: 1.1rem;
+      border-radius: 0.5rem;
+      font-size: 1rem;
       font-weight: 600;
       padding: 0.6rem 0;
       cursor: pointer;
-      transition: background 0.18s;
+      transition: all 0.2s ease;
     }
+
     .global-chat-btn:hover {
       background: var(--main-dark);
+      transform: translateY(-1px);
     }
+
     .chat-list {
       flex: 1;
       overflow-y: auto;
       background: var(--bg-light);
       padding: 0.5rem 0;
     }
+
     .chat-box {
       display: flex;
       align-items: center;
@@ -182,11 +209,14 @@
       padding: 0.7rem 1.2rem;
       cursor: pointer;
       border-bottom: 1px solid var(--main-dark);
-      transition: background 0.15s;
+      transition: all 0.2s ease;
     }
+
     .chat-box:hover {
       background: var(--main-light);
+      transform: translateX(4px);
     }
+
     .img-box img {
       width: 38px;
       height: 38px;
@@ -195,47 +225,61 @@
       background: #44415e;
       border: 2px solid var(--main-dark);
     }
+
     .chat-details h4 {
       margin: 0;
-      font-size: 1.1rem;
+      font-size: 1rem;
       color: var(--main);
     }
+
     .chat-details p {
       margin: 0;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: #aaa;
     }
+
     .no-users-msg {
       color: #aaa;
       text-align: center;
       margin-top: 2rem;
+      font-size: 0.9rem;
     }
+
     .sidebar-bottom {
       width: 100%;
       display: flex;
       justify-content: center;
       align-items: flex-end;
       padding: 1.2rem 0 0.7rem 0;
+      background: var(--bg-light);
     }
+
     .settings-btn {
       background: none;
       border: none;
       color: var(--main);
-      font-size: 2rem;
+      font-size: 1.5rem;
       cursor: pointer;
-      transition: color 0.18s;
+      transition: all 0.2s ease;
+      padding: 0.5rem;
+      border-radius: 50%;
     }
+
     .settings-btn:hover {
       color: var(--main-dark);
+      background: var(--main-light);
+      transform: rotate(30deg);
     }
+
     .right-container {
       flex: 1;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
       background: var(--bg);
+      padding: 2rem;
+      overflow-y: auto;
     }
+
     .right-header {
       width: 100%;
       text-align: center;
@@ -243,7 +287,105 @@
       font-weight: 900;
       color: var(--main);
       letter-spacing: 2px;
-      margin: 2rem 0 1rem 0;
+      margin-bottom: 2rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .users-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1.5rem;
+      padding: 1rem;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .user-card {
+      background: var(--bg-light);
+      border-radius: 0.8rem;
+      padding: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: 1px solid var(--main-dark);
+    }
+
+    .user-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-color: var(--main);
+    }
+
+    .user-card-img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--main);
+    }
+
+    .user-card-info {
+      flex: 1;
+    }
+
+    .user-card-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--main);
+      margin-bottom: 0.2rem;
+    }
+
+    .user-card-status {
+      font-size: 0.85rem;
+      color: var(--main-light);
+    }
+
+    .no-users-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--main-light);
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .no-users-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: var(--main);
+    }
+
+    .no-users-text {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .no-users-subtext {
+      font-size: 0.9rem;
+      color: var(--main-light);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--main);
     }
   </style>
 </head>
@@ -272,8 +414,15 @@
       </div>
     </div>
     <div class="right-container">
-      <div class="right-header">Chatz</div>
-      <div style="color:#aaa;text-align:center;">Select a user to start chatting</div>
+      <div class="right-header">Active Users</div>
+      <div class="users-grid" id="users-grid">
+        <!-- Users will be populated here -->
+      </div>
+      <div class="no-users-container" id="no-users-container" style="display: none;">
+        <i class="fa fa-users no-users-icon"></i>
+        <div class="no-users-text">No Active Users</div>
+        <div class="no-users-subtext">Be the first to sign in and start chatting!</div>
+      </div>
     </div>
   </div>
   <script type="module">
@@ -319,13 +468,39 @@
 
     function renderUsers() {
       usersList.innerHTML = "";
+      const usersGrid = document.getElementById("users-grid");
+      const noUsersContainer = document.getElementById("no-users-container");
+      
       if (allUsers.length === 0) {
         noUsersMsg.style.display = "block";
+        noUsersContainer.style.display = "flex";
+        usersGrid.style.display = "none";
       } else {
         noUsersMsg.style.display = "none";
+        noUsersContainer.style.display = "none";
+        usersGrid.style.display = "grid";
+        
+        // Clear existing users
+        usersGrid.innerHTML = "";
+        
         allUsers.forEach(user => {
           const nameToDisplay = user.nickname || user.displayName || "Anonymous";
           const avatarUrl = user.photoURL || "https://via.placeholder.com/38/2c2045/f0eaff?text=U";
+          
+          // Create card for grid
+          const card = document.createElement("div");
+          card.className = "user-card";
+          card.innerHTML = `
+            <img src="${avatarUrl}" alt="Avatar" class="user-card-img" />
+            <div class="user-card-info">
+              <div class="user-card-name">${nameToDisplay}</div>
+              <div class="user-card-status">Click to start chat</div>
+            </div>
+          `;
+          card.onclick = () => window.location.href = `global.html?type=dm&uid=${user.uid}`;
+          usersGrid.appendChild(card);
+          
+          // Create item for sidebar list
           const box = document.createElement("div");
           box.className = "chat-box";
           box.innerHTML = `
