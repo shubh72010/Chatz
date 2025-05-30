@@ -68,7 +68,7 @@
       border-radius: 1.2rem;
       box-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
       padding: 2rem 2.5rem;
-      max-width: 400px;
+      max-width: 500px;
       width: 100%;
       margin: 2rem auto;
       display: flex;
@@ -85,7 +85,36 @@
       margin-bottom: 0.5rem;
       display: block;
     }
-    select, input[type="text"] {
+    .profile-section {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .profile-pic {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--main);
+      box-shadow: 0 2px 8px rgba(114,109,255,0.15);
+    }
+    .profile-info {
+      flex: 1;
+    }
+    .profile-name {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--main);
+      margin-bottom: 0.3rem;
+    }
+    .profile-email {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+    }
+    select, input[type="text"], input[type="color"] {
       width: 100%;
       padding: 0.7rem 1.1rem;
       border-radius: 1.2rem;
@@ -97,22 +126,53 @@
       outline: none;
       transition: border 0.18s;
     }
-    select:focus, input[type="text"]:focus {
+    input[type="color"] {
+      height: 40px;
+      padding: 0.2rem;
+    }
+    select:focus, input[type="text"]:focus, input[type="color"]:focus {
       border: 1.5px solid var(--main);
     }
-    .save-btn {
+    .save-btn, .signout-btn {
       background: var(--main);
       border: none;
       color: white;
       font-weight: 600;
-      padding: 0.6rem 1.5rem;
+      padding: 0.8rem 1.5rem;
       border-radius: 1.2rem;
       cursor: pointer;
       font-size: 1.1rem;
-      transition: background 0.18s;
-      margin-top: 1rem;
+      transition: all 0.2s ease;
+      width: 100%;
     }
     .save-btn:hover { background: var(--main-dark); }
+    .signout-btn {
+      background: var(--danger);
+      margin-top: 1rem;
+    }
+    .signout-btn:hover {
+      background: #ff3333;
+      transform: translateY(-2px);
+    }
+    .color-preview {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 8px;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+    .settings-group {
+      background: rgba(255,255,255,0.05);
+      padding: 1.5rem;
+      border-radius: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .settings-group h3 {
+      color: var(--main);
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
 
     /* PURPLE THEME */
     .theme-default body {
@@ -244,28 +304,65 @@
   <header>Chatz Settings</header>
   <button class="back-btn" onclick="window.location.href='index.html'">&larr; Back</button>
   <div class="settings-card">
-    <div class="section">
-      <label for="theme-select">Theme</label>
-      <select id="theme-select">
-        <option value="default">Purple</option>
-        <option value="dark">Dark</option>
-        <option value="light">Light</option>
-      </select>
+    <div class="profile-section">
+      <img id="profile-pic" src="" alt="Profile" class="profile-pic" />
+      <div class="profile-info">
+        <div id="profile-name" class="profile-name"></div>
+        <div id="profile-email" class="profile-email"></div>
+      </div>
     </div>
-    <div class="section">
-      <label for="nickname">Nickname</label>
-      <input type="text" id="nickname" placeholder="Enter your nickname" maxlength="24" />
-      <small style="color: var(--text); opacity: 0.7; font-size: 0.8rem; margin-top: 0.5rem; display: block;">
-        This will be your display name in the chat
-      </small>
+
+    <div class="settings-group">
+      <h3>Profile Settings</h3>
+      <div class="section">
+        <label for="nickname">Nickname</label>
+        <input type="text" id="nickname" placeholder="Enter your nickname" maxlength="24" />
+        <small style="color: var(--text); opacity: 0.7; font-size: 0.8rem; margin-top: 0.5rem; display: block;">
+          This will be your display name in the chat
+        </small>
+      </div>
     </div>
+
+    <div class="settings-group">
+      <h3>Appearance</h3>
+      <div class="section">
+        <label for="theme-select">Theme</label>
+        <select id="theme-select">
+          <option value="default">Purple</option>
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </div>
+      <div class="section">
+        <label for="accent-color">Accent Color</label>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <input type="color" id="accent-color" value="#726dff" />
+          <span class="color-preview" id="color-preview"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>Notifications</h3>
+      <div class="section">
+        <label for="notifications">Enable Notifications</label>
+        <select id="notifications">
+          <option value="all">All Messages</option>
+          <option value="mentions">Mentions Only</option>
+          <option value="none">None</option>
+        </select>
+      </div>
+    </div>
+
     <button class="save-btn" id="save-btn">Save Changes</button>
+    <button class="signout-btn" id="signout-btn">Sign Out</button>
   </div>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
       getAuth,
-      onAuthStateChanged
+      onAuthStateChanged,
+      signOut
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
     import {
       getDatabase,
@@ -291,11 +388,22 @@
     const themeSelect = document.getElementById('theme-select');
     const nicknameInput = document.getElementById('nickname');
     const saveBtn = document.getElementById('save-btn');
+    const signoutBtn = document.getElementById('signout-btn');
+    const profilePic = document.getElementById('profile-pic');
+    const profileName = document.getElementById('profile-name');
+    const profileEmail = document.getElementById('profile-email');
+    const accentColor = document.getElementById('accent-color');
+    const colorPreview = document.getElementById('color-preview');
+    const notifications = document.getElementById('notifications');
 
     // Load theme from localStorage
     document.addEventListener('DOMContentLoaded', () => {
       const savedTheme = localStorage.getItem('chatzTheme') || 'default';
       themeSelect.value = savedTheme;
+      
+      const savedColor = localStorage.getItem('chatzAccentColor') || '#726dff';
+      accentColor.value = savedColor;
+      colorPreview.style.backgroundColor = savedColor;
     });
 
     themeSelect.addEventListener('change', (event) => {
@@ -304,9 +412,19 @@
       localStorage.setItem('chatzTheme', theme);
     });
 
+    accentColor.addEventListener('input', (event) => {
+      const color = event.target.value;
+      colorPreview.style.backgroundColor = color;
+      localStorage.setItem('chatzAccentColor', color);
+    });
+
     // Load user data if signed in
     onAuthStateChanged(auth, async (user) => {
       if (user) {
+        profilePic.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=726dff&color=fff`;
+        profileName.textContent = user.displayName || "Anonymous";
+        profileEmail.textContent = user.email || "";
+
         try {
           const userRef = ref(db, "users/" + user.uid);
           const snapshot = await get(userRef);
@@ -314,6 +432,7 @@
           if (snapshot.exists()) {
             const data = snapshot.val();
             nicknameInput.value = data.nickname || "";
+            notifications.value = data.notifications || "all";
           } else {
             // Initialize user data if it doesn't exist
             await set(userRef, {
@@ -321,12 +440,15 @@
               displayName: user.displayName,
               photoURL: user.photoURL,
               email: user.email,
-              lastActive: Date.now()
+              lastActive: Date.now(),
+              notifications: "all"
             });
           }
         } catch (error) {
           console.error("Error loading user data:", error);
         }
+      } else {
+        window.location.href = "index.html";
       }
     });
 
@@ -334,6 +456,7 @@
       const theme = themeSelect.value;
       document.documentElement.className = 'theme-' + theme;
       localStorage.setItem('chatzTheme', theme);
+      localStorage.setItem('chatzAccentColor', accentColor.value);
 
       const user = auth.currentUser;
       if (user) {
@@ -348,6 +471,7 @@
             await set(userRef, {
               ...snapshot.val(),
               nickname: nickname,
+              notifications: notifications.value,
               lastActive: Date.now()
             });
           } else {
@@ -357,7 +481,8 @@
               displayName: user.displayName,
               photoURL: user.photoURL,
               email: user.email,
-              lastActive: Date.now()
+              lastActive: Date.now(),
+              notifications: notifications.value
             });
           }
           
@@ -369,7 +494,12 @@
             saveBtn.style.background = "";
           }, 2000);
 
-          console.log("Settings saved successfully:", { nickname, theme });
+          console.log("Settings saved successfully:", { 
+            nickname, 
+            theme, 
+            accentColor: accentColor.value,
+            notifications: notifications.value 
+          });
 
           // Wait for data to be saved before redirecting
           setTimeout(() => {
@@ -381,6 +511,16 @@
         }
       } else {
         alert("Please sign in to save settings.");
+      }
+    };
+
+    signoutBtn.onclick = async () => {
+      try {
+        await signOut(auth);
+        window.location.href = "index.html";
+      } catch (error) {
+        console.error("Error signing out:", error);
+        alert("Failed to sign out. Please try again.");
       }
     };
   </script>
