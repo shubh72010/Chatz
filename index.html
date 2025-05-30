@@ -371,6 +371,56 @@
     const usersGrid = document.getElementById("users-grid");
     const noUsersContainer = document.getElementById("no-users-container");
 
+    // Listen for users data
+    onValue(ref(db, "users"), (snapshot) => {
+      try {
+        const users = snapshot.val() || {};
+        console.log("Received users data:", users); // Debug log
+        const usersArray = Object.entries(users).map(([uid, data]) => ({
+          uid,
+          ...data
+        }));
+        console.log("Processed users array:", usersArray); // Debug log
+
+        if (usersArray.length === 0) {
+          noUsersContainer.style.display = "flex";
+          usersGrid.style.display = "none";
+        } else {
+          noUsersContainer.style.display = "none";
+          usersGrid.style.display = "grid";
+          usersGrid.innerHTML = "";
+
+          usersArray.forEach(user => {
+            console.log("Processing user:", user); // Debug log
+            const card = document.createElement("div");
+            card.className = "user-card";
+            
+            // Ensure we have valid data
+            const displayName = user.displayName || 'User';
+            const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=726dff&color=fff&size=64`;
+            
+            card.innerHTML = `
+              <img src="${photoURL}" 
+                   alt="${displayName}" 
+                   class="user-card-img" 
+                   onerror="this.src='https://ui-avatars.com/api/?name=U&background=726dff&color=fff&size=64'" />
+              <div class="user-card-info">
+                <div class="user-card-name">${displayName}</div>
+                <div class="user-card-status">Click to start chat</div>
+                ${user.email ? `<div class="user-card-email">${user.email}</div>` : ''}
+              </div>
+            `;
+            card.onclick = () => window.location.href = `global.html?type=dm&uid=${user.uid}`;
+            usersGrid.appendChild(card);
+          });
+        }
+      } catch (error) {
+        console.error("Error rendering users:", error);
+        noUsersContainer.style.display = "flex";
+        usersGrid.style.display = "none";
+      }
+    });
+
     // Handle sign in
     signInBtn.onclick = () => {
       const provider = new GoogleAuthProvider();
@@ -380,30 +430,32 @@
       signInWithPopup(auth, provider)
         .then(async (result) => {
           const user = result.user;
+          console.log("Google sign in successful:", user); // Debug log
           try {
             // First check if user exists
             const userRef = ref(db, `users/${user.uid}`);
             const snapshot = await get(userRef);
             
+            const userData = {
+              displayName: user.displayName,
+              email: user.email,
+              photoURL: user.photoURL,
+              lastActive: serverTimestamp()
+            };
+            
+            console.log("Saving user data:", userData); // Debug log
+            
             if (!snapshot.exists()) {
-              // If user doesn't exist, create new user data with Google profile info
-              await set(userRef, {
-                displayName: user.displayName,
-                email: user.email,
-                photoURL: user.photoURL,
-                lastActive: serverTimestamp(),
-                createdAt: serverTimestamp()
-              });
+              // If user doesn't exist, create new user data
+              userData.createdAt = serverTimestamp();
+              await set(userRef, userData);
             } else {
-              // If user exists, update lastActive and ensure profile info is current
-              await update(userRef, {
-                lastActive: serverTimestamp(),
-                displayName: user.displayName,
-                photoURL: user.photoURL
-              });
+              // If user exists, update user data
+              await update(userRef, userData);
             }
           } catch (error) {
             console.error("Database error:", error);
+            alert("Error saving user data: " + error.message);
           }
         })
         .catch((error) => {
@@ -427,47 +479,6 @@
         }
       } else {
         signInBtn.style.display = "inline-block";
-      }
-    });
-
-    // Listen for users data
-    onValue(ref(db, "users"), (snapshot) => {
-      try {
-        const users = snapshot.val() || {};
-        const usersArray = Object.entries(users).map(([uid, data]) => ({
-          uid,
-          ...data
-        }));
-
-        if (usersArray.length === 0) {
-          noUsersContainer.style.display = "flex";
-          usersGrid.style.display = "none";
-        } else {
-          noUsersContainer.style.display = "none";
-          usersGrid.style.display = "grid";
-          usersGrid.innerHTML = "";
-
-          usersArray.forEach(user => {
-            const card = document.createElement("div");
-            card.className = "user-card";
-            card.innerHTML = `
-              <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=U&background=726dff&color=fff&size=64'}" 
-                   alt="${user.displayName || 'User'}" 
-                   class="user-card-img" />
-              <div class="user-card-info">
-                <div class="user-card-name">${user.displayName || 'User'}</div>
-                <div class="user-card-status">Click to start chat</div>
-                ${user.email ? `<div class="user-card-email">${user.email}</div>` : ''}
-              </div>
-            `;
-            card.onclick = () => window.location.href = `global.html?type=dm&uid=${user.uid}`;
-            usersGrid.appendChild(card);
-          });
-        }
-      } catch (error) {
-        console.error("Error rendering users:", error);
-        noUsersContainer.style.display = "flex";
-        usersGrid.style.display = "none";
       }
     });
 
