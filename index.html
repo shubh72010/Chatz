@@ -349,7 +349,8 @@
       onValue,
       set,
       serverTimestamp,
-      update
+      update,
+      get
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -374,17 +375,31 @@
     signInBtn.onclick = () => {
       const provider = new GoogleAuthProvider();
       signInWithPopup(auth, provider)
-        .then((result) => {
+        .then(async (result) => {
           const user = result.user;
-          // Save user data to database
-          const userRef = ref(db, `users/${user.uid}`);
-          update(userRef, {
-            displayName: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL,
-            lastActive: serverTimestamp(),
-            createdAt: serverTimestamp()
-          });
+          try {
+            // First check if user exists
+            const userRef = ref(db, `users/${user.uid}`);
+            const snapshot = await get(userRef);
+            
+            if (!snapshot.exists()) {
+              // If user doesn't exist, create new user data
+              await set(userRef, {
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+                lastActive: serverTimestamp(),
+                createdAt: serverTimestamp()
+              });
+            } else {
+              // If user exists, update lastActive
+              await update(userRef, {
+                lastActive: serverTimestamp()
+              });
+            }
+          } catch (error) {
+            console.error("Database error:", error);
+          }
         })
         .catch((error) => {
           console.error("Sign in error:", error);
@@ -393,14 +408,18 @@
     };
 
     // Handle auth state changes
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
         signInBtn.style.display = "none";
-        // Update last active timestamp
-        const userRef = ref(db, `users/${user.uid}`);
-        update(userRef, {
-          lastActive: serverTimestamp()
-        });
+        try {
+          // Update last active timestamp
+          const userRef = ref(db, `users/${user.uid}`);
+          await update(userRef, {
+            lastActive: serverTimestamp()
+          });
+        } catch (error) {
+          console.error("Error updating last active:", error);
+        }
       } else {
         signInBtn.style.display = "inline-block";
       }
@@ -408,36 +427,42 @@
 
     // Listen for users data
     onValue(ref(db, "users"), (snapshot) => {
-      const users = snapshot.val() || {};
-      const usersArray = Object.entries(users).map(([uid, data]) => ({
-        uid,
-        ...data
-      }));
+      try {
+        const users = snapshot.val() || {};
+        const usersArray = Object.entries(users).map(([uid, data]) => ({
+          uid,
+          ...data
+        }));
 
-      if (usersArray.length === 0) {
+        if (usersArray.length === 0) {
+          noUsersContainer.style.display = "flex";
+          usersGrid.style.display = "none";
+        } else {
+          noUsersContainer.style.display = "none";
+          usersGrid.style.display = "grid";
+          usersGrid.innerHTML = "";
+
+          usersArray.forEach(user => {
+            const card = document.createElement("div");
+            card.className = "user-card";
+            card.innerHTML = `
+              <img src="${user.photoURL || 'https://via.placeholder.com/64/2c2045/f0eaff?text=U'}" 
+                   alt="${user.displayName || 'User'}" 
+                   class="user-card-img" />
+              <div class="user-card-info">
+                <div class="user-card-name">${user.displayName || 'Anonymous'}</div>
+                <div class="user-card-status">Click to start chat</div>
+                ${user.email ? `<div class="user-card-email">${user.email}</div>` : ''}
+              </div>
+            `;
+            card.onclick = () => window.location.href = `global.html?type=dm&uid=${user.uid}`;
+            usersGrid.appendChild(card);
+          });
+        }
+      } catch (error) {
+        console.error("Error rendering users:", error);
         noUsersContainer.style.display = "flex";
         usersGrid.style.display = "none";
-      } else {
-        noUsersContainer.style.display = "none";
-        usersGrid.style.display = "grid";
-        usersGrid.innerHTML = "";
-
-        usersArray.forEach(user => {
-          const card = document.createElement("div");
-          card.className = "user-card";
-          card.innerHTML = `
-            <img src="${user.photoURL || 'https://via.placeholder.com/64/2c2045/f0eaff?text=U'}" 
-                 alt="${user.displayName || 'User'}" 
-                 class="user-card-img" />
-            <div class="user-card-info">
-              <div class="user-card-name">${user.displayName || 'Anonymous'}</div>
-              <div class="user-card-status">Click to start chat</div>
-              ${user.email ? `<div class="user-card-email">${user.email}</div>` : ''}
-            </div>
-          `;
-          card.onclick = () => window.location.href = `global.html?type=dm&uid=${user.uid}`;
-          usersGrid.appendChild(card);
-        });
       }
     });
 
