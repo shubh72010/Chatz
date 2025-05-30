@@ -454,6 +454,27 @@
       appId: "1:463847844545:web:5006247d061c3e0dc28240",
       measurementId: "G-2VHETC9V8B"
     };
+
+    /* 
+    Recommended Firebase Realtime Database Rules:
+    {
+      "rules": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "messages": {
+          ".read": true,
+          ".write": "auth != null"
+        },
+        "users": {
+          "$uid": {
+            ".read": true,
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        }
+      }
+    }
+    */
+
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
@@ -636,26 +657,37 @@
         userPic.src = user.photoURL || "https://ui-avatars.com/api/?name=U&background=726dff&color=fff";
         
         // Get user's data including nickname
-        get(ref(db, "users/" + user.uid))
-          .then((snapshot) => {
-            const userData = snapshot.exists() ? snapshot.val() : {};
+        const userRef = ref(db, "users/" + user.uid);
+        
+        // First check if user data exists
+        get(userRef).then((snapshot) => {
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
             userName.textContent = userData.nickname || user.displayName || "Anonymous";
-            
-            // Update user data if needed
-            if (!snapshot.exists()) {
-              set(ref(db, "users/" + user.uid), {
-                nickname: "",
-                displayName: user.displayName,
-                photoURL: user.photoURL,
-                email: user.email,
-                lastActive: Date.now()
-              });
-            }
-          })
-          .catch((err) => {
-            console.error("Error loading user data:", err);
-            userName.textContent = user.displayName || "Anonymous";
-          });
+          } else {
+            // Initialize user data if it doesn't exist
+            set(userRef, {
+              nickname: "",
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              email: user.email,
+              lastActive: Date.now()
+            }).then(() => {
+              userName.textContent = user.displayName || "Anonymous";
+            });
+          }
+        }).catch((err) => {
+          console.error("Error loading user data:", err);
+          userName.textContent = user.displayName || "Anonymous";
+        });
+
+        // Listen for user data changes
+        onValue(userRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            userName.textContent = userData.nickname || user.displayName || "Anonymous";
+          }
+        });
       } else {
         messageInput.value = "";
         messageInput.placeholder = "Sign in to chat";
@@ -667,19 +699,6 @@
         replyPreview.style.display = "none";
         userPic.style.display = "none";
         userName.style.display = "none";
-      }
-    });
-
-    // Listen for user data changes
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const userRef = ref(db, "users/" + user.uid);
-        onValue(userRef, (snapshot) => {
-          if (snapshot.exists()) {
-            const userData = snapshot.val();
-            userName.textContent = userData.nickname || user.displayName || "Anonymous";
-          }
-        });
       }
     });
   </script>
