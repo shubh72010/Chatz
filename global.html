@@ -434,7 +434,8 @@
       push,
       onChildAdded,
       onValue,
-      serverTimestamp
+      serverTimestamp,
+      get
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
     import {
       getAuth,
@@ -482,6 +483,7 @@
       return str.length > n ? str.substr(0, n - 1) + "…" : str;
     }
     const messagesRef = ref(db, "messages");
+    const usersRef = ref(db, "users");
     
     // Load existing messages
     onValue(messagesRef, (snapshot) => {
@@ -497,14 +499,14 @@
           let replyHTML = "";
           if (data.replyTo) {
             replyHTML = `<div style="font-size:0.8rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--reply-border); padding-left: 6px; color:#ccc;">
-              Reply to: <strong>${escapeHtml(data.replyTo.name || "Anonymous")}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
+              Reply to: <strong>${escapeHtml(data.replyTo.nickname || data.replyTo.name || "Anonymous")}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
             </div>`;
           }
           const bubble = document.createElement("div");
           bubble.className = "bubble";
           bubble.innerHTML = `
             ${replyHTML}
-            <span class="sender">${escapeHtml(data.name || "Anonymous")}</span>
+            <span class="sender">${escapeHtml(data.nickname || data.name || "Anonymous")}</span>
             ${escapeHtml(data.message)}
             <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
           `;
@@ -515,10 +517,11 @@
             if (data.uid === auth.currentUser.uid) return;
             replyTo = {
               id: key,
-              name: data.name,
+              name: data.nickname || data.name,
+              nickname: data.nickname,
               message: data.message,
             };
-            replyText.textContent = `${replyTo.name || "Anonymous"}: ${truncate(replyTo.message, 50)}`;
+            replyText.textContent = `${replyTo.nickname || replyTo.name || "Anonymous"}: ${truncate(replyTo.message, 50)}`;
             replyPreview.style.display = "flex";
             messageInput.focus();
           });
@@ -539,14 +542,14 @@
       let replyHTML = "";
       if (data.replyTo) {
         replyHTML = `<div style="font-size:0.8rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--reply-border); padding-left: 6px; color:#ccc;">
-          Reply to: <strong>${escapeHtml(data.replyTo.name || "Anonymous")}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
+          Reply to: <strong>${escapeHtml(data.replyTo.nickname || data.replyTo.name || "Anonymous")}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
         </div>`;
       }
       const bubble = document.createElement("div");
       bubble.className = "bubble";
       bubble.innerHTML = `
         ${replyHTML}
-        <span class="sender">${escapeHtml(data.name || "Anonymous")}</span>
+        <span class="sender">${escapeHtml(data.nickname || data.name || "Anonymous")}</span>
         ${escapeHtml(data.message)}
         <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
       `;
@@ -557,10 +560,11 @@
         if (data.uid === auth.currentUser.uid) return;
         replyTo = {
           id: snapshot.key,
-          name: data.name,
+          name: data.nickname || data.name,
+          nickname: data.nickname,
           message: data.message,
         };
-        replyText.textContent = `${replyTo.name || "Anonymous"}: ${truncate(replyTo.message, 50)}`;
+        replyText.textContent = `${replyTo.nickname || replyTo.name || "Anonymous"}: ${truncate(replyTo.message, 50)}`;
         replyPreview.style.display = "flex";
         messageInput.focus();
       });
@@ -577,17 +581,30 @@
       const msg = messageInput.value.trim();
       if (!msg) return;
 
-      const newMsg = {
-        uid: auth.currentUser.uid,
-        name: auth.currentUser.displayName || "Anonymous",
-        message: msg,
-        timestamp: serverTimestamp(),
-        photoURL: auth.currentUser.photoURL || null,
-        email: auth.currentUser.email || null
-      };
-      if (replyTo) newMsg.replyTo = replyTo;
+      // Get user's data from database
+      get(ref(db, "users/" + auth.currentUser.uid))
+        .then((snapshot) => {
+          const userData = snapshot.exists() ? snapshot.val() : {};
+          const newMsg = {
+            uid: auth.currentUser.uid,
+            name: auth.currentUser.displayName || "Anonymous",
+            nickname: userData.nickname || null,
+            message: msg,
+            timestamp: serverTimestamp(),
+            photoURL: auth.currentUser.photoURL || null,
+            email: auth.currentUser.email || null
+          };
+          if (replyTo) {
+            newMsg.replyTo = {
+              id: replyTo.id,
+              name: replyTo.name,
+              nickname: replyTo.nickname,
+              message: replyTo.message
+            };
+          }
 
-      push(messagesRef, newMsg)
+          return push(messagesRef, newMsg);
+        })
         .then(() => {
           messageInput.value = "";
           replyTo = null;
@@ -615,8 +632,18 @@
         messageInput.placeholder = "Type a message...";
         userPic.style.display = "block";
         userName.style.display = "block";
-        userPic.src = user.photoURL || "https://via.placeholder.com/38/726dff/fff?text=U";
-        userName.textContent = user.displayName || "Anonymous";
+        userPic.src = user.photoURL || "https://ui-avatars.com/api/?name=U&background=726dff&color=fff";
+        
+        // Get user's data including nickname
+        get(ref(db, "users/" + user.uid))
+          .then((snapshot) => {
+            const userData = snapshot.exists() ? snapshot.val() : {};
+            userName.textContent = userData.nickname || user.displayName || "Anonymous";
+          })
+          .catch((err) => {
+            console.error("Error loading user data:", err);
+            userName.textContent = user.displayName || "Anonymous";
+          });
       } else {
         messageInput.value = "";
         messageInput.placeholder = "Sign in to chat";
