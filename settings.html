@@ -339,10 +339,26 @@
       if (user) {
         try {
           const nickname = nicknameInput.value.trim();
-          await update(ref(db, "users/" + user.uid), {
-            nickname: nickname,
-            lastActive: Date.now()
-          });
+          const userRef = ref(db, "users/" + user.uid);
+          
+          // First check if user data exists
+          const snapshot = await get(userRef);
+          if (snapshot.exists()) {
+            // Update existing user data
+            await update(userRef, {
+              nickname: nickname,
+              lastActive: Date.now()
+            });
+          } else {
+            // Create new user data
+            await set(userRef, {
+              nickname: nickname,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              email: user.email,
+              lastActive: Date.now()
+            });
+          }
           
           // Show success message
           saveBtn.textContent = "Saved!";
@@ -351,6 +367,8 @@
             saveBtn.textContent = "Save Changes";
             saveBtn.style.background = "";
           }, 2000);
+
+          console.log("Settings saved successfully:", { nickname, theme });
         } catch (error) {
           console.error("Error saving settings:", error);
           alert("Failed to save settings. Please try again.");
