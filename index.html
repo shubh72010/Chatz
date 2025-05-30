@@ -332,8 +332,7 @@
       getDatabase,
       ref,
       onValue,
-      set,
-      get
+      set
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -353,134 +352,81 @@
     const signInBtn = document.getElementById("sign-in");
     const usersGrid = document.getElementById("users-grid");
     const noUsersContainer = document.getElementById("no-users-container");
-    let allUsers = [];
-    let myUid = null;
 
-    // Function to fetch all users
-    async function fetchAllUsers() {
-      try {
-        const usersRef = ref(db, "users");
-        const snapshot = await get(usersRef);
-        const users = snapshot.val() || {};
-        console.log("Fetched users:", users);
-        
-        allUsers = Object.entries(users).map(([uid, userData]) => ({
-          uid,
-          ...userData
-        }));
-        console.log("Processed users:", allUsers);
-        renderUsers();
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    }
-
-    signInBtn.onclick = async () => {
-      try {
-        const provider = new GoogleAuthProvider();
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        
-        console.log("User signed in:", user);
-        
-        // Update user data in database
-        await set(ref(db, `users/${user.uid}`), {
-          displayName: user.displayName,
-          email: user.email,
-          photoURL: user.photoURL,
-          lastActive: Date.now()
+    // Handle sign in
+    signInBtn.onclick = () => {
+      const provider = new GoogleAuthProvider();
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          const user = result.user;
+          // Save user data to database
+          set(ref(db, `users/${user.uid}`), {
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
+            lastActive: Date.now()
+          });
+        })
+        .catch((error) => {
+          console.error("Sign in error:", error);
+          alert("Sign in failed: " + error.message);
         });
-        
-        console.log("User data updated in database");
-        await fetchAllUsers(); // Fetch users after sign in
-      } catch (e) {
-        console.error("Sign-in failed:", e);
-        alert("Sign-in failed: " + e.message);
-      }
     };
 
-    function renderUsers() {
-      console.log("Rendering users. Total users:", allUsers.length);
-      
-      if (allUsers.length === 0) {
-        console.log("No users to display");
+    // Handle auth state changes
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        signInBtn.style.display = "none";
+        // Update last active timestamp
+        set(ref(db, `users/${user.uid}/lastActive`), Date.now());
+      } else {
+        signInBtn.style.display = "inline-block";
+      }
+    });
+
+    // Listen for users data
+    onValue(ref(db, "users"), (snapshot) => {
+      const users = snapshot.val() || {};
+      const usersArray = Object.entries(users).map(([uid, data]) => ({
+        uid,
+        ...data
+      }));
+
+      if (usersArray.length === 0) {
         noUsersContainer.style.display = "flex";
         usersGrid.style.display = "none";
       } else {
-        console.log("Displaying users grid");
         noUsersContainer.style.display = "none";
         usersGrid.style.display = "grid";
         usersGrid.innerHTML = "";
-        
-        allUsers.forEach(user => {
-          if (user.uid === myUid) {
-            console.log("Skipping current user:", user.displayName);
-            return;
-          }
-          
-          console.log("Creating card for user:", user.displayName);
-          const nameToDisplay = user.displayName || user.nickname || "Anonymous";
-          const avatarUrl = user.photoURL || "https://via.placeholder.com/64/2c2045/f0eaff?text=U";
-          const email = user.email || "";
-          
+
+        usersArray.forEach(user => {
           const card = document.createElement("div");
           card.className = "user-card";
           card.innerHTML = `
-            <img src="${avatarUrl}" alt="${nameToDisplay}" class="user-card-img" />
+            <img src="${user.photoURL || 'https://via.placeholder.com/64/2c2045/f0eaff?text=U'}" 
+                 alt="${user.displayName || 'User'}" 
+                 class="user-card-img" />
             <div class="user-card-info">
-              <div class="user-card-name">${nameToDisplay}</div>
+              <div class="user-card-name">${user.displayName || 'Anonymous'}</div>
               <div class="user-card-status">Click to start chat</div>
-              ${email ? `<div class="user-card-email">${email}</div>` : ''}
+              ${user.email ? `<div class="user-card-email">${user.email}</div>` : ''}
             </div>
           `;
           card.onclick = () => window.location.href = `global.html?type=dm&uid=${user.uid}`;
           usersGrid.appendChild(card);
         });
       }
-    }
-
-    // Listen for auth state changes
-    onAuthStateChanged(auth, async (user) => {
-      console.log("Auth state changed:", user ? "User signed in" : "No user");
-      
-      if (user) {
-        signInBtn.style.display = "none";
-        myUid = user.uid;
-        
-        // Update user's last active timestamp
-        await set(ref(db, `users/${user.uid}/lastActive`), Date.now());
-        await fetchAllUsers(); // Fetch users when auth state changes
-      } else {
-        signInBtn.style.display = "inline-block";
-        myUid = null;
-        allUsers = [];
-        renderUsers();
-      }
     });
 
-    // Initial fetch of users
-    fetchAllUsers();
+    // Handle navigation buttons
+    document.getElementById("global-chat-btn").onclick = () => {
+      window.location.href = "global.html";
+    };
 
-    // Listen for users data changes
-    onValue(ref(db, "users"), (snapshot) => {
-      console.log("Users data changed");
-      const users = snapshot.val() || {};
-      allUsers = Object.entries(users).map(([uid, userData]) => ({
-        uid,
-        ...userData
-      }));
-      renderUsers();
-    });
-
-    // Desktop buttons
-    const globalChatBtn = document.getElementById("global-chat-btn");
-    if (globalChatBtn) {
-      globalChatBtn.onclick = () => window.location.href = "global.html";
-    }
-    const settingsBtn = document.getElementById("settings-btn");
-    if (settingsBtn) {
-      settingsBtn.onclick = () => window.location.href = "settings.html";
-    }
+    document.getElementById("settings-btn").onclick = () => {
+      window.location.href = "settings.html";
+    };
   </script>
   <script>
     // Apply theme from localStorage on page load
