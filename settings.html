@@ -516,7 +516,12 @@
       get,
       update
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
+    import {
+      getStorage,
+      ref as storageRef,
+      uploadBytes,
+      getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
@@ -527,6 +532,7 @@
       messagingSenderId: "463847844545",
       appId: "1:463847844545:web:5006247d061c3e0dc28240"
     };
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
@@ -576,10 +582,86 @@
       localStorage.setItem('chatzAccentColor', color);
     });
 
+    // Handle profile picture upload
+    profilePicEdit.onclick = () => {
+      profilePicInput.click();
+    };
+
+    profilePicInput.onchange = async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          alert('Please sign in to update profile picture');
+          return;
+        }
+
+        // Show loading state
+        profilePic.style.opacity = '0.5';
+        profilePicEdit.style.pointerEvents = 'none';
+        
+        // Create a unique filename
+        const timestamp = Date.now();
+        const fileExtension = file.name.split('.').pop();
+        const fileName = `${user.uid}_${timestamp}.${fileExtension}`;
+        
+        // Upload to Firebase Storage
+        const storageReference = storageRef(storage, `profile_pics/${fileName}`);
+        const uploadResult = await uploadBytes(storageReference, file);
+        console.log('Upload successful:', uploadResult);
+
+        // Get download URL
+        const downloadURL = await getDownloadURL(uploadResult.ref);
+        console.log('Download URL:', downloadURL);
+
+        // Update user profile in database
+        const userRef = ref(db, "users/" + user.uid);
+        await update(userRef, {
+          photoURL: downloadURL,
+          lastActive: Date.now()
+        });
+
+        // Update UI
+        profilePic.src = downloadURL;
+        profilePic.style.opacity = '1';
+        profilePicEdit.style.pointerEvents = 'auto';
+
+        // Show success message
+        saveBtn.textContent = "Profile Picture Updated!";
+        saveBtn.style.background = "#4CAF50";
+        setTimeout(() => {
+          saveBtn.textContent = "Save Changes";
+          saveBtn.style.background = "";
+        }, 2000);
+
+      } catch (error) {
+        console.error("Error uploading profile picture:", error);
+        alert("Failed to upload profile picture: " + error.message);
+        profilePic.style.opacity = '1';
+        profilePicEdit.style.pointerEvents = 'auto';
+      }
+    };
+
     // Load user data if signed in
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        profilePic.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=726dff&color=fff`;
+        // Set profile picture with fallback
+        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=726dff&color=fff`;
+        profilePic.src = photoURL;
         profileName.textContent = user.displayName || "Anonymous";
         profileEmail.textContent = user.email || "";
 
@@ -591,12 +673,16 @@
             const data = snapshot.val();
             nicknameInput.value = data.nickname || "";
             notifications.value = data.notifications || "all";
+            // Update profile picture if it exists in database
+            if (data.photoURL) {
+              profilePic.src = data.photoURL;
+            }
           } else {
             // Initialize user data if it doesn't exist
             await set(userRef, {
               nickname: "",
               displayName: user.displayName,
-              photoURL: user.photoURL,
+              photoURL: photoURL,
               email: user.email,
               lastActive: Date.now(),
               notifications: "all"
@@ -609,51 +695,6 @@
         window.location.href = "index.html";
       }
     });
-
-    // Handle profile picture upload
-    profilePicEdit.onclick = () => {
-      profilePicInput.click();
-    };
-
-    profilePicInput.onchange = async (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        try {
-          const user = auth.currentUser;
-          if (!user) return;
-
-          // Show loading state
-          profilePic.style.opacity = '0.5';
-          
-          // Upload to Firebase Storage
-          const storageReference = storageRef(storage, `profile_pics/${user.uid}`);
-          await uploadBytes(storageReference, file);
-          const downloadURL = await getDownloadURL(storageReference);
-
-          // Update user profile
-          const userRef = ref(db, "users/" + user.uid);
-          await update(userRef, {
-            photoURL: downloadURL
-          });
-
-          // Update UI
-          profilePic.src = downloadURL;
-          profilePic.style.opacity = '1';
-
-          // Show success message
-          saveBtn.textContent = "Profile Picture Updated!";
-          saveBtn.style.background = "#4CAF50";
-          setTimeout(() => {
-            saveBtn.textContent = "Save Changes";
-            saveBtn.style.background = "";
-          }, 2000);
-        } catch (error) {
-          console.error("Error uploading profile picture:", error);
-          alert("Failed to upload profile picture. Please try again.");
-          profilePic.style.opacity = '1';
-        }
-      }
-    };
 
     // Handle notification settings
     notificationSound.onchange = () => {
