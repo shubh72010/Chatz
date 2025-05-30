@@ -380,10 +380,11 @@
         const userCard = document.createElement("div");
         userCard.className = "user-card";
         userCard.innerHTML = `
-          <img src="${data.photoURL || 'https://ui-avatars.com/api/?name=U&background=726dff&color=fff'}" alt="Profile" />
-          <div class="user-info">
-            <span class="name">${data.nickname || data.name || "Anonymous"}</span>
-            <span class="status">${data.online ? "Online" : "Offline"}</span>
+          <img src="${data.photoURL || 'https://ui-avatars.com/api/?name=U&background=726dff&color=fff'}" alt="Profile" class="user-card-img" />
+          <div class="user-card-info">
+            <div class="user-card-name">${data.nickname || data.displayName || "Anonymous"}</div>
+            <div class="user-card-status">${data.online ? "Online" : "Offline"}</div>
+            <div class="user-card-email">${data.email || ""}</div>
           </div>
         `;
         userCard.addEventListener("click", () => {
@@ -396,46 +397,13 @@
     // Listen for user data changes
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        signInBtn.style.display = "none"; // Hide sign in button when signed in
+        signInBtn.style.display = "none";
         
         const userRef = ref(db, "users/" + user.uid);
-        
-        // First check if user data exists
-        get(userRef).then((snapshot) => {
-          if (snapshot.exists()) {
-            const userData = snapshot.val();
-            userName.textContent = userData.nickname || user.displayName || "Anonymous";
-          } else {
-            // Initialize user data if it doesn't exist
-            set(userRef, {
-              nickname: "",
-              displayName: user.displayName,
-              photoURL: user.photoURL,
-              email: user.email,
-              lastActive: Date.now(),
-              online: true // Set initial online status
-            }).then(() => {
-              userName.textContent = user.displayName || "Anonymous";
-            });
-          }
-        }).catch((err) => {
-          console.error("Error loading user data:", err);
-          userName.textContent = user.displayName || "Anonymous";
-        });
-
-        // Listen for user data changes
-        onValue(userRef, (snapshot) => {
-          if (snapshot.exists()) {
-            const userData = snapshot.val();
-            userName.textContent = userData.nickname || user.displayName || "Anonymous";
-          }
-        });
-
-        // Update online status
         const userStatusRef = ref(db, "users/" + user.uid + "/online");
         const userStatusDatabaseRef = ref(db, "users/" + user.uid + "/lastActive");
         
-        // Set online status to true when user is active
+        // Set up online status
         set(userStatusRef, true);
         set(userStatusDatabaseRef, serverTimestamp());
         
@@ -443,14 +411,41 @@
         onDisconnect(userStatusRef).set(false);
         onDisconnect(userStatusDatabaseRef).set(serverTimestamp());
         
+        // First check if user data exists
+        get(userRef).then((snapshot) => {
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            // Update user data while preserving online status
+            update(userRef, {
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              email: user.email,
+              lastActive: serverTimestamp()
+            });
+          } else {
+            // Initialize user data if it doesn't exist
+            set(userRef, {
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              email: user.email,
+              lastActive: serverTimestamp(),
+              online: true
+            });
+          }
+        }).catch((err) => {
+          console.error("Error loading user data:", err);
+        });
+
         // Listen for all users
         onValue(ref(db, "users"), (snapshot) => {
           const users = {};
           snapshot.forEach((childSnapshot) => {
             const data = childSnapshot.val();
             users[childSnapshot.key] = {
-              name: data.nickname || data.displayName || "Anonymous",
+              displayName: data.displayName || "Anonymous",
+              nickname: data.nickname || "",
               photoURL: data.photoURL,
+              email: data.email,
               online: data.online,
               lastActive: data.lastActive
             };
@@ -458,7 +453,7 @@
           renderUsers(users);
         });
       } else {
-        signInBtn.style.display = "inline-block"; // Show sign in button when signed out
+        signInBtn.style.display = "inline-block";
       }
     });
 
@@ -476,13 +471,11 @@
           try {
             const userRef = ref(db, `users/${user.uid}`);
             const userData = {
-              uid: user.uid,
               displayName: user.displayName,
               email: user.email,
               photoURL: user.photoURL,
               lastActive: serverTimestamp(),
-              createdAt: serverTimestamp(),
-              online: true // Set initial online status
+              online: true
             };
             
             console.log("Saving user data:", userData);
