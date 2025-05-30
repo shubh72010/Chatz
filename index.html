@@ -396,6 +396,8 @@
     // Listen for user data changes
     onAuthStateChanged(auth, (user) => {
       if (user) {
+        signInBtn.style.display = "none"; // Hide sign in button when signed in
+        
         const userRef = ref(db, "users/" + user.uid);
         
         // First check if user data exists
@@ -410,7 +412,8 @@
               displayName: user.displayName,
               photoURL: user.photoURL,
               email: user.email,
-              lastActive: Date.now()
+              lastActive: Date.now(),
+              online: true // Set initial online status
             }).then(() => {
               userName.textContent = user.displayName || "Anonymous";
             });
@@ -432,6 +435,15 @@
         const userStatusRef = ref(db, "users/" + user.uid + "/online");
         const userStatusDatabaseRef = ref(db, "users/" + user.uid + "/lastActive");
         
+        // Set online status to true when user is active
+        set(userStatusRef, true);
+        set(userStatusDatabaseRef, serverTimestamp());
+        
+        // Set up disconnect handlers
+        onDisconnect(userStatusRef).set(false);
+        onDisconnect(userStatusDatabaseRef).set(serverTimestamp());
+        
+        // Listen for all users
         onValue(ref(db, "users"), (snapshot) => {
           const users = {};
           snapshot.forEach((childSnapshot) => {
@@ -445,16 +457,8 @@
           });
           renderUsers(users);
         });
-
-        onDisconnect(userStatusRef).set(false);
-        onDisconnect(userStatusDatabaseRef).set(serverTimestamp());
-        set(userStatusRef, true);
-        set(userStatusDatabaseRef, serverTimestamp());
       } else {
-        userName.textContent = "";
-        userPic.style.display = "none";
-        signInBtn.style.display = "inline-block";
-        backBtn.style.display = "none";
+        signInBtn.style.display = "inline-block"; // Show sign in button when signed out
       }
     });
 
@@ -477,7 +481,8 @@
               email: user.email,
               photoURL: user.photoURL,
               lastActive: serverTimestamp(),
-              createdAt: serverTimestamp()
+              createdAt: serverTimestamp(),
+              online: true // Set initial online status
             };
             
             console.log("Saving user data:", userData);
