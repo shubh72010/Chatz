@@ -159,11 +159,24 @@
       padding: 0.8rem 1.2rem;
       border-radius: 1.2rem;
       position: relative;
+      word-break: break-word;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .message-content:hover {
+      transform: translateY(-1px);
     }
 
     .message.own .message-content {
       background: var(--bubble-own);
       color: var(--bubble-own-text);
+    }
+
+    .message-sender {
+      font-size: 0.8rem;
+      color: var(--main);
+      margin-bottom: 0.3rem;
     }
 
     .message-time {
@@ -263,6 +276,72 @@
         max-width: 90%;
       }
     }
+
+    .reply-preview {
+      display: none;
+      background: var(--reply-bg);
+      padding: 0.8rem 1.2rem;
+      margin: 0 1rem 1rem 1rem;
+      border-left: 3px solid var(--reply-border);
+      border-radius: 0.8rem;
+      font-size: 0.9rem;
+      color: var(--bubble-other-text);
+      position: relative;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .reply-preview-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .reply-preview-text {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .reply-preview-sender {
+      color: var(--main);
+      font-weight: 600;
+    }
+
+    .reply-preview-cancel {
+      background: none;
+      border: none;
+      color: var(--bubble-other-text);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0.2rem;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .reply-preview-cancel:hover {
+      opacity: 1;
+    }
+
+    .reply-to {
+      font-size: 0.8rem;
+      color: var(--main);
+      margin-bottom: 0.3rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--main);
+    }
   </style>
 </head>
 <body>
@@ -287,6 +366,16 @@
 
     <div class="typing-indicator" id="typing-indicator">
       <span id="typing-text"></span>
+    </div>
+
+    <div class="reply-preview" id="reply-preview">
+      <div class="reply-preview-content">
+        <div class="reply-preview-text">
+          <span class="reply-preview-sender" id="reply-sender"></span>
+          <span id="reply-text"></span>
+        </div>
+        <button class="reply-preview-cancel" id="cancel-reply">&times;</button>
+      </div>
     </div>
 
     <div class="chat-input">
@@ -346,8 +435,17 @@
     const typingText = document.getElementById('typing-text');
 
     let currentUser = null;
-    let chatId = null;
+    let otherUser = null;
     let typingTimeout = null;
+    let userDataCache = {};
+    let replyTo = null;
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
 
     // Initialize chat
     onAuthStateChanged(auth, async (user) => {
@@ -370,29 +468,29 @@
         const chatRef = ref(db, `chats/${user.uid}/${otherUserId}`);
         const snapshot = await get(chatRef);
         if (snapshot.exists()) {
-          chatId = snapshot.val().chatId;
+          otherUser = user;
         } else {
           // Create new chat
-          chatId = push(ref(db, 'chats')).key;
-          await set(chatRef, { chatId });
-          await set(ref(db, `chats/${otherUserId}/${user.uid}`), { chatId });
+          otherUser = user;
+          await set(chatRef, { chatId: user.uid + otherUserId });
+          await set(ref(db, `chats/${otherUserId}/${user.uid}`), { chatId: otherUserId + user.uid });
         }
 
         // Load messages
-        const messagesRef = ref(db, `messages/${chatId}`);
+        const messagesRef = ref(db, `messages/${user.uid + otherUserId}`);
         const messagesQuery = query(messagesRef, orderByChild('timestamp'));
         
         onValue(messagesQuery, (snapshot) => {
           chatMessages.innerHTML = '';
           snapshot.forEach((childSnapshot) => {
             const message = childSnapshot.val();
-            renderMessage(message);
+            renderMessage(message, childSnapshot.key);
           });
           scrollToBottom();
         });
 
         // Listen for typing status
-        const typingRef = ref(db, `typing/${chatId}/${otherUserId}`);
+        const typingRef = ref(db, `typing/${user.uid + otherUserId}/${otherUserId}`);
         onValue(typingRef, (snapshot) => {
           if (snapshot.exists() && snapshot.val()) {
             typingIndicator.classList.add('active');
@@ -409,28 +507,31 @@
     // Send message
     sendBtn.onclick = async () => {
       const message = messageInput.value.trim();
-      if (!message || !currentUser || !chatId) return;
+      if (!message || !currentUser || !otherUser) return;
 
       try {
-        const messageRef = push(ref(db, `messages/${chatId}`));
-        await set(messageRef, {
+        const chatId = getChatId(currentUser.uid, otherUser.uid);
+        const messageRef = push(ref(db, `chats/${chatId}/messages`));
+        const messageData = {
           text: message,
           senderId: currentUser.uid,
           timestamp: serverTimestamp(),
           status: 'sent'
-        });
+        };
 
-        // Update last message in chat
-        await update(ref(db, `chats/${currentUser.uid}/${otherUserId}`), {
-          lastMessage: message,
-          lastMessageTime: serverTimestamp()
-        });
-        await update(ref(db, `chats/${otherUserId}/${currentUser.uid}`), {
-          lastMessage: message,
-          lastMessageTime: serverTimestamp()
-        });
+        if (replyTo) {
+          messageData.replyTo = {
+            messageId: replyTo.messageId,
+            senderId: replyTo.senderId,
+            text: replyTo.text,
+            senderName: replyTo.senderName
+          };
+        }
+
+        await set(messageRef, messageData);
 
         messageInput.value = '';
+        cancelReply();
         scrollToBottom();
       } catch (error) {
         console.error("Error sending message:", error);
@@ -448,10 +549,10 @@
 
     // Typing indicator
     messageInput.oninput = () => {
-      if (!currentUser || !chatId) return;
+      if (!currentUser || !otherUser) return;
 
       // Set typing status
-      const typingRef = ref(db, `typing/${chatId}/${currentUser.uid}`);
+      const typingRef = ref(db, `typing/${currentUser.uid + otherUser.uid}/${otherUser.uid}`);
       set(typingRef, true);
 
       // Clear previous timeout
@@ -465,35 +566,76 @@
       }, 2000);
     };
 
+    // Handle reply preview
+    const replyPreview = document.getElementById('reply-preview');
+    const replySender = document.getElementById('reply-sender');
+    const replyText = document.getElementById('reply-text');
+    const cancelReplyBtn = document.getElementById('cancel-reply');
+
+    function setReply(message, messageId) {
+      replyTo = {
+        messageId,
+        senderId: message.senderId,
+        text: message.text,
+        senderName: userDataCache[message.senderId]?.nickname || 
+                   userDataCache[message.senderId]?.displayName || 
+                   "Anonymous"
+      };
+      
+      replySender.textContent = replyTo.senderName + ': ';
+      replyText.textContent = message.text;
+      replyPreview.style.display = 'block';
+      messageInput.focus();
+    }
+
+    function cancelReply() {
+      replyTo = null;
+      replyPreview.style.display = 'none';
+    }
+
+    cancelReplyBtn.onclick = cancelReply;
+
     // Render message
-    function renderMessage(message) {
+    function renderMessage(message, messageId) {
       const isOwn = message.senderId === currentUser?.uid;
       const messageDiv = document.createElement('div');
       messageDiv.className = `message ${isOwn ? 'own' : ''}`;
       
+      const userData = userDataCache[message.senderId] || {};
       const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : 'Sending...';
-      const status = isOwn ? getMessageStatus(message.status) : '';
+      const displayName = userData.nickname || userData.displayName || "Anonymous";
+      const photoURL = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=726dff&color=fff`;
+
+      let replyHTML = '';
+      if (message.replyTo) {
+        const replyUserData = userDataCache[message.replyTo.senderId] || {};
+        const replyDisplayName = replyUserData.nickname || replyUserData.displayName || "Anonymous";
+        replyHTML = `
+          <div class="reply-to">
+            Reply to ${escapeHtml(replyDisplayName)}: ${escapeHtml(message.replyTo.text)}
+          </div>
+        `;
+      }
 
       messageDiv.innerHTML = `
-        <img src="${isOwn ? (currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || 'U')}&background=726dff&color=fff`) : otherUserPic.src}" alt="Profile" />
-        <div class="message-content">
-          ${message.text}
+        <img src="${photoURL}" alt="Profile" />
+        <div class="message-content" onclick="event.stopPropagation();">
+          ${!isOwn ? `<div class="message-sender">${escapeHtml(displayName)}</div>` : ''}
+          ${replyHTML}
+          ${escapeHtml(message.text)}
           <div class="message-time">${timestamp}</div>
-          ${status ? `<div class="message-status">${status}</div>` : ''}
         </div>
       `;
 
-      chatMessages.appendChild(messageDiv);
-    }
+      // Add click handler for reply
+      const messageContent = messageDiv.querySelector('.message-content');
+      messageContent.onclick = () => {
+        if (!isOwn) {
+          setReply(message, messageId);
+        }
+      };
 
-    // Get message status icon
-    function getMessageStatus(status) {
-      switch (status) {
-        case 'sent': return '✓';
-        case 'delivered': return '✓✓';
-        case 'read': return '✓✓';
-        default: return '';
-      }
+      chatMessages.appendChild(messageDiv);
     }
 
     // Scroll to bottom
@@ -503,14 +645,14 @@
 
     // Handle visibility change
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && chatId) {
+      if (document.visibilityState === 'visible' && otherUser) {
         // Mark messages as read
-        const messagesRef = ref(db, `messages/${chatId}`);
+        const messagesRef = ref(db, `messages/${otherUser.uid + currentUser.uid}`);
         get(messagesRef).then((snapshot) => {
           snapshot.forEach((childSnapshot) => {
             const message = childSnapshot.val();
             if (message.senderId === otherUserId && message.status !== 'read') {
-              update(ref(db, `messages/${chatId}/${childSnapshot.key}`), {
+              update(ref(db, `messages/${otherUser.uid + currentUser.uid}/${childSnapshot.key}`), {
                 status: 'read'
               });
             }
