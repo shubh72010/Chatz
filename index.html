@@ -230,6 +230,49 @@
       line-height: 1.5;
     }
 
+    .floating-actions {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      display: flex;
+      gap: 1rem;
+      z-index: 1000;
+    }
+
+    .action-button {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--main);
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .action-button:hover {
+      transform: translateY(-4px);
+      background: var(--main-dark);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .action-button i {
+      transition: transform 0.2s ease;
+    }
+
+    .action-button:hover i {
+      transform: scale(1.1);
+    }
+
+    .action-button.settings:hover i {
+      transform: rotate(30deg);
+    }
+
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
@@ -267,6 +310,16 @@
       </div>
     </div>
   </div>
+
+  <div class="floating-actions">
+    <button class="action-button" id="global-chat-btn" title="Global Chat">
+      <i class="fa fa-globe"></i>
+    </button>
+    <button class="action-button settings" id="settings-btn" title="Settings">
+      <i class="fa fa-gear"></i>
+    </button>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
