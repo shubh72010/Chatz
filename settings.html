@@ -93,13 +93,44 @@
       padding-bottom: 1.5rem;
       border-bottom: 1px solid rgba(255,255,255,0.1);
     }
-    .profile-pic {
+    .profile-pic-container {
+      position: relative;
       width: 80px;
       height: 80px;
+    }
+    .profile-pic {
+      width: 100%;
+      height: 100%;
       border-radius: 50%;
       object-fit: cover;
       border: 3px solid var(--main);
       box-shadow: 0 2px 8px rgba(114,109,255,0.15);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .profile-pic:hover {
+      filter: brightness(0.8);
+    }
+    .profile-pic-edit {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      background: var(--main);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border: 2px solid var(--settings-bg);
+      transition: all 0.2s ease;
+    }
+    .profile-pic-edit:hover {
+      transform: scale(1.1);
+      background: var(--accent);
     }
     .profile-info {
       flex: 1;
@@ -172,6 +203,87 @@
       color: var(--main);
       margin-bottom: 1rem;
       font-size: 1.1rem;
+    }
+    .notification-preview {
+      background: rgba(255,255,255,0.1);
+      padding: 1rem;
+      border-radius: 0.8rem;
+      margin-top: 1rem;
+      display: none;
+    }
+    .notification-preview.active {
+      display: block;
+    }
+    .notification-preview-header {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+    .notification-preview-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.8rem;
+    }
+    .notification-preview-title {
+      font-weight: 600;
+      color: var(--main);
+    }
+    .notification-preview-content {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.8);
+    }
+    .notification-sound {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .notification-sound label {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+    }
+    .notification-sound select {
+      flex: 1;
+      padding: 0.4rem;
+      font-size: 0.9rem;
+    }
+    .notification-volume {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .notification-volume label {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+      min-width: 60px;
+    }
+    .notification-volume input[type="range"] {
+      flex: 1;
+      height: 4px;
+      -webkit-appearance: none;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      outline: none;
+    }
+    .notification-volume input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--main);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .notification-volume input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
     }
 
     /* PURPLE THEME */
@@ -305,7 +417,13 @@
   <button class="back-btn" onclick="window.location.href='index.html'">&larr; Back</button>
   <div class="settings-card">
     <div class="profile-section">
-      <img id="profile-pic" src="" alt="Profile" class="profile-pic" />
+      <div class="profile-pic-container">
+        <img id="profile-pic" src="" alt="Profile" class="profile-pic" />
+        <div class="profile-pic-edit" id="profile-pic-edit">
+          <i class="fas fa-camera"></i>
+        </div>
+        <input type="file" id="profile-pic-input" accept="image/*" style="display: none;" />
+      </div>
       <div class="profile-info">
         <div id="profile-name" class="profile-name"></div>
         <div id="profile-email" class="profile-email"></div>
@@ -352,6 +470,33 @@
           <option value="none">None</option>
         </select>
       </div>
+      <div class="section">
+        <label>Notification Sound</label>
+        <div class="notification-sound">
+          <label>Sound:</label>
+          <select id="notification-sound">
+            <option value="default">Default</option>
+            <option value="chime">Chime</option>
+            <option value="bell">Bell</option>
+            <option value="message">Message</option>
+          </select>
+        </div>
+        <div class="notification-volume">
+          <label>Volume:</label>
+          <input type="range" id="notification-volume" min="0" max="100" value="50" />
+        </div>
+      </div>
+      <div class="notification-preview" id="notification-preview">
+        <div class="notification-preview-header">
+          <div class="notification-preview-icon">
+            <i class="fas fa-bell"></i>
+          </div>
+          <div class="notification-preview-title">New Message</div>
+        </div>
+        <div class="notification-preview-content">
+          This is how your notifications will look
+        </div>
+      </div>
     </div>
 
     <button class="save-btn" id="save-btn">Save Changes</button>
@@ -371,6 +516,7 @@
       get,
       update
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
@@ -384,6 +530,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
+    const storage = getStorage(app);
 
     const themeSelect = document.getElementById('theme-select');
     const nicknameInput = document.getElementById('nickname');
@@ -395,6 +542,11 @@
     const accentColor = document.getElementById('accent-color');
     const colorPreview = document.getElementById('color-preview');
     const notifications = document.getElementById('notifications');
+    const profilePicEdit = document.getElementById('profile-pic-edit');
+    const profilePicInput = document.getElementById('profile-pic-input');
+    const notificationSound = document.getElementById('notification-sound');
+    const notificationVolume = document.getElementById('notification-volume');
+    const notificationPreview = document.getElementById('notification-preview');
 
     // Load theme from localStorage
     document.addEventListener('DOMContentLoaded', () => {
@@ -404,6 +556,12 @@
       const savedColor = localStorage.getItem('chatzAccentColor') || '#726dff';
       accentColor.value = savedColor;
       colorPreview.style.backgroundColor = savedColor;
+      
+      const savedSound = localStorage.getItem('chatzNotificationSound') || 'default';
+      const savedVolume = localStorage.getItem('chatzNotificationVolume') || '50';
+      
+      notificationSound.value = savedSound;
+      notificationVolume.value = savedVolume;
     });
 
     themeSelect.addEventListener('change', (event) => {
@@ -452,6 +610,69 @@
       }
     });
 
+    // Handle profile picture upload
+    profilePicEdit.onclick = () => {
+      profilePicInput.click();
+    };
+
+    profilePicInput.onchange = async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        try {
+          const user = auth.currentUser;
+          if (!user) return;
+
+          // Show loading state
+          profilePic.style.opacity = '0.5';
+          
+          // Upload to Firebase Storage
+          const storageReference = storageRef(storage, `profile_pics/${user.uid}`);
+          await uploadBytes(storageReference, file);
+          const downloadURL = await getDownloadURL(storageReference);
+
+          // Update user profile
+          const userRef = ref(db, "users/" + user.uid);
+          await update(userRef, {
+            photoURL: downloadURL
+          });
+
+          // Update UI
+          profilePic.src = downloadURL;
+          profilePic.style.opacity = '1';
+
+          // Show success message
+          saveBtn.textContent = "Profile Picture Updated!";
+          saveBtn.style.background = "#4CAF50";
+          setTimeout(() => {
+            saveBtn.textContent = "Save Changes";
+            saveBtn.style.background = "";
+          }, 2000);
+        } catch (error) {
+          console.error("Error uploading profile picture:", error);
+          alert("Failed to upload profile picture. Please try again.");
+          profilePic.style.opacity = '1';
+        }
+      }
+    };
+
+    // Handle notification settings
+    notificationSound.onchange = () => {
+      localStorage.setItem('chatzNotificationSound', notificationSound.value);
+      showNotificationPreview();
+    };
+
+    notificationVolume.oninput = () => {
+      localStorage.setItem('chatzNotificationVolume', notificationVolume.value);
+    };
+
+    function showNotificationPreview() {
+      notificationPreview.classList.add('active');
+      setTimeout(() => {
+        notificationPreview.classList.remove('active');
+      }, 3000);
+    }
+
+    // Update save button handler
     saveBtn.onclick = async () => {
       const theme = themeSelect.value;
       document.documentElement.className = 'theme-' + theme;
@@ -464,25 +685,26 @@
           const nickname = nicknameInput.value.trim();
           const userRef = ref(db, "users/" + user.uid);
           
-          // First check if user data exists
           const snapshot = await get(userRef);
           if (snapshot.exists()) {
-            // Update existing user data
             await set(userRef, {
               ...snapshot.val(),
               nickname: nickname,
               notifications: notifications.value,
+              notificationSound: notificationSound.value,
+              notificationVolume: notificationVolume.value,
               lastActive: Date.now()
             });
           } else {
-            // Create new user data
             await set(userRef, {
               nickname: nickname,
               displayName: user.displayName,
               photoURL: user.photoURL,
               email: user.email,
               lastActive: Date.now(),
-              notifications: notifications.value
+              notifications: notifications.value,
+              notificationSound: notificationSound.value,
+              notificationVolume: notificationVolume.value
             });
           }
           
@@ -498,7 +720,9 @@
             nickname, 
             theme, 
             accentColor: accentColor.value,
-            notifications: notifications.value 
+            notifications: notifications.value,
+            notificationSound: notificationSound.value,
+            notificationVolume: notificationVolume.value
           });
 
           // Wait for data to be saved before redirecting
