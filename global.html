@@ -213,6 +213,12 @@
       border-radius: 1.2rem;
       position: relative;
       word-break: break-word;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .message-content:hover {
+      transform: translateY(-1px);
     }
 
     .message.own .message-content {
@@ -231,6 +237,72 @@
       color: rgba(255,255,255,0.5);
       margin-top: 0.3rem;
       text-align: right;
+    }
+
+    .reply-preview {
+      display: none;
+      background: var(--reply-bg);
+      padding: 0.8rem 1.2rem;
+      margin: 0 1rem 1rem 1rem;
+      border-left: 3px solid var(--reply-border);
+      border-radius: 0.8rem;
+      font-size: 0.9rem;
+      color: var(--bubble-other-text);
+      position: relative;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .reply-preview-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .reply-preview-text {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .reply-preview-sender {
+      color: var(--main);
+      font-weight: 600;
+    }
+
+    .reply-preview-cancel {
+      background: none;
+      border: none;
+      color: var(--bubble-other-text);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0.2rem;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .reply-preview-cancel:hover {
+      opacity: 1;
+    }
+
+    .reply-to {
+      font-size: 0.8rem;
+      color: var(--main);
+      margin-bottom: 0.3rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--main);
     }
 
     .chat-input {
@@ -356,6 +428,16 @@
       <span id="typing-text"></span>
     </div>
 
+    <div class="reply-preview" id="reply-preview">
+      <div class="reply-preview-content">
+        <div class="reply-preview-text">
+          <span class="reply-preview-sender" id="reply-sender"></span>
+          <span id="reply-text"></span>
+        </div>
+        <button class="reply-preview-cancel" id="cancel-reply">&times;</button>
+      </div>
+    </div>
+
     <div class="chat-input">
       <input type="text" id="message-input" placeholder="Type a message..." />
       <button id="send-btn">Send</button>
@@ -403,6 +485,7 @@
     let currentUser = null;
     let typingTimeout = null;
     let userDataCache = {};
+    let replyTo = null;
 
     // Escape HTML to prevent XSS
     function escapeHtml(text) {
@@ -424,7 +507,7 @@
           chatMessages.innerHTML = '';
           snapshot.forEach((childSnapshot) => {
             const message = childSnapshot.val();
-            renderMessage(message);
+            renderMessage(message, childSnapshot.key);
           });
           scrollToBottom();
         });
@@ -469,13 +552,25 @@
 
       try {
         const messageRef = push(ref(db, 'global_messages'));
-        await set(messageRef, {
+        const messageData = {
           text: message,
           senderId: currentUser.uid,
           timestamp: serverTimestamp()
-        });
+        };
+
+        if (replyTo) {
+          messageData.replyTo = {
+            messageId: replyTo.messageId,
+            senderId: replyTo.senderId,
+            text: replyTo.text,
+            senderName: replyTo.senderName
+          };
+        }
+
+        await set(messageRef, messageData);
 
         messageInput.value = '';
+        cancelReply();
         scrollToBottom();
       } catch (error) {
         console.error("Error sending message:", error);
@@ -510,8 +605,37 @@
       }, 2000);
     };
 
+    // Handle reply preview
+    const replyPreview = document.getElementById('reply-preview');
+    const replySender = document.getElementById('reply-sender');
+    const replyText = document.getElementById('reply-text');
+    const cancelReplyBtn = document.getElementById('cancel-reply');
+
+    function setReply(message, messageId) {
+      replyTo = {
+        messageId,
+        senderId: message.senderId,
+        text: message.text,
+        senderName: userDataCache[message.senderId]?.nickname || 
+                   userDataCache[message.senderId]?.displayName || 
+                   "Anonymous"
+      };
+      
+      replySender.textContent = replyTo.senderName + ': ';
+      replyText.textContent = message.text;
+      replyPreview.style.display = 'block';
+      messageInput.focus();
+    }
+
+    function cancelReply() {
+      replyTo = null;
+      replyPreview.style.display = 'none';
+    }
+
+    cancelReplyBtn.onclick = cancelReply;
+
     // Render message
-    function renderMessage(message) {
+    function renderMessage(message, messageId) {
       const isOwn = message.senderId === currentUser?.uid;
       const messageDiv = document.createElement('div');
       messageDiv.className = `message ${isOwn ? 'own' : ''}`;
@@ -521,14 +645,34 @@
       const displayName = userData.nickname || userData.displayName || "Anonymous";
       const photoURL = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=726dff&color=fff`;
 
+      let replyHTML = '';
+      if (message.replyTo) {
+        const replyUserData = userDataCache[message.replyTo.senderId] || {};
+        const replyDisplayName = replyUserData.nickname || replyUserData.displayName || "Anonymous";
+        replyHTML = `
+          <div class="reply-to">
+            Reply to ${escapeHtml(replyDisplayName)}: ${escapeHtml(message.replyTo.text)}
+          </div>
+        `;
+      }
+
       messageDiv.innerHTML = `
         <img src="${photoURL}" alt="Profile" onclick="window.location.href='chat.html?uid=${message.senderId}'" />
-        <div class="message-content">
+        <div class="message-content" onclick="event.stopPropagation();">
           ${!isOwn ? `<div class="message-sender">${escapeHtml(displayName)}</div>` : ''}
+          ${replyHTML}
           ${escapeHtml(message.text)}
           <div class="message-time">${timestamp}</div>
         </div>
       `;
+
+      // Add click handler for reply
+      const messageContent = messageDiv.querySelector('.message-content');
+      messageContent.onclick = () => {
+        if (!isOwn) {
+          setReply(message, messageId);
+        }
+      };
 
       chatMessages.appendChild(messageDiv);
     }
