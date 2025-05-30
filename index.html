@@ -332,7 +332,8 @@
       getDatabase,
       ref,
       onValue,
-      set
+      set,
+      get
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -355,34 +356,69 @@
     let allUsers = [];
     let myUid = null;
 
-    signInBtn.onclick = () => {
-      const provider = new GoogleAuthProvider();
-      signInWithPopup(auth, provider)
-        .then((result) => {
-          // Update user data in database
-          const user = result.user;
-          set(ref(db, `users/${user.uid}`), {
-            displayName: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL,
-            lastActive: Date.now()
-          });
-        })
-        .catch(e => alert("Sign-in failed: " + e.message));
+    // Function to fetch all users
+    async function fetchAllUsers() {
+      try {
+        const usersRef = ref(db, "users");
+        const snapshot = await get(usersRef);
+        const users = snapshot.val() || {};
+        console.log("Fetched users:", users);
+        
+        allUsers = Object.entries(users).map(([uid, userData]) => ({
+          uid,
+          ...userData
+        }));
+        console.log("Processed users:", allUsers);
+        renderUsers();
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    }
+
+    signInBtn.onclick = async () => {
+      try {
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        
+        console.log("User signed in:", user);
+        
+        // Update user data in database
+        await set(ref(db, `users/${user.uid}`), {
+          displayName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          lastActive: Date.now()
+        });
+        
+        console.log("User data updated in database");
+        await fetchAllUsers(); // Fetch users after sign in
+      } catch (e) {
+        console.error("Sign-in failed:", e);
+        alert("Sign-in failed: " + e.message);
+      }
     };
 
     function renderUsers() {
+      console.log("Rendering users. Total users:", allUsers.length);
+      
       if (allUsers.length === 0) {
+        console.log("No users to display");
         noUsersContainer.style.display = "flex";
         usersGrid.style.display = "none";
       } else {
+        console.log("Displaying users grid");
         noUsersContainer.style.display = "none";
         usersGrid.style.display = "grid";
         usersGrid.innerHTML = "";
         
         allUsers.forEach(user => {
-          if (user.uid === myUid) return; // Skip current user
+          if (user.uid === myUid) {
+            console.log("Skipping current user:", user.displayName);
+            return;
+          }
           
+          console.log("Creating card for user:", user.displayName);
           const nameToDisplay = user.displayName || user.nickname || "Anonymous";
           const avatarUrl = user.photoURL || "https://via.placeholder.com/64/2c2045/f0eaff?text=U";
           const email = user.email || "";
@@ -404,21 +440,30 @@
     }
 
     // Listen for auth state changes
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
+      console.log("Auth state changed:", user ? "User signed in" : "No user");
+      
       if (user) {
         signInBtn.style.display = "none";
         myUid = user.uid;
         
         // Update user's last active timestamp
-        set(ref(db, `users/${user.uid}/lastActive`), Date.now());
+        await set(ref(db, `users/${user.uid}/lastActive`), Date.now());
+        await fetchAllUsers(); // Fetch users when auth state changes
       } else {
         signInBtn.style.display = "inline-block";
         myUid = null;
+        allUsers = [];
+        renderUsers();
       }
     });
 
+    // Initial fetch of users
+    fetchAllUsers();
+
     // Listen for users data changes
     onValue(ref(db, "users"), (snapshot) => {
+      console.log("Users data changed");
       const users = snapshot.val() || {};
       allUsers = Object.entries(users).map(([uid, userData]) => ({
         uid,
