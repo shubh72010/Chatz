@@ -435,7 +435,8 @@
       onChildAdded,
       onValue,
       serverTimestamp,
-      get
+      get,
+      set
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
     import {
       getAuth,
@@ -639,6 +640,17 @@
           .then((snapshot) => {
             const userData = snapshot.exists() ? snapshot.val() : {};
             userName.textContent = userData.nickname || user.displayName || "Anonymous";
+            
+            // Update user data if needed
+            if (!snapshot.exists()) {
+              set(ref(db, "users/" + user.uid), {
+                nickname: "",
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                email: user.email,
+                lastActive: Date.now()
+              });
+            }
           })
           .catch((err) => {
             console.error("Error loading user data:", err);
@@ -655,6 +667,19 @@
         replyPreview.style.display = "none";
         userPic.style.display = "none";
         userName.style.display = "none";
+      }
+    });
+
+    // Listen for user data changes
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userRef = ref(db, "users/" + user.uid);
+        onValue(userRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            userName.textContent = userData.nickname || user.displayName || "Anonymous";
+          }
+        });
       }
     });
   </script>
