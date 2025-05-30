@@ -317,12 +317,12 @@
     // Theme sync
     (function() {
       const theme = localStorage.getItem('chatzTheme') || 'default';
-      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
+      document.documentElement.className = 'theme-' + theme;
     })();
     window.addEventListener('storage', function(e) {
       if (e.key === 'chatzTheme') {
         const theme = e.newValue || 'default';
-        document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
+        document.documentElement.className = 'theme-' + theme;
       }
     });
   </script>
