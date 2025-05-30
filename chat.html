@@ -280,25 +280,17 @@
     .reply-preview {
       display: none;
       background: var(--reply-bg);
-      padding: 0.8rem 1.2rem;
-      margin: 0 1rem 1rem 1rem;
+      padding: 0.5rem 1.1rem;
+      margin: 0 1.2rem 0.7rem 1.2rem;
       border-left: 3px solid var(--reply-border);
-      border-radius: 0.8rem;
-      font-size: 0.9rem;
-      color: var(--bubble-other-text);
-      position: relative;
-      animation: slideDown 0.3s ease;
-    }
-
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      font-size: 0.93rem;
+      color: #dcdcff;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 0.7rem;
+      box-shadow: 0 2px 8px 0 rgba(114,109,255,0.08);
     }
 
     .reply-preview-content {
@@ -607,15 +599,18 @@
                    "Anonymous"
       };
       
-      replySender.textContent = replyTo.senderName + ': ';
-      replyText.textContent = message.text;
-      replyPreview.style.display = 'block';
+      replyText.textContent = `${replyTo.senderName}: ${truncate(replyTo.text, 50)}`;
+      replyPreview.style.display = "flex";
       messageInput.focus();
+    }
+
+    function truncate(str, n) {
+      return str.length > n ? str.substr(0, n - 1) + "…" : str;
     }
 
     function cancelReply() {
       replyTo = null;
-      replyPreview.style.display = 'none';
+      replyPreview.style.display = "none";
     }
 
     cancelReplyBtn.onclick = cancelReply;
@@ -637,7 +632,7 @@
         const replyDisplayName = replyUserData.nickname || replyUserData.displayName || "Anonymous";
         replyHTML = `
           <div class="reply-to">
-            Reply to ${escapeHtml(replyDisplayName)}: ${escapeHtml(message.replyTo.text)}
+            Reply to ${escapeHtml(replyDisplayName)}: ${escapeHtml(truncate(message.replyTo.text, 40))}
           </div>
         `;
       }
