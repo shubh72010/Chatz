@@ -29,6 +29,48 @@
       --scrollbar-track: #23272f;
     }
 
+    /* DARK THEME */
+    .theme-dark {
+      --main: #23272f;
+      --main-dark: #181b20;
+      --main-light: #44415e;
+      --bg: #181b20;
+      --bg-light: #23272f;
+      --bg-gradient: linear-gradient(135deg, #181b20 0%, #23272f 100%);
+      --bubble-own: #44415e;
+      --bubble-other: #23272f;
+      --bubble-own-text: #fff;
+      --bubble-other-text: #e6e6fa;
+      --header-bg: #181b20;
+      --input-bg: #23232f;
+      --input-border: #44415e;
+      --reply-bg: #23272f;
+      --reply-border: #726dff;
+      --scrollbar-thumb: #44415e;
+      --scrollbar-track: #181b20;
+    }
+
+    /* LIGHT THEME */
+    .theme-light {
+      --main: #7b5cff;
+      --main-dark: #5a3ec8;
+      --main-light: #b3aaff;
+      --bg: #f4f6fb;
+      --bg-light: #fff;
+      --bg-gradient: linear-gradient(135deg, #e9e6ff 0%, #f4f6fb 100%);
+      --bubble-own: #7b5cff;
+      --bubble-other: #e9e6ff;
+      --bubble-own-text: #fff;
+      --bubble-other-text: #23272f;
+      --header-bg: #fff;
+      --input-bg: #f4f6fb;
+      --input-border: #b3aaff;
+      --reply-bg: #e9e6ff;
+      --reply-border: #7b5cff;
+      --scrollbar-thumb: #b3aaff;
+      --scrollbar-track: #f4f6fb;
+    }
+
     * { 
       box-sizing: border-box; 
       margin: 0; 
@@ -130,6 +172,18 @@
       display: flex;
       gap: 0.8rem;
       max-width: 80%;
+      animation: messageAppear 0.3s ease;
+    }
+
+    @keyframes messageAppear {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .message.own {
@@ -158,6 +212,7 @@
       padding: 0.8rem 1.2rem;
       border-radius: 1.2rem;
       position: relative;
+      word-break: break-word;
     }
 
     .message.own .message-content {
@@ -262,6 +317,21 @@
       }
     }
   </style>
+  <script>
+    // Apply theme from localStorage on page load
+    (function() {
+      const theme = localStorage.getItem('chatzTheme') || 'default';
+      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
+    })();
+
+    // Listen for theme changes in other tabs
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'chatzTheme') {
+        const theme = e.newValue || 'default';
+        document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
+      }
+    });
+  </script>
 </head>
 <body>
   <header>
@@ -333,6 +403,13 @@
     let currentUser = null;
     let typingTimeout = null;
     let userDataCache = {};
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
 
     // Initialize chat
     onAuthStateChanged(auth, async (user) => {
@@ -447,8 +524,8 @@
       messageDiv.innerHTML = `
         <img src="${photoURL}" alt="Profile" onclick="window.location.href='chat.html?uid=${message.senderId}'" />
         <div class="message-content">
-          ${!isOwn ? `<div class="message-sender">${displayName}</div>` : ''}
-          ${message.text}
+          ${!isOwn ? `<div class="message-sender">${escapeHtml(displayName)}</div>` : ''}
+          ${escapeHtml(message.text)}
           <div class="message-time">${timestamp}</div>
         </div>
       `;
