@@ -430,29 +430,25 @@
       signInWithPopup(auth, provider)
         .then(async (result) => {
           const user = result.user;
-          console.log("Google sign in successful:", user); // Debug log
+          console.log("Google sign in successful:", user);
           try {
-            // First check if user exists
             const userRef = ref(db, `users/${user.uid}`);
-            const snapshot = await get(userRef);
             
+            // Create complete user data object
             const userData = {
               displayName: user.displayName,
               email: user.email,
               photoURL: user.photoURL,
-              lastActive: serverTimestamp()
+              lastActive: serverTimestamp(),
+              createdAt: serverTimestamp()
             };
             
-            console.log("Saving user data:", userData); // Debug log
+            console.log("Saving user data:", userData);
             
-            if (!snapshot.exists()) {
-              // If user doesn't exist, create new user data
-              userData.createdAt = serverTimestamp();
-              await set(userRef, userData);
-            } else {
-              // If user exists, update user data
-              await update(userRef, userData);
-            }
+            // Always use set to ensure all data is saved
+            await set(userRef, userData);
+            
+            console.log("User data saved successfully");
           } catch (error) {
             console.error("Database error:", error);
             alert("Error saving user data: " + error.message);
@@ -469,13 +465,16 @@
       if (user) {
         signInBtn.style.display = "none";
         try {
-          // Update last active timestamp
+          // Update last active timestamp and ensure profile data is current
           const userRef = ref(db, `users/${user.uid}`);
-          await update(userRef, {
+          await set(userRef, {
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
             lastActive: serverTimestamp()
-          });
+          }, { merge: true });
         } catch (error) {
-          console.error("Error updating last active:", error);
+          console.error("Error updating user data:", error);
         }
       } else {
         signInBtn.style.display = "inline-block";
