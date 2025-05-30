@@ -228,6 +228,15 @@
       align-self: flex-end;
       flex-direction: row-reverse;
     }
+    .message .profile-pic {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--main);
+      box-shadow: 0 2px 8px rgba(114,109,255,0.15);
+      flex-shrink: 0;
+    }
     .bubble {
       padding: 1rem 1.5rem;
       border-radius: var(--bubble-radius);
@@ -532,6 +541,14 @@
             ${escapeHtml(data.message)}
             <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
           `;
+          
+          // Add profile picture
+          const profilePic = document.createElement("img");
+          profilePic.className = "profile-pic";
+          profilePic.src = data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.nickname || data.name || "U")}&background=726dff&color=fff`;
+          profilePic.alt = "Profile";
+          
+          msgDiv.appendChild(profilePic);
           msgDiv.appendChild(bubble);
 
           msgDiv.addEventListener("click", () => {
@@ -575,6 +592,14 @@
         ${escapeHtml(data.message)}
         <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
       `;
+      
+      // Add profile picture
+      const profilePic = document.createElement("img");
+      profilePic.className = "profile-pic";
+      profilePic.src = data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.nickname || data.name || "U")}&background=726dff&color=fff`;
+      profilePic.alt = "Profile";
+      
+      msgDiv.appendChild(profilePic);
       msgDiv.appendChild(bubble);
 
       msgDiv.addEventListener("click", () => {
