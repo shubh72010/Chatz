@@ -149,55 +149,60 @@
       padding: 1.5rem;
       display: flex;
       align-items: center;
-      gap: 1.2rem;
-      transition: all 0.2s ease;
+      gap: 1rem;
+      transition: transform 0.2s, box-shadow 0.2s;
       cursor: pointer;
-      border: 1px solid var(--main-dark);
+      position: relative;
     }
 
     .user-card:hover {
-      transform: translateY(-4px);
+      transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      border-color: var(--main);
-      background: var(--main-dark);
     }
 
-    .user-card:hover .user-card-name,
-    .user-card:hover .user-card-status {
-      color: #fff;
-    }
-
-    .user-card-img {
-      width: 64px;
-      height: 64px;
+    .user-card img {
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       object-fit: cover;
-      border: 3px solid var(--main);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border: 2px solid var(--main);
     }
 
-    .user-card-info {
+    .user-info {
       flex: 1;
     }
 
-    .user-card-name {
-      font-size: 1.2rem;
+    .user-name {
       font-weight: 600;
       color: var(--main);
-      margin-bottom: 0.3rem;
-      transition: color 0.2s ease;
     }
 
-    .user-card-status {
+    .user-status {
       font-size: 0.9rem;
       color: var(--main-light);
-      transition: color 0.2s ease;
     }
 
-    .user-card-email {
-      font-size: 0.85rem;
-      color: #aaa;
-      margin-top: 0.3rem;
+    .dm-btn {
+      background: var(--main);
+      color: #fff;
+      border: none;
+      border-radius: 1.2rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .dm-btn:hover {
+      background: var(--main-dark);
+    }
+
+    .dm-btn i {
+      font-size: 0.9rem;
     }
 
     .no-users-container {
@@ -373,23 +378,30 @@
     const noUsersContainer = document.getElementById("no-users-container");
 
     function renderUsers(users) {
-      const userList = document.getElementById("users-grid");
-      userList.innerHTML = "";
-      Object.entries(users).forEach(([uid, data]) => {
-        if (uid === auth.currentUser?.uid) return;
-        const userCard = document.createElement("div");
-        userCard.className = "user-card";
+      const usersGrid = document.getElementById('users-grid');
+      usersGrid.innerHTML = '';
+      
+      users.forEach(user => {
+        if (user.uid === auth.currentUser?.uid) return;
+        
+        const userCard = document.createElement('div');
+        userCard.className = 'user-card';
         userCard.innerHTML = `
-          <img src="${data.photoURL || 'https://ui-avatars.com/api/?name=U&background=726dff&color=fff'}" alt="Profile" class="user-card-img" />
-          <div class="user-card-info">
-            <div class="user-card-name">${data.nickname || data.displayName || "Anonymous"}</div>
-            <div class="user-card-status">${data.online ? "Online" : "Offline"}</div>
+          <img src="${user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nickname || user.displayName || 'U')}&background=726dff&color=fff`}" alt="Profile" />
+          <div class="user-info">
+            <div class="user-name">${user.nickname || user.displayName || "Anonymous"}</div>
+            <div class="user-status">${user.online ? "Online" : "Offline"}</div>
           </div>
+          <button class="dm-btn" onclick="event.stopPropagation(); window.location.href='chat.html?uid=${user.uid}'">
+            <i class="fas fa-comment"></i> DM
+          </button>
         `;
-        userCard.addEventListener("click", () => {
-          window.location.href = `chat.html?uid=${uid}`;
-        });
-        userList.appendChild(userCard);
+        
+        userCard.onclick = () => {
+          window.location.href = 'chat.html?uid=' + user.uid;
+        };
+        
+        usersGrid.appendChild(userCard);
       });
     }
 
@@ -434,16 +446,17 @@
 
         // Listen for all users
         onValue(ref(db, "users"), (snapshot) => {
-          const users = {};
+          const users = [];
           snapshot.forEach((childSnapshot) => {
             const data = childSnapshot.val();
-            users[childSnapshot.key] = {
+            users.push({
+              uid: childSnapshot.key,
               displayName: data.displayName || "Anonymous",
               nickname: data.nickname || "",
               photoURL: data.photoURL,
               online: data.online,
               lastActive: data.lastActive
-            };
+            });
           });
           renderUsers(users);
         });
