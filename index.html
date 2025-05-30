@@ -348,7 +348,8 @@
       ref,
       onValue,
       set,
-      serverTimestamp
+      serverTimestamp,
+      update
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -377,7 +378,7 @@
           const user = result.user;
           // Save user data to database
           const userRef = ref(db, `users/${user.uid}`);
-          set(userRef, {
+          update(userRef, {
             displayName: user.displayName,
             email: user.email,
             photoURL: user.photoURL,
@@ -396,8 +397,10 @@
       if (user) {
         signInBtn.style.display = "none";
         // Update last active timestamp
-        const userRef = ref(db, `users/${user.uid}/lastActive`);
-        set(userRef, serverTimestamp());
+        const userRef = ref(db, `users/${user.uid}`);
+        update(userRef, {
+          lastActive: serverTimestamp()
+        });
       } else {
         signInBtn.style.display = "inline-block";
       }
