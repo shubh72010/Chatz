@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chatz | Direct Message</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root {
+      --main: #726dff;
+      --main-dark: #554fa6;
+      --main-light: #a3a0ff;
+      --bg: #23272f;
+      --bg-light: #2e323c;
+      --bg-gradient: linear-gradient(135deg, #726dff 0%, #554fa6 100%);
+      --bubble-own: #726dff;
+      --bubble-other: #2e323c;
+      --bubble-own-text: #fff;
+      --bubble-other-text: #e6e6fa;
+      --header-bg: #23272f;
+      --header-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
+      --input-bg: #292d36;
+      --input-border: #44415e;
+      --input-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+      --reply-bg: #554fa6;
+      --reply-border: #a3a0ff;
+      --scrollbar-thumb: #726dff55;
+      --scrollbar-track: #23272f;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--header-bg);
+      color: #fff;
+      padding: 1rem 2rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      box-shadow: var(--header-shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+    }
+
+    .back-btn {
+      background: var(--main);
+      color: #fff;
+      border: none;
+      border-radius: 1.5rem;
+      padding: 0.6rem 1.3rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #726dff33;
+      transition: background 0.2s;
+    }
+
+    .back-btn:hover {
+      background: var(--main-dark);
+    }
+
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      margin-top: 4rem;
+      height: calc(100vh - 4rem);
+      padding: 1rem;
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg-light);
+      border-radius: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .chat-header img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--main);
+    }
+
+    .chat-header-info {
+      flex: 1;
+    }
+
+    .chat-header-name {
+      font-weight: 600;
+      color: var(--main);
+    }
+
+    .chat-header-status {
+      font-size: 0.9rem;
+      color: var(--main-light);
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .message {
+      display: flex;
+      gap: 0.8rem;
+      max-width: 80%;
+    }
+
+    .message.own {
+      margin-left: auto;
+      flex-direction: row-reverse;
+    }
+
+    .message img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--main);
+      flex-shrink: 0;
+    }
+
+    .message-content {
+      background: var(--bubble-other);
+      color: var(--bubble-other-text);
+      padding: 0.8rem 1.2rem;
+      border-radius: 1.2rem;
+      position: relative;
+    }
+
+    .message.own .message-content {
+      background: var(--bubble-own);
+      color: var(--bubble-own-text);
+    }
+
+    .message-time {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.5);
+      margin-top: 0.3rem;
+      text-align: right;
+    }
+
+    .message-status {
+      font-size: 0.7rem;
+      color: var(--main);
+      margin-top: 0.2rem;
+      text-align: right;
+    }
+
+    .chat-input {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg-light);
+      border-radius: 1rem;
+      margin-top: 1rem;
+    }
+
+    .chat-input input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1.5px solid var(--input-border);
+      border-radius: 1.2rem;
+      padding: 0.8rem 1.2rem;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .chat-input input:focus {
+      border-color: var(--main);
+    }
+
+    .chat-input button {
+      background: var(--main);
+      color: #fff;
+      border: none;
+      border-radius: 1.2rem;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .chat-input button:hover {
+      background: var(--main-dark);
+    }
+
+    .chat-input button:disabled {
+      background: var(--input-border);
+      cursor: not-allowed;
+    }
+
+    .typing-indicator {
+      font-size: 0.9rem;
+      color: var(--main-light);
+      padding: 0.5rem 1rem;
+      display: none;
+    }
+
+    .typing-indicator.active {
+      display: block;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--main);
+    }
+
+    @media (max-width: 768px) {
+      .chat-container {
+        padding: 0.5rem;
+      }
+      .message {
+        max-width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <button class="back-btn" onclick="window.location.href='index.html'">&larr; Back</button>
+    <span>Direct Message</span>
+    <div style="width: 100px;"></div>
+  </header>
+
+  <div class="chat-container">
+    <div class="chat-header">
+      <img id="other-user-pic" src="" alt="Profile" />
+      <div class="chat-header-info">
+        <div id="other-user-name" class="chat-header-name"></div>
+        <div id="other-user-status" class="chat-header-status">Offline</div>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <!-- Messages will be populated here -->
+    </div>
+
+    <div class="typing-indicator" id="typing-indicator">
+      <span id="typing-text"></span>
+    </div>
+
+    <div class="chat-input">
+      <input type="text" id="message-input" placeholder="Type a message..." />
+      <button id="send-btn">Send</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      set,
+      onValue,
+      serverTimestamp,
+      query,
+      orderByChild,
+      get,
+      update
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+      authDomain: "chatz-45df4.firebaseapp.com",
+      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
+      projectId: "chatz-45df4",
+      storageBucket: "chatz-45df4.appspot.com",
+      messagingSenderId: "463847844545",
+      appId: "1:463847844545:web:5006247d061c3e0dc28240"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // Get user ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const otherUserId = urlParams.get('uid');
+
+    if (!otherUserId) {
+      window.location.href = 'index.html';
+    }
+
+    const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const otherUserPic = document.getElementById('other-user-pic');
+    const otherUserName = document.getElementById('other-user-name');
+    const otherUserStatus = document.getElementById('other-user-status');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const typingText = document.getElementById('typing-text');
+
+    let currentUser = null;
+    let chatId = null;
+    let typingTimeout = null;
+
+    // Initialize chat
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        
+        // Get other user's data
+        const otherUserRef = ref(db, `users/${otherUserId}`);
+        onValue(otherUserRef, (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            otherUserPic.src = data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.nickname || data.displayName || 'U')}&background=726dff&color=fff`;
+            otherUserName.textContent = data.nickname || data.displayName || "Anonymous";
+            otherUserStatus.textContent = data.online ? "Online" : "Offline";
+            otherUserStatus.style.color = data.online ? "#4CAF50" : "var(--main-light)";
+          }
+        });
+
+        // Create or get chat ID
+        const chatRef = ref(db, `chats/${user.uid}/${otherUserId}`);
+        const snapshot = await get(chatRef);
+        if (snapshot.exists()) {
+          chatId = snapshot.val().chatId;
+        } else {
+          // Create new chat
+          chatId = push(ref(db, 'chats')).key;
+          await set(chatRef, { chatId });
+          await set(ref(db, `chats/${otherUserId}/${user.uid}`), { chatId });
+        }
+
+        // Load messages
+        const messagesRef = ref(db, `messages/${chatId}`);
+        const messagesQuery = query(messagesRef, orderByChild('timestamp'));
+        
+        onValue(messagesQuery, (snapshot) => {
+          chatMessages.innerHTML = '';
+          snapshot.forEach((childSnapshot) => {
+            const message = childSnapshot.val();
+            renderMessage(message);
+          });
+          scrollToBottom();
+        });
+
+        // Listen for typing status
+        const typingRef = ref(db, `typing/${chatId}/${otherUserId}`);
+        onValue(typingRef, (snapshot) => {
+          if (snapshot.exists() && snapshot.val()) {
+            typingIndicator.classList.add('active');
+            typingText.textContent = `${otherUserName.textContent} is typing...`;
+          } else {
+            typingIndicator.classList.remove('active');
+          }
+        });
+      } else {
+        window.location.href = 'index.html';
+      }
+    });
+
+    // Send message
+    sendBtn.onclick = async () => {
+      const message = messageInput.value.trim();
+      if (!message || !currentUser || !chatId) return;
+
+      try {
+        const messageRef = push(ref(db, `messages/${chatId}`));
+        await set(messageRef, {
+          text: message,
+          senderId: currentUser.uid,
+          timestamp: serverTimestamp(),
+          status: 'sent'
+        });
+
+        // Update last message in chat
+        await update(ref(db, `chats/${currentUser.uid}/${otherUserId}`), {
+          lastMessage: message,
+          lastMessageTime: serverTimestamp()
+        });
+        await update(ref(db, `chats/${otherUserId}/${currentUser.uid}`), {
+          lastMessage: message,
+          lastMessageTime: serverTimestamp()
+        });
+
+        messageInput.value = '';
+        scrollToBottom();
+      } catch (error) {
+        console.error("Error sending message:", error);
+        alert("Failed to send message. Please try again.");
+      }
+    };
+
+    // Handle enter key
+    messageInput.onkeypress = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    };
+
+    // Typing indicator
+    messageInput.oninput = () => {
+      if (!currentUser || !chatId) return;
+
+      // Set typing status
+      const typingRef = ref(db, `typing/${chatId}/${currentUser.uid}`);
+      set(typingRef, true);
+
+      // Clear previous timeout
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
+
+      // Set timeout to clear typing status
+      typingTimeout = setTimeout(() => {
+        set(typingRef, false);
+      }, 2000);
+    };
+
+    // Render message
+    function renderMessage(message) {
+      const isOwn = message.senderId === currentUser?.uid;
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isOwn ? 'own' : ''}`;
+      
+      const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : 'Sending...';
+      const status = isOwn ? getMessageStatus(message.status) : '';
+
+      messageDiv.innerHTML = `
+        <img src="${isOwn ? (currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || 'U')}&background=726dff&color=fff`) : otherUserPic.src}" alt="Profile" />
+        <div class="message-content">
+          ${message.text}
+          <div class="message-time">${timestamp}</div>
+          ${status ? `<div class="message-status">${status}</div>` : ''}
+        </div>
+      `;
+
+      chatMessages.appendChild(messageDiv);
+    }
+
+    // Get message status icon
+    function getMessageStatus(status) {
+      switch (status) {
+        case 'sent': return '✓';
+        case 'delivered': return '✓✓';
+        case 'read': return '✓✓';
+        default: return '';
+      }
+    }
+
+    // Scroll to bottom
+    function scrollToBottom() {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Handle visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && chatId) {
+        // Mark messages as read
+        const messagesRef = ref(db, `messages/${chatId}`);
+        get(messagesRef).then((snapshot) => {
+          snapshot.forEach((childSnapshot) => {
+            const message = childSnapshot.val();
+            if (message.senderId === otherUserId && message.status !== 'read') {
+              update(ref(db, `messages/${chatId}/${childSnapshot.key}`), {
+                status: 'read'
+              });
+            }
+          });
+        });
+      }
+    });
+  </script>
+</body>
+</html> 
