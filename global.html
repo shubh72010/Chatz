@@ -526,13 +526,17 @@
       if (!auth.currentUser) return alert("You must be signed in to send messages.");
       const msg = messageInput.value.trim();
       if (!msg) return;
+
       const newMsg = {
         uid: auth.currentUser.uid,
         name: auth.currentUser.displayName || "Anonymous",
         message: msg,
-        timestamp: Date.now(),
+        timestamp: serverTimestamp(),
+        photoURL: auth.currentUser.photoURL || null,
+        email: auth.currentUser.email || null
       };
       if (replyTo) newMsg.replyTo = replyTo;
+
       push(messagesRef, newMsg)
         .then(() => {
           messageInput.value = "";
@@ -541,6 +545,7 @@
         })
         .catch((err) => {
           console.error("Error sending message:", err);
+          alert("Failed to send message. Please try again.");
         });
     });
     signInBtn.addEventListener("click", () => {
