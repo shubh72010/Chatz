@@ -384,7 +384,6 @@
           <div class="user-card-info">
             <div class="user-card-name">${data.nickname || data.displayName || "Anonymous"}</div>
             <div class="user-card-status">${data.online ? "Online" : "Offline"}</div>
-            <div class="user-card-email">${data.email || ""}</div>
           </div>
         `;
         userCard.addEventListener("click", () => {
@@ -418,7 +417,6 @@
             update(userRef, {
               displayName: user.displayName,
               photoURL: user.photoURL,
-              email: user.email,
               lastActive: serverTimestamp()
             });
           } else {
@@ -426,7 +424,6 @@
             set(userRef, {
               displayName: user.displayName,
               photoURL: user.photoURL,
-              email: user.email,
               lastActive: serverTimestamp(),
               online: true
             });
@@ -444,7 +441,6 @@
               displayName: data.displayName || "Anonymous",
               nickname: data.nickname || "",
               photoURL: data.photoURL,
-              email: data.email,
               online: data.online,
               lastActive: data.lastActive
             };
