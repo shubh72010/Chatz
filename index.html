@@ -414,7 +414,6 @@
         // First check if user data exists
         get(userRef).then((snapshot) => {
           if (snapshot.exists()) {
-            const userData = snapshot.val();
             // Update user data while preserving online status
             update(userRef, {
               displayName: user.displayName,
