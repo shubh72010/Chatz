@@ -320,6 +320,21 @@
     </button>
   </div>
 
+  <script>
+    // Apply theme from localStorage on page load
+    (function() {
+      const theme = localStorage.getItem('chatzTheme') || 'default';
+      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
+    })();
+
+    // Listen for theme changes in other tabs
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'chatzTheme') {
+        const theme = e.newValue || 'default';
+        document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
+      }
+    });
+  </script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
@@ -332,7 +347,8 @@
       getDatabase,
       ref,
       onValue,
-      set
+      set,
+      serverTimestamp
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -360,11 +376,13 @@
         .then((result) => {
           const user = result.user;
           // Save user data to database
-          set(ref(db, `users/${user.uid}`), {
+          const userRef = ref(db, `users/${user.uid}`);
+          set(userRef, {
             displayName: user.displayName,
             email: user.email,
             photoURL: user.photoURL,
-            lastActive: Date.now()
+            lastActive: serverTimestamp(),
+            createdAt: serverTimestamp()
           });
         })
         .catch((error) => {
@@ -378,7 +396,8 @@
       if (user) {
         signInBtn.style.display = "none";
         // Update last active timestamp
-        set(ref(db, `users/${user.uid}/lastActive`), Date.now());
+        const userRef = ref(db, `users/${user.uid}/lastActive`);
+        set(userRef, serverTimestamp());
       } else {
         signInBtn.style.display = "inline-block";
       }
@@ -427,27 +446,6 @@
     document.getElementById("settings-btn").onclick = () => {
       window.location.href = "settings.html";
     };
-  </script>
-  <script>
-    // Apply theme from localStorage on page load
-    (function() {
-      const theme = localStorage.getItem('chatzTheme') || 'default';
-      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
-    })();
-    // Listen for theme changes in other tabs
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'chatzTheme') {
-        const theme = e.newValue || 'default';
-        document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
-      }
-    });
-
-    // Example for your settings page
-    document.getElementById('theme-select').addEventListener('change', function() {
-      const theme = this.value;
-      localStorage.setItem('chatzTheme', theme);
-      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
-    });
   </script>
 </body>
 </html>
