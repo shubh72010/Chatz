@@ -3,382 +3,525 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chatz | by Flakious</title>
+  <title>Chatz | Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
-    /* Your existing CSS variables */
     :root {
-      --main: #726dff;
-      --main-dark: #554fa6;
-      --main-light: #a3a0ff;
-      --bg: #23272f;
-      --bg-light: #2e323c;
-      --bg-gradient: linear-gradient(135deg, #726dff 0%, #554fa6 100%);
-      --bubble-own: #726dff;
-      --bubble-other: #2e323c;
-      --bubble-own-text: #fff;
-      --bubble-other-text: #e6e6fa;
-      --header-bg: #23272f;
-      --header-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
-      --input-bg: #292d36;
-      --input-border: #44415e;
-      --input-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
-      --reply-bg: #554fa6;
-      --reply-border: #a3a0ff;
-      --scrollbar-thumb: #726dff55;
-      --scrollbar-track: #23272f;
+      --main: #a259ff;
+      --accent: #5f27cd;
+      --danger: #ff5252;
+      --settings-bg: rgba(44,32,69,0.96);
+      --text: #f0eaff;
+      --input-bg: rgba(255,255,255,0.16);
+      --dark-bg: #131324;
+      --dark-card: #191938;
+      --dark-input: #191938;
+      --dark-text: #f0eaff;
+      --light-bg: #f7f4fb;
+      --light-card: #fff;
+      --light-input: #f0eaff;
+      --light-text: #2c2045;
     }
-
-    /* DARK THEME */
-    .theme-dark {
-      --main: #23272f;
-      --main-dark: #181b20;
-      --main-light: #44415e;
-      --bg: #181b20;
-      --bg-light: #23272f;
-      --bg-gradient: linear-gradient(135deg, #181b20 0%, #23272f 100%);
-      --bubble-own: #44415e;
-      --bubble-other: #23272f;
-      --bubble-own-text: #fff;
-      --bubble-other-text: #e6e6fa;
-      --header-bg: #181b20;
-      --input-bg: #23232f;
-      --input-border: #44415e;
-      --reply-bg: #23272f;
-      --reply-border: #726dff;
-      --scrollbar-thumb: #44415e;
-      --scrollbar-track: #181b20;
-    }
-
-    /* LIGHT THEME */
-    .theme-light {
-      --main: #7b5cff;
-      --main-dark: #5a3ec8;
-      --main-light: #b3aaff;
-      --bg: #f4f6fb;
-      --bg-light: #fff;
-      --bg-gradient: linear-gradient(135deg, #e9e6ff 0%, #f4f6fb 100%);
-      --bubble-own: #7b5cff;
-      --bubble-other: #e9e6ff;
-      --bubble-own-text: #fff;
-      --bubble-other-text: #23272f;
-      --header-bg: #fff;
-      --input-bg: #f4f6fb;
-      --input-border: #b3aaff;
-      --reply-bg: #e9e6ff;
-      --reply-border: #7b5cff;
-      --scrollbar-thumb: #b3aaff;
-      --scrollbar-track: #f4f6fb;
-    }
-
-    /* Global Styles */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Segoe UI', 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
       background: var(--bg-gradient);
       color: #f5f5f5;
+      margin: 0;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      margin: 0;
-      min-width: 0;
-      min-height: 0;
-      overflow: hidden;
+      align-items: center;
+      justify-content: flex-start;
     }
     header {
+      width: 100%;
       background: var(--header-bg);
       color: #fff;
-      padding: 1rem 2rem 1rem 1.5rem;
+      padding: 1rem 2rem;
       font-size: 1.5rem;
       font-weight: 700;
       border-radius: 0 0 1.2rem 1.2rem;
       box-shadow: var(--header-shadow);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      z-index: 2;
+      text-align: center;
+      margin-bottom: 2rem;
     }
-    #user-info {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-    }
-    #user-pic {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #44415e;
-      border: 2px solid var(--main);
-      display: none;
-    }
-    #user-name {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--main-light);
-      display: none;
-    }
-    #auth-btns {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-    button.auth-btn {
+    .back-btn {
+      position: absolute;
+      left: 1.5rem;
       background: var(--main);
+      color: #fff;
       border: none;
-      color: white;
-      font-weight: 600;
-      padding: 0.4rem 1.1rem;
-      border-radius: 1.2rem;
-      cursor: pointer;
+      border-radius: 1.5rem;
+      padding: 0.6rem 1.3rem;
       font-size: 1rem;
-      transition: background 0.18s, box-shadow 0.18s;
-      box-shadow: 0 2px 8px 0 rgba(114,109,255,0.08);
-      outline: none;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #a259ff33;
+      transition: background 0.2s;
     }
-    button.auth-btn:hover { background: var(--main-dark); }
-    #chat {
-      flex: 1;
-      overflow-y: auto;
-      padding: 2.2rem 0.5rem 1.2rem 0.5rem;
+    .back-btn:hover {
+      background: var(--accent);
+    }
+    .settings-card {
+      margin-top: 110px;
+      background: var(--settings-bg);
+      border-radius: 1.2rem;
+      box-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
+      padding: 2rem 2.5rem;
+      max-width: 500px;
+      width: 100%;
+      margin: 2rem auto;
       display: flex;
       flex-direction: column;
-      gap: 0.7rem; /* Default gap for normal density */
-      background: transparent;
-      min-height: 0;
-      min-width: 0;
-      scrollbar-width: thin;
-      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+      gap: 1.5rem;
     }
-    #chat::-webkit-scrollbar {
-      width: 8px;
+    .section {
+      width: 100%;
+      margin-bottom: 1.2rem;
     }
-    #chat::-webkit-scrollbar-thumb {
-      background: var(--scrollbar-thumb);
-      border-radius: 8px;
-    }
-    #chat::-webkit-scrollbar-track {
-      background: var(--scrollbar-track);
-    }
-    .message {
-      display: flex;
-      align-items: flex-end;
-      gap: 0.7rem;
-      max-width: 80%;
-      margin-bottom: 0.2rem;
-      position: relative;
-      transition: background 0.15s;
-    }
-    .message.own {
-      align-self: flex-end;
-      flex-direction: row-reverse;
-    }
-    .bubble {
-      padding: 0.7rem 1.2rem;
-      border-radius: 1.3rem;
-      background: var(--bubble-other);
-      color: var(--bubble-other-text);
-      font-size: 1.07rem;
-      box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
-      position: relative;
-      min-width: 0;
-      word-break: break-word;
-      transition: background 0.15s;
-    }
-    .message.own .bubble {
-      background: var(--bubble-own);
-      color: var(--bubble-own-text);
-      border-bottom-right-radius: 0.4rem;
-      border-bottom-left-radius: 1.3rem;
-    }
-    .message:not(.own) .bubble {
-      border-bottom-left-radius: 0.4rem;
-      border-bottom-right-radius: 1.3rem;
-    }
-    .sender {
-      font-size: 0.92rem;
+    .section label {
       font-weight: 600;
-      color: var(--main-light);
-      margin-bottom: 2px;
+      color: var(--main);
+      margin-bottom: 0.5rem;
       display: block;
-      opacity: 0.85;
     }
-    .message.own .sender { color: #fff; }
-    .meta {
-      font-size: 0.75rem;
-      opacity: 0.5;
-      margin-top: 0.2rem;
-      user-select: none;
-      text-align: right;
-    }
-    .reply-preview {
-      background: var(--reply-bg);
-      padding: 0.5rem 1.1rem;
-      margin: 0 1.2rem 0.7rem 1.2rem;
-      border-left: 3px solid var(--reply-border);
-      font-size: 0.93rem;
-      color: #dcdcff;
-      user-select: none;
+    .profile-section {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      border-radius: 0.7rem;
-      box-shadow: 0 2px 8px 0 rgba(114,109,255,0.08);
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
     }
-    .reply-preview span {
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 80%;
+    .profile-pic-container {
+      position: relative;
+      width: 80px;
+      height: 80px;
     }
-    .reply-preview button {
-      background: transparent;
-      border: none;
-      color: #dcdcff;
-      font-size: 1.2rem;
+    .profile-pic {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--main);
+      box-shadow: 0 2px 8px rgba(114,109,255,0.15);
       cursor: pointer;
-      font-weight: bold;
-      user-select: none;
-      margin-left: 1rem;
+      transition: all 0.2s ease;
     }
-    form {
+    .profile-pic:hover {
+      filter: brightness(0.8);
+    }
+    .profile-pic-edit {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      background: var(--main);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
       display: flex;
-      flex-wrap: nowrap;
-      padding: 1.1rem 1.2rem 1.1rem 1.2rem;
-      background: var(--input-bg);
-      gap: 0.7rem;
       align-items: center;
-      border-radius: 1.2rem 1.2rem 0 0;
-      box-shadow: var(--input-shadow);
-      z-index: 2;
-    }
-    #message {
-      flex: 3 1 auto;
-      padding: 0.7rem 1.2rem;
-      border-radius: 1.3rem;
-      border: 1.5px solid var(--input-border);
-      outline: none;
-      background: #23232f;
+      justify-content: center;
       color: white;
-      font-size: 1.07rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border: 2px solid var(--settings-bg);
+      transition: all 0.2s ease;
+    }
+    .profile-pic-edit:hover {
+      transform: scale(1.1);
+      background: var(--accent);
+    }
+    .profile-info {
+      flex: 1;
+    }
+    .profile-name {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--main);
+      margin-bottom: 0.3rem;
+    }
+    .profile-email {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+    }
+    select, input[type="text"], input[type="color"] {
+      width: 100%;
+      padding: 0.7rem 1.1rem;
+      border-radius: 1.2rem;
+      border: 1.5px solid var(--input-border);
+      background: var(--input-bg);
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      outline: none;
       transition: border 0.18s;
     }
-    #message:focus {
-      border: 1.5px solid var(--main);
-      background: #23232f;
+    input[type="color"] {
+      height: 40px;
+      padding: 0.2rem;
     }
-    button#send-btn {
-      flex: 0 0 auto;
-      padding: 0.7rem 1.3rem;
-      border-radius: 1.3rem;
-      border: none;
+    select:focus, input[type="text"]:focus, input[type="color"]:focus {
+      border: 1.5px solid var(--main);
+    }
+    .save-btn, .signout-btn {
       background: var(--main);
+      border: none;
       color: white;
-      font-weight: bold;
+      font-weight: 600;
+      padding: 0.8rem 1.5rem;
+      border-radius: 1.2rem;
       cursor: pointer;
-      font-size: 1.07rem;
-      transition: background 0.18s, box-shadow 0.18s;
-      box-shadow: 0 2px 8px 0 rgba(114,109,255,0.08);
+      font-size: 1.1rem;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+    .save-btn:hover { background: var(--main-dark); }
+    .signout-btn {
+      background: var(--danger);
+      margin-top: 1rem;
+    }
+    .signout-btn:hover {
+      background: #ff3333;
+      transform: translateY(-2px);
+    }
+    .color-preview {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 8px;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+    .settings-group {
+      background: rgba(255,255,255,0.05);
+      padding: 1.5rem;
+      border-radius: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .settings-group h3 {
+      color: var(--main);
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+    .notification-preview {
+      background: rgba(255,255,255,0.1);
+      padding: 1rem;
+      border-radius: 0.8rem;
+      margin-top: 1rem;
+      display: none;
+    }
+    .notification-preview.active {
+      display: block;
+    }
+    .notification-preview-header {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+    .notification-preview-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.8rem;
+    }
+    .notification-preview-title {
+      font-weight: 600;
+      color: var(--main);
+    }
+    .notification-preview-content {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.8);
+    }
+    .notification-sound {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .notification-sound label {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+    }
+    .notification-sound select {
+      flex: 1;
+      padding: 0.4rem;
+      font-size: 0.9rem;
+    }
+    .notification-volume {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .notification-volume label {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+      min-width: 60px;
+    }
+    .notification-volume input[type="range"] {
+      flex: 1;
+      height: 4px;
+      -webkit-appearance: none;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
       outline: none;
     }
-    button#send-btn:disabled {
-      background: #44415e;
-      cursor: not-allowed;
-      opacity: 0.7;
+    .notification-volume input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--main);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
-    button#send-btn:hover:not(:disabled) { background: var(--main-dark); }
+    .notification-volume input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+    }
+
+    /* PURPLE THEME */
+    .theme-default body {
+      background: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%) !important;
+      color: var(--text) !important;
+    }
+    .theme-default .settings-card {
+      background: rgba(44,32,69,0.96)!important;
+      color: #fff!important;
+    }
+    .theme-default header {
+      background: rgba(44,32,69,0.85)!important;
+      color: #fff!important;
+    }
+    .theme-default .profile-info .profile-name,
+    .theme-default .section label { color: var(--main)!important; }
+    .theme-default select,
+    .theme-default input[type="text"] {
+      background: rgba(255,255,255,0.16)!important;
+      color: var(--main)!important;
+      border-color: var(--main)!important;
+    }
+    .theme-default .save-btn, .theme-default .signout-btn {
+      background: var(--main)!important;
+      color: #fff!important;
+    }
+
+    /* DARK THEME */
+    .theme-dark body {
+      background: var(--dark-bg)!important;
+      color: var(--dark-text)!important;
+    }
+    .theme-dark .settings-card {
+      background: var(--dark-card)!important;
+      color: var(--dark-text)!important;
+      box-shadow: 0 8px 32px #0004!important;
+    }
+    .theme-dark header {
+      background: #191938!important;
+      color: var(--dark-text)!important;
+    }
+    .theme-dark .profile-info .profile-name,
+    .theme-dark .section label { color: #a259ff!important; }
+    .theme-dark select,
+    .theme-dark input[type="text"] {
+      background: var(--dark-input)!important;
+      color: #a259ff!important;
+      border-color: #5f27cd!important;
+    }
+    .theme-dark select:focus, .theme-dark input[type="text"]:focus {
+      background: #1c1c38!important;
+      color: #a259ff!important;
+      border-color: var(--main)!important;
+    }
+    .theme-dark .save-btn, .theme-dark .signout-btn {
+      background: #a259ff!important;
+      color: #fff!important;
+    }
+
+    /* LIGHT THEME */
+    .theme-light body {
+      background: var(--light-bg)!important;
+      color: var(--light-text)!important;
+    }
+    .theme-light .settings-card {
+      background: var(--light-card)!important;
+      color: var(--light-text)!important;
+      box-shadow: 0 8px 32px #a259ff0d!important;
+    }
+    .theme-light header {
+      background: #fff!important;
+      color: var(--main)!important;
+    }
+    .theme-light .profile-info .profile-name,
+    .theme-light .section label { color: var(--accent)!important; }
+    .theme-light select,
+    .theme-light input[type="text"] {
+      background: #f2edfd!important;
+      color: var(--accent)!important;
+      border-color: var(--main)!important;
+    }
+    .theme-light select:focus, .theme-light input[type="text"]:focus {
+      background: #fff!important;
+      color: var(--main)!important;
+      border-color: var(--accent)!important;
+    }
+    .theme-light .save-btn, .theme-light .signout-btn {
+      background: var(--accent)!important;
+      color: #fff!important;
+    }
+    .theme-light .save-btn:hover, .theme-light .signout-btn:hover {
+      background: var(--main)!important;
+    }
     @media (max-width: 600px) {
-      header { font-size: 1.1rem; padding: 0.7rem 0.7rem; }
-      #chat { padding: 1.1rem 0.2rem 0.7rem 0.2rem; }
-      form { padding: 0.7rem 0.7rem; }
-      .reply-preview { margin: 0 0.5rem 0.5rem 0.5rem; }
-    }
-
-    /* NEW CSS RULES FOR CHAT DENSITY */
-    #chat.compact {
-        gap: 0.4rem; /* Smaller gap */
-    }
-    #chat.compact .message .bubble {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.95rem;
-    }
-    #chat.compact .message .meta {
-      font-size: 0.65rem;
-    }
-
-    #chat.spacious {
-        gap: 1.2rem; /* Larger gap */
-    }
-    #chat.spacious .message .bubble {
-      padding: 1rem 1.5rem;
-      font-size: 1.15rem;
-    }
-    #chat.spacious .message .meta {
-      font-size: 0.85rem;
+      .settings-card {
+        padding: 1.2rem 0.7rem 1rem 0.7rem;
+        margin-top: 80px;
+      }
+      header {
+        font-size: 1.4rem;
+        padding: 0.8rem 0 0.6rem 0;
+      }
+      .back-btn {
+        left: 0.5rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+      }
+      .profile-info img {
+        width: 52px;
+        height: 52px;
+      }
     }
   </style>
   <script>
-    // Theme sync (already exists)
+    // Theme sync
     (function() {
       const theme = localStorage.getItem('chatzTheme') || 'default';
       document.documentElement.className = 'theme-' + theme;
-      const savedAccentColor = localStorage.getItem('chatzAccentColor');
-      if (savedAccentColor) {
-        document.documentElement.style.setProperty('--main', savedAccentColor);
-        document.documentElement.style.setProperty('--accent', savedAccentColor);
-      }
     })();
     window.addEventListener('storage', function(e) {
       if (e.key === 'chatzTheme') {
         const theme = e.newValue || 'default';
         document.documentElement.className = 'theme-' + theme;
       }
-      if (e.key === 'chatzAccentColor') {
-        const color = e.newValue;
-        document.documentElement.style.setProperty('--main', color);
-        document.documentElement.style.setProperty('--accent', color);
-      }
     });
   </script>
 </head>
 <body>
-  <header>
-    <div id="user-info">
-      <img id="user-pic" src="" alt="Profile" />
-      <span id="user-name"></span>
+  <header>Chatz Settings</header>
+  <button class="back-btn" onclick="window.location.href='index.html'">&larr; Back</button>
+  <div class="settings-card">
+    <div class="profile-section">
+      <div class="profile-pic-container">
+        <img id="profile-pic" src="" alt="Profile" class="profile-pic" />
+        <div class="profile-pic-edit" id="profile-pic-edit">
+          <i class="fas fa-camera"></i>
+        </div>
+        <input type="file" id="profile-pic-input" accept="image/*" style="display: none;" />
+      </div>
+      <div class="profile-info">
+        <div id="profile-name" class="profile-name"></div>
+        <div id="profile-email" class="profile-email"></div>
+      </div>
     </div>
-    <span style="margin-left:1rem;letter-spacing:1px;">Chatz</span>
-    <div id="auth-btns">
-      <button id="sign-in" class="auth-btn">Sign In</button>
-      <button id="back-btn" class="auth-btn" style="display:none;">&larr; Back</button>
+
+    <div class="settings-group">
+      <h3>Profile Settings</h3>
+      <div class="section">
+        <label for="nickname">Nickname</label>
+        <input type="text" id="nickname" placeholder="Enter your nickname" maxlength="24" />
+        <small style="color: var(--text); opacity: 0.7; font-size: 0.8rem; margin-top: 0.5rem; display: block;">
+          This will be your display name in the chat
+        </small>
+      </div>
     </div>
-  </header>
-  <div id="chat"></div>
-  <div id="reply-preview" class="reply-preview" style="display:none;">
-    <span id="reply-text"></span>
-    <button id="cancel-reply" title="Cancel reply">&times;</button>
+
+    <div class="settings-group">
+      <h3>Appearance</h3>
+      <div class="section">
+        <label for="theme-select">Theme</label>
+        <select id="theme-select">
+          <option value="default">Purple</option>
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </div>
+      <div class="section">
+        <label for="accent-color">Accent Color</label>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <input type="color" id="accent-color" value="#726dff" />
+          <span class="color-preview" id="color-preview"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>Notifications</h3>
+      <div class="section">
+        <label for="notifications">Enable Notifications</label>
+        <select id="notifications">
+          <option value="all">All Messages</option>
+          <option value="mentions">Mentions Only</option>
+          <option value="none">None</option>
+        </select>
+      </div>
+      <div class="section">
+        <label>Notification Sound</label>
+        <div class="notification-sound">
+          <label>Sound:</label>
+          <select id="notification-sound">
+            <option value="default">Default</option>
+            <option value="chime">Chime</option>
+            <option value="bell">Bell</option>
+            <option value="message">Message</option>
+          </select>
+        </div>
+        <div class="notification-volume">
+          <label>Volume:</label>
+          <input type="range" id="notification-volume" min="0" max="100" value="50" />
+        </div>
+      </div>
+      <div class="notification-preview" id="notification-preview">
+        <div class="notification-preview-header">
+          <div class="notification-preview-icon">
+            <i class="fas fa-bell"></i>
+          </div>
+          <div class="notification-preview-title">New Message</div>
+        </div>
+        <div class="notification-preview-content">
+          This is how your notifications will look
+        </div>
+      </div>
+    </div>
+
+    <button class="save-btn" id="save-btn">Save Changes</button>
+    <button class="signout-btn" id="signout-btn">Sign Out</button>
   </div>
-  <form id="chat-form">
-    <input type="text" id="message" placeholder="Type a message..." disabled autocomplete="off" required />
-    <button id="send-btn" type="submit" disabled>Send</button>
-  </form>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
+      getAuth,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import {
       getDatabase,
       ref,
-      push,
-      onChildAdded,
-      query, // ADDED: for limiting messages
-      limitToLast, // ADDED: for limiting messages
-      get // ADDED: to fetch user notification settings
+      set,
+      get,
+      update
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
     import {
-      getAuth,
-      GoogleAuthProvider,
-      signInWithPopup,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+      getStorage,
+      ref as storageRef,
+      uploadBytes,
+      getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
@@ -387,282 +530,264 @@
       projectId: "chatz-45df4",
       storageBucket: "chatz-45df4.appspot.com",
       messagingSenderId: "463847844545",
-      appId: "1:463847844545:web:5006247d061c3e0dc28240",
-      measurementId: "G-2VHETC9V8B"
+      appId: "1:463847844545:web:5006247d061c3e0dc28240"
     };
+
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
     const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+    const db = getDatabase(app);
+    const storage = getStorage(app);
 
-    const chat = document.getElementById("chat");
-    const form = document.getElementById("chat-form");
-    const messageInput = document.getElementById("message");
-    const sendBtn = document.getElementById("send-btn");
-    const replyPreview = document.getElementById("reply-preview");
-    const replyText = document.getElementById("reply-text");
-    const cancelReplyBtn = document.getElementById("cancel-reply");
-    const signInBtn = document.getElementById("sign-in");
-    const backBtn = document.getElementById("back-btn");
-    const userPic = document.getElementById("user-pic");
-    const userName = document.getElementById("user-name");
-    let replyTo = null;
+    const themeSelect = document.getElementById('theme-select');
+    const nicknameInput = document.getElementById('nickname');
+    const saveBtn = document.getElementById('save-btn');
+    const signoutBtn = document.getElementById('signout-btn');
+    const profilePic = document.getElementById('profile-pic');
+    const profileName = document.getElementById('profile-name');
+    const profileEmail = document.getElementById('profile-email');
+    const accentColor = document.getElementById('accent-color');
+    const colorPreview = document.getElementById('color-preview');
+    const notifications = document.getElementById('notifications');
+    const profilePicEdit = document.getElementById('profile-pic-edit');
+    const profilePicInput = document.getElementById('profile-pic-input');
+    const notificationSound = document.getElementById('notification-sound');
+    const notificationVolume = document.getElementById('notification-volume');
+    const notificationPreview = document.getElementById('notification-preview');
 
-    // --- NEW: Audio for notifications ---
-    // Map sound names to file paths. You need to provide these files!
-    const notificationSounds = {
-        'default': 'sounds/default.mp3', // Replace with your actual path
-        'chime': 'sounds/chime.mp3',     // Replace
-        'bell': 'sounds/bell.mp3',       // Replace
-        'message': 'sounds/message.mp3'  // Replace
+    // Load theme from localStorage
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('chatzTheme') || 'default';
+      themeSelect.value = savedTheme;
+      
+      const savedColor = localStorage.getItem('chatzAccentColor') || '#726dff';
+      accentColor.value = savedColor;
+      colorPreview.style.backgroundColor = savedColor;
+      
+      const savedSound = localStorage.getItem('chatzNotificationSound') || 'default';
+      const savedVolume = localStorage.getItem('chatzNotificationVolume') || '50';
+      
+      notificationSound.value = savedSound;
+      notificationVolume.value = savedVolume;
+    });
+
+    themeSelect.addEventListener('change', (event) => {
+      const theme = event.target.value;
+      document.documentElement.className = 'theme-' + theme;
+      localStorage.setItem('chatzTheme', theme);
+    });
+
+    accentColor.addEventListener('input', (event) => {
+      const color = event.target.value;
+      colorPreview.style.backgroundColor = color;
+      localStorage.setItem('chatzAccentColor', color);
+    });
+
+    // Handle profile picture upload
+    profilePicEdit.onclick = () => {
+      profilePicInput.click();
     };
-    let currentNotificationAudio = new Audio(notificationSounds['default']);
-    currentNotificationAudio.volume = 0.5; // Default volume
 
+    profilePicInput.onchange = async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
 
-    // --- NEW: Function to apply chat density class ---
-    function applyChatDensity() {
-      const density = localStorage.getItem('chatzChatDensity') || 'normal';
-      chat.classList.remove('compact', 'normal', 'spacious'); // Remove existing
-      chat.classList.add(density); // Add selected
-    }
-
-    // --- NEW: Get max messages setting ---
-    function getMaxMessagesLimit() {
-      const limit = parseInt(localStorage.getItem('chatzMaxMessages') || '200');
-      return Math.max(50, Math.min(limit, 500)); // Ensure it's within a reasonable range
-    }
-
-    const scrollToBottom = () => { chat.scrollTop = chat.scrollHeight; };
-    function escapeHtml(text) {
-      return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-    function truncate(str, n) {
-      return str.length > n ? str.substr(0, n - 1) + "…" : str;
-    }
-
-    // --- MODIFY: `messagesRef` to use `limitToLast` based on setting ---
-    // This will only fetch the last N messages, improving initial load performance
-    let messagesQuery;
-    let unsubscribeOnChildAdded; // To store the unsubscribe function
-
-    function setupMessagesListener() {
-        if (unsubscribeOnChildAdded) {
-            unsubscribeOnChildAdded(); // Unsubscribe from previous listener if exists
-        }
-        const limit = getMaxMessagesLimit();
-        messagesQuery = query(ref(db, "messages"), limitToLast(limit));
-
-        unsubscribeOnChildAdded = onChildAdded(messagesQuery, async (snapshot) => {
-            const data = snapshot.val();
-            const msgDiv = document.createElement("div");
-            msgDiv.className = "message";
-
-            // Apply chat density to each message
-            const density = localStorage.getItem('chatzChatDensity') || 'normal';
-            if (density !== 'normal') {
-                msgDiv.classList.add(density);
-            }
-
-            const currentUserId = auth.currentUser ? auth.currentUser.uid : null;
-            if (currentUserId && data.uid === currentUserId) {
-                msgDiv.classList.add("own");
-            }
-            let replyHTML = "";
-            if (data.replyTo) {
-                replyHTML = `<div style="font-size:0.8rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--reply-border); padding-left: 6px; color:#ccc;">
-                    Reply to: <strong>${escapeHtml(data.replyTo.name || "Anonymous")}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
-                </div>`;
-            }
-            const bubble = document.createElement("div");
-            bubble.className = "bubble";
-            bubble.innerHTML = `
-                ${replyHTML}
-                <span class="sender">${escapeHtml(data.name || "Anonymous")}</span>
-                ${escapeHtml(data.message)}
-                <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-            `;
-            msgDiv.appendChild(bubble);
-
-            msgDiv.addEventListener("click", () => {
-                if (!currentUserId) return;
-                if (data.uid === currentUserId) return;
-                replyTo = {
-                    id: snapshot.key,
-                    name: data.name,
-                    message: data.message,
-                };
-                replyText.textContent = `${replyTo.name || "Anonymous"}: ${truncate(replyTo.message, 50)}`;
-                replyPreview.style.display = "flex";
-                messageInput.focus();
-            });
-            chat.appendChild(msgDiv);
-            scrollToBottom();
-
-            // NEW: Play notification sound if enabled and not own message, based on settings
-            const playSoundsToggle = localStorage.getItem('chatzNotificationSoundsToggle') === 'true';
-            if (playSoundsToggle && currentUserId && data.uid !== currentUserId) {
-                // Fetch notification settings from Firebase for sound/volume
-                let userNotificationSound = localStorage.getItem('chatzNotificationSound') || 'default';
-                let userNotificationVolume = parseFloat(localStorage.getItem('chatzNotificationVolume') || '50') / 100;
-
-                // Attempt to get from Firebase if user is signed in
-                if (currentUserId) {
-                    try {
-                        const userSnapshot = await get(ref(db, "users/" + currentUserId + "/notificationSound"));
-                        if (userSnapshot.exists()) {
-                            userNotificationSound = userSnapshot.val() || userNotificationSound;
-                        }
-                        const volumeSnapshot = await get(ref(db, "users/" + currentUserId + "/notificationVolume"));
-                        if (volumeSnapshot.exists()) {
-                            userNotificationVolume = parseFloat(volumeSnapshot.val()) / 100 || userNotificationVolume;
-                        }
-                    } catch (e) {
-                        console.warn("Could not fetch user notification settings from Firebase:", e);
-                    }
-                }
-
-                const soundFilePath = notificationSounds[userNotificationSound] || notificationSounds['default'];
-                currentNotificationAudio.src = soundFilePath;
-                currentNotificationAudio.volume = userNotificationVolume;
-
-                currentNotificationAudio.play().catch(e => console.warn("Notification sound failed:", e));
-            }
-        });
-    }
-
-    // Initial setup of messages listener and chat density
-    applyChatDensity();
-    setupMessagesListener();
-
-    // Event listener for Enter key behavior
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      if (!auth.currentUser) return alert("You must be signed in to send messages.");
-      const msg = messageInput.value.trim();
-      if (!msg) return;
-
-      const newMsg = {
-        uid: auth.currentUser.uid,
-        name: auth.currentUser.displayName || "Anonymous",
-        message: msg,
-        timestamp: Date.now(),
-      };
-      if (replyTo) newMsg.replyTo = replyTo;
-      push(ref(db, "messages"), newMsg)
-        .then(() => {
-          messageInput.value = "";
-          replyTo = null;
-          replyPreview.style.display = "none";
-        })
-        .catch((err) => {
-          console.error("Error sending message:", err);
-        });
-    });
-
-    // Listen for keydown on the message input to handle "Enter sends message"
-    messageInput.addEventListener('keydown', (e) => {
-      const enterSends = localStorage.getItem('chatzEnterSendsMessage') === 'true';
-
-      if (e.key === 'Enter' && !e.shiftKey && enterSends) {
-        e.preventDefault(); // Prevent newline
-        form.dispatchEvent(new Event('submit')); // Trigger form submission
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
       }
-      // If enterSends is false, default Enter behavior (newline) is allowed.
-      // If Shift+Enter is pressed, default (newline) is always allowed.
-    });
 
-    cancelReplyBtn.addEventListener("click", () => {
-      replyTo = null;
-      replyPreview.style.display = "none";
-    });
-    signInBtn.addEventListener("click", () => {
-      signInWithPopup(auth, provider).catch((error) => {
-        console.error("Sign-in error:", error);
-      });
-    });
-    backBtn.addEventListener("click", () => {
-      window.location.href = "index.html";
-    });
-    onAuthStateChanged(auth, (user) => {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          alert('Please sign in to update profile picture');
+          return;
+        }
+
+        // Show loading state
+        profilePic.style.opacity = '0.5';
+        profilePicEdit.style.pointerEvents = 'none';
+        
+        // Create a unique filename
+        const timestamp = Date.now();
+        const fileExtension = file.name.split('.').pop();
+        const fileName = `${user.uid}_${timestamp}.${fileExtension}`;
+        
+        // Upload to Firebase Storage
+        const storageReference = storageRef(storage, `profile_pics/${fileName}`);
+        const uploadResult = await uploadBytes(storageReference, file);
+        console.log('Upload successful:', uploadResult);
+
+        // Get download URL
+        const downloadURL = await getDownloadURL(uploadResult.ref);
+        console.log('Download URL:', downloadURL);
+
+        // Update user profile in database
+        const userRef = ref(db, "users/" + user.uid);
+        await update(userRef, {
+          photoURL: downloadURL,
+          lastActive: Date.now()
+        });
+
+        // Update UI
+        profilePic.src = downloadURL;
+        profilePic.style.opacity = '1';
+        profilePicEdit.style.pointerEvents = 'auto';
+
+        // Show success message
+        saveBtn.textContent = "Profile Picture Updated!";
+        saveBtn.style.background = "#4CAF50";
+        setTimeout(() => {
+          saveBtn.textContent = "Save Changes";
+          saveBtn.style.background = "";
+        }, 2000);
+
+      } catch (error) {
+        console.error("Error uploading profile picture:", error);
+        alert("Failed to upload profile picture: " + error.message);
+        profilePic.style.opacity = '1';
+        profilePicEdit.style.pointerEvents = 'auto';
+      }
+    };
+
+    // Load user data if signed in
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
-        messageInput.disabled = false;
-        sendBtn.disabled = false;
-        signInBtn.style.display = "none";
-        backBtn.style.display = "inline-block";
-        messageInput.placeholder = "Type a message...";
-        userPic.style.display = "block";
-        userName.style.display = "block";
+        // Set profile picture with fallback
+        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=726dff&color=fff`;
+        profilePic.src = photoURL;
+        profileName.textContent = user.displayName || "Anonymous";
+        profileEmail.textContent = user.email || "";
 
-        // Get nickname from Firebase, fallback to displayName, then "Anonymous"
-        get(ref(db, "users/" + user.uid)).then(snapshot => {
-            if (snapshot.exists()) {
-                const userData = snapshot.val();
-                userName.textContent = userData.nickname || user.displayName || "Anonymous";
-                userPic.src = userData.photoURL || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=a259ff&color=fff`;
-
-                // Update notification sound and volume on auth change (if different from localStorage)
-                localStorage.setItem('chatzNotificationSound', userData.notificationSound || 'default');
-                localStorage.setItem('chatzNotificationVolume', userData.notificationVolume || '50');
-            } else {
-                userName.textContent = user.displayName || "Anonymous";
-                userPic.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=a259ff&color=fff`;
+        try {
+          const userRef = ref(db, "users/" + user.uid);
+          const snapshot = await get(userRef);
+          
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            nicknameInput.value = data.nickname || "";
+            notifications.value = data.notifications || "all";
+            // Update profile picture if it exists in database
+            if (data.photoURL) {
+              profilePic.src = data.photoURL;
             }
-        }).catch(err => {
-            console.error("Error fetching user data:", err);
-            userName.textContent = user.displayName || "Anonymous"; // Fallback
-            userPic.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=a259ff&color=fff`;
-        });
-
-        // Reapply chat density and re-fetch messages with potential new limit if settings changed while logged out
-        applyChatDensity();
-        setupMessagesListener();
-
+          } else {
+            // Initialize user data if it doesn't exist
+            await set(userRef, {
+              nickname: "",
+              displayName: user.displayName,
+              photoURL: photoURL,
+              email: user.email,
+              lastActive: Date.now(),
+              notifications: "all"
+            });
+          }
+        } catch (error) {
+          console.error("Error loading user data:", error);
+        }
       } else {
-        messageInput.value = "";
-        messageInput.placeholder = "Sign in to chat";
-        messageInput.disabled = true;
-        sendBtn.disabled = true;
-        signInBtn.style.display = "inline-block";
-        backBtn.style.display = "none";
-        replyTo = null;
-        replyPreview.style.display = "none";
-        userPic.style.display = "none";
-        userName.style.display = "none";
+        window.location.href = "index.html";
       }
     });
 
-    // NEW: Listen for storage changes in case settings are changed in another tab
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'chatzChatDensity') {
-            applyChatDensity();
-            // Re-render existing messages to apply new density class
-            const messages = chat.querySelectorAll('.message');
-            const newDensity = e.newValue || 'normal';
-            messages.forEach(msg => {
-                msg.classList.remove('compact', 'normal', 'spacious');
-                if (newDensity !== 'normal') {
-                    msg.classList.add(newDensity);
-                }
-            });
-        }
-        if (e.key === 'chatzMaxMessages') {
-            // Re-fetch messages with new limit if changed in another tab
-            chat.innerHTML = ''; // Clear existing messages
-            setupMessagesListener();
-        }
-        if (e.key === 'chatzAccentColor') {
-            const color = e.newValue;
-            document.documentElement.style.setProperty('--main', color);
-            document.documentElement.style.setProperty('--accent', color);
-        }
-    });
+    // Handle notification settings
+    notificationSound.onchange = () => {
+      localStorage.setItem('chatzNotificationSound', notificationSound.value);
+      showNotificationPreview();
+    };
 
+    notificationVolume.oninput = () => {
+      localStorage.setItem('chatzNotificationVolume', notificationVolume.value);
+    };
+
+    function showNotificationPreview() {
+      notificationPreview.classList.add('active');
+      setTimeout(() => {
+        notificationPreview.classList.remove('active');
+      }, 3000);
+    }
+
+    // Update save button handler
+    saveBtn.onclick = async () => {
+      const theme = themeSelect.value;
+      document.documentElement.className = 'theme-' + theme;
+      localStorage.setItem('chatzTheme', theme);
+      localStorage.setItem('chatzAccentColor', accentColor.value);
+
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const nickname = nicknameInput.value.trim();
+          const userRef = ref(db, "users/" + user.uid);
+          
+          const snapshot = await get(userRef);
+          if (snapshot.exists()) {
+            await set(userRef, {
+              ...snapshot.val(),
+              nickname: nickname,
+              notifications: notifications.value,
+              notificationSound: notificationSound.value,
+              notificationVolume: notificationVolume.value,
+              lastActive: Date.now()
+            });
+          } else {
+            await set(userRef, {
+              nickname: nickname,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              email: user.email,
+              lastActive: Date.now(),
+              notifications: notifications.value,
+              notificationSound: notificationSound.value,
+              notificationVolume: notificationVolume.value
+            });
+          }
+          
+          // Show success message
+          saveBtn.textContent = "Saved!";
+          saveBtn.style.background = "#4CAF50";
+          setTimeout(() => {
+            saveBtn.textContent = "Save Changes";
+            saveBtn.style.background = "";
+          }, 2000);
+
+          console.log("Settings saved successfully:", { 
+            nickname, 
+            theme, 
+            accentColor: accentColor.value,
+            notifications: notifications.value,
+            notificationSound: notificationSound.value,
+            notificationVolume: notificationVolume.value
+          });
+
+          // Wait for data to be saved before redirecting
+          setTimeout(() => {
+            window.location.href = "global.html";
+          }, 1000);
+        } catch (error) {
+          console.error("Error saving settings:", error);
+          alert("Failed to save settings. Please try again.");
+        }
+      } else {
+        alert("Please sign in to save settings.");
+      }
+    };
+
+    signoutBtn.onclick = async () => {
+      try {
+        await signOut(auth);
+        window.location.href = "index.html";
+      } catch (error) {
+        console.error("Error signing out:", error);
+        alert("Failed to sign out. Please try again.");
+      }
+    };
   </script>
 </body>
 </html>
