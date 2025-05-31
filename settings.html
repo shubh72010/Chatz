@@ -204,88 +204,24 @@
       margin-bottom: 1rem;
       font-size: 1.1rem;
     }
-    .notification-preview {
-      background: rgba(255,255,255,0.1);
-      padding: 1rem;
-      border-radius: 0.8rem;
-      margin-top: 1rem;
+    .theme-info {
+      font-size: 0.85rem;
+      color: var(--text);
+      opacity: 0.7;
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      background: rgba(255,255,255,0.05);
       display: none;
     }
-    .notification-preview.active {
+    .theme-info.show {
       display: block;
     }
-    .notification-preview-header {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      margin-bottom: 0.5rem;
-    }
-    .notification-preview-icon {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: var(--main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 0.8rem;
-    }
-    .notification-preview-title {
+    .theme-time {
       font-weight: 600;
       color: var(--main);
     }
-    .notification-preview-content {
-      font-size: 0.9rem;
-      color: rgba(255,255,255,0.8);
-    }
-    .notification-sound {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-    }
-    .notification-sound label {
-      font-size: 0.9rem;
-      color: rgba(255,255,255,0.7);
-    }
-    .notification-sound select {
-      flex: 1;
-      padding: 0.4rem;
-      font-size: 0.9rem;
-    }
-    .notification-volume {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-    }
-    .notification-volume label {
-      font-size: 0.9rem;
-      color: rgba(255,255,255,0.7);
-      min-width: 60px;
-    }
-    .notification-volume input[type="range"] {
-      flex: 1;
-      height: 4px;
-      -webkit-appearance: none;
-      background: rgba(255,255,255,0.1);
-      border-radius: 2px;
-      outline: none;
-    }
-    .notification-volume input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
-      background: var(--main);
-      border-radius: 50%;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .notification-volume input[type="range"]::-webkit-slider-thumb:hover {
-      transform: scale(1.1);
-    }
-
+    
     /* PURPLE THEME */
     .theme-default body {
       background: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%) !important;
@@ -398,19 +334,6 @@
       }
     }
   </style>
-  <script>
-    // Theme sync
-    (function() {
-      const theme = localStorage.getItem('chatzTheme') || 'default';
-      document.documentElement.className = 'theme-' + theme;
-    })();
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'chatzTheme') {
-        const theme = e.newValue || 'default';
-        document.documentElement.className = 'theme-' + theme;
-      }
-    });
-  </script>
 </head>
 <body>
   <header>Chatz Settings</header>
@@ -449,7 +372,15 @@
           <option value="default">Purple</option>
           <option value="dark">Dark</option>
           <option value="light">Light</option>
+          <option value="auto">Day-Night Cycle</option>
         </select>
+        <small style="color: var(--text); opacity: 0.7; font-size: 0.8rem; margin-top: 0.5rem; display: block;">
+          Day-Night Cycle: Light (6:00-14:00) → Purple (14:00-20:00) → Dark (20:00-6:00)
+        </small>
+        <div id="theme-info" class="theme-info">
+          Current theme: <span id="current-theme" class="theme-time"></span><br>
+          Next change: <span id="next-theme-time" class="theme-time"></span>
+        </div>
       </div>
       <div class="section">
         <label for="accent-color">Accent Color</label>
@@ -486,22 +417,12 @@
           <input type="range" id="notification-volume" min="0" max="100" value="50" />
         </div>
       </div>
-      <div class="notification-preview" id="notification-preview">
-        <div class="notification-preview-header">
-          <div class="notification-preview-icon">
-            <i class="fas fa-bell"></i>
-          </div>
-          <div class="notification-preview-title">New Message</div>
-        </div>
-        <div class="notification-preview-content">
-          This is how your notifications will look
-        </div>
-      </div>
     </div>
 
     <button class="save-btn" id="save-btn">Save Changes</button>
     <button class="signout-btn" id="signout-btn">Sign Out</button>
   </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
@@ -522,6 +443,7 @@
       uploadBytes,
       getDownloadURL
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
+    import { initTheme, saveTheme, getThemeInfo } from './themeManager.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
@@ -533,12 +455,17 @@
       appId: "1:463847844545:web:5006247d061c3e0dc28240"
     };
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
     const storage = getStorage(app);
 
+    // Get DOM elements
     const themeSelect = document.getElementById('theme-select');
+    const themeInfo = document.getElementById('theme-info');
+    const currentTheme = document.getElementById('current-theme');
+    const nextThemeTime = document.getElementById('next-theme-time');
     const nicknameInput = document.getElementById('nickname');
     const saveBtn = document.getElementById('save-btn');
     const signoutBtn = document.getElementById('signout-btn');
@@ -552,30 +479,47 @@
     const profilePicInput = document.getElementById('profile-pic-input');
     const notificationSound = document.getElementById('notification-sound');
     const notificationVolume = document.getElementById('notification-volume');
-    const notificationPreview = document.getElementById('notification-preview');
 
-    // Load theme from localStorage
-    document.addEventListener('DOMContentLoaded', () => {
-      const savedTheme = localStorage.getItem('chatzTheme') || 'default';
-      themeSelect.value = savedTheme;
-      
-      const savedColor = localStorage.getItem('chatzAccentColor') || '#726dff';
-      accentColor.value = savedColor;
-      colorPreview.style.backgroundColor = savedColor;
-      
-      const savedSound = localStorage.getItem('chatzNotificationSound') || 'default';
-      const savedVolume = localStorage.getItem('chatzNotificationVolume') || '50';
-      
-      notificationSound.value = savedSound;
-      notificationVolume.value = savedVolume;
+    // Initialize theme
+    initTheme();
+
+    // Load saved settings
+    themeSelect.value = localStorage.getItem('chatzTheme') || 'default';
+    accentColor.value = localStorage.getItem('chatzAccentColor') || '#726dff';
+    colorPreview.style.backgroundColor = accentColor.value;
+    notificationSound.value = localStorage.getItem('chatzNotificationSound') || 'default';
+    notificationVolume.value = localStorage.getItem('chatzNotificationVolume') || '50';
+
+    // Update theme info if auto theme is selected
+    function updateThemeInfo() {
+      if (themeSelect.value === 'auto') {
+        const info = getThemeInfo();
+        currentTheme.textContent = info.current.charAt(0).toUpperCase() + info.current.slice(1);
+        nextThemeTime.textContent = info.next.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        themeInfo.classList.add('show');
+      } else {
+        themeInfo.classList.remove('show');
+      }
+    }
+
+    // Theme select handler
+    themeSelect.addEventListener('change', (e) => {
+      const selectedTheme = e.target.value;
+      saveTheme(selectedTheme);
+      updateThemeInfo();
     });
 
-    themeSelect.addEventListener('change', (event) => {
-      const theme = event.target.value;
-      document.documentElement.className = 'theme-' + theme;
-      localStorage.setItem('chatzTheme', theme);
-    });
+    // Update theme info every minute if auto theme is selected
+    setInterval(() => {
+      if (themeSelect.value === 'auto') {
+        updateThemeInfo();
+      }
+    }, 60000);
 
+    // Initial theme info update
+    updateThemeInfo();
+
+    // Accent color handler
     accentColor.addEventListener('input', (event) => {
       const color = event.target.value;
       colorPreview.style.backgroundColor = color;
@@ -583,21 +527,17 @@
     });
 
     // Handle profile picture upload
-    profilePicEdit.onclick = () => {
-      profilePicInput.click();
-    };
+    profilePicEdit.onclick = () => profilePicInput.click();
 
     profilePicInput.onchange = async (event) => {
       const file = event.target.files[0];
       if (!file) return;
 
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         alert('Please select an image file');
         return;
       }
 
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert('Image size should be less than 5MB');
         return;
@@ -610,44 +550,28 @@
           return;
         }
 
-        // Show loading state
         profilePic.style.opacity = '0.5';
         profilePicEdit.style.pointerEvents = 'none';
         
-        // Create a unique filename
         const timestamp = Date.now();
         const fileExtension = file.name.split('.').pop();
         const fileName = `${user.uid}_${timestamp}.${fileExtension}`;
         
-        // Upload to Firebase Storage
         const storageReference = storageRef(storage, `profile_pics/${fileName}`);
         const uploadResult = await uploadBytes(storageReference, file);
-        console.log('Upload successful:', uploadResult);
-
-        // Get download URL
         const downloadURL = await getDownloadURL(uploadResult.ref);
-        console.log('Download URL:', downloadURL);
 
-        // Update user profile in database
         const userRef = ref(db, "users/" + user.uid);
         await update(userRef, {
           photoURL: downloadURL,
           lastActive: Date.now()
         });
 
-        // Update UI
         profilePic.src = downloadURL;
         profilePic.style.opacity = '1';
         profilePicEdit.style.pointerEvents = 'auto';
 
-        // Show success message
-        saveBtn.textContent = "Profile Picture Updated!";
-        saveBtn.style.background = "#4CAF50";
-        setTimeout(() => {
-          saveBtn.textContent = "Save Changes";
-          saveBtn.style.background = "";
-        }, 2000);
-
+        showSuccess("Profile Picture Updated!");
       } catch (error) {
         console.error("Error uploading profile picture:", error);
         alert("Failed to upload profile picture: " + error.message);
@@ -656,10 +580,19 @@
       }
     };
 
-    // Load user data if signed in
+    // Show success message
+    function showSuccess(message) {
+      saveBtn.textContent = message;
+      saveBtn.style.background = "#4CAF50";
+      setTimeout(() => {
+        saveBtn.textContent = "Save Changes";
+        saveBtn.style.background = "";
+      }, 2000);
+    }
+
+    // Load user data
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Set profile picture with fallback
         const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=726dff&color=fff`;
         profilePic.src = photoURL;
         profileName.textContent = user.displayName || "Anonymous";
@@ -673,12 +606,10 @@
             const data = snapshot.val();
             nicknameInput.value = data.nickname || "";
             notifications.value = data.notifications || "all";
-            // Update profile picture if it exists in database
             if (data.photoURL) {
               profilePic.src = data.photoURL;
             }
           } else {
-            // Initialize user data if it doesn't exist
             await set(userRef, {
               nickname: "",
               displayName: user.displayName,
@@ -696,29 +627,13 @@
       }
     });
 
-    // Handle notification settings
-    notificationSound.onchange = () => {
-      localStorage.setItem('chatzNotificationSound', notificationSound.value);
-      showNotificationPreview();
-    };
-
-    notificationVolume.oninput = () => {
-      localStorage.setItem('chatzNotificationVolume', notificationVolume.value);
-    };
-
-    function showNotificationPreview() {
-      notificationPreview.classList.add('active');
-      setTimeout(() => {
-        notificationPreview.classList.remove('active');
-      }, 3000);
-    }
-
-    // Update save button handler
+    // Save settings
     saveBtn.onclick = async () => {
       const theme = themeSelect.value;
-      document.documentElement.className = 'theme-' + theme;
-      localStorage.setItem('chatzTheme', theme);
+      saveTheme(theme);
       localStorage.setItem('chatzAccentColor', accentColor.value);
+      localStorage.setItem('chatzNotificationSound', notificationSound.value);
+      localStorage.setItem('chatzNotificationVolume', notificationVolume.value);
 
       const user = auth.currentUser;
       if (user) {
@@ -749,24 +664,7 @@
             });
           }
           
-          // Show success message
-          saveBtn.textContent = "Saved!";
-          saveBtn.style.background = "#4CAF50";
-          setTimeout(() => {
-            saveBtn.textContent = "Save Changes";
-            saveBtn.style.background = "";
-          }, 2000);
-
-          console.log("Settings saved successfully:", { 
-            nickname, 
-            theme, 
-            accentColor: accentColor.value,
-            notifications: notifications.value,
-            notificationSound: notificationSound.value,
-            notificationVolume: notificationVolume.value
-          });
-
-          // Wait for data to be saved before redirecting
+          showSuccess("Saved!");
           setTimeout(() => {
             window.location.href = "global.html";
           }, 1000);
@@ -779,6 +677,7 @@
       }
     };
 
+    // Sign out
     signoutBtn.onclick = async () => {
       try {
         await signOut(auth);
