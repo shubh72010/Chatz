@@ -451,7 +451,8 @@
       serverTimestamp,
       query,
       orderByChild,
-      get
+      get,
+      update
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -491,15 +492,62 @@
       if (user) {
         currentUser = user;
         
-        // Load messages
+        // First ensure current user data is in the database
+        const userRef = ref(db, "users/" + user.uid);
+        const userSnapshot = await get(userRef);
+        
+        if (!userSnapshot.exists()) {
+          // Create user data if it doesn't exist
+          const defaultPhotoURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=726dff&color=fff`;
+          await set(userRef, {
+            nickname: "",
+            displayName: user.displayName || "User",
+            photoURL: user.photoURL || defaultPhotoURL,
+            email: user.email,
+            lastActive: Date.now(),
+            notifications: "all"
+          });
+        } else {
+          // Update last active timestamp
+          await update(userRef, {
+            lastActive: Date.now()
+          });
+        }
+        
+        // Load and cache all user data
+        const usersRef = ref(db, 'users');
+        const usersSnapshot = await get(usersRef);
+        usersSnapshot.forEach((childSnapshot) => {
+          userDataCache[childSnapshot.key] = childSnapshot.val();
+        });
+        
+        // Set up real-time user data updates
+        onValue(ref(db, 'users'), (snapshot) => {
+          snapshot.forEach((childSnapshot) => {
+            userDataCache[childSnapshot.key] = childSnapshot.val();
+          });
+        });
+        
+        // Now load messages after we have user data
         const messagesRef = ref(db, 'global_messages');
         const messagesQuery = query(messagesRef, orderByChild('timestamp'));
         
         onValue(messagesQuery, (snapshot) => {
           chatMessages.innerHTML = '';
+          const messages = [];
           snapshot.forEach((childSnapshot) => {
-            const message = childSnapshot.val();
-            renderMessage(message, childSnapshot.key);
+            messages.push({
+              ...childSnapshot.val(),
+              id: childSnapshot.key
+            });
+          });
+          
+          // Sort messages by timestamp
+          messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+          
+          // Render messages
+          messages.forEach(message => {
+            renderMessage(message, message.id);
           });
           scrollToBottom();
         });
@@ -524,13 +572,6 @@
           } else {
             typingIndicator.classList.remove('active');
           }
-        });
-
-        // Cache user data
-        onValue(ref(db, 'users'), (snapshot) => {
-          snapshot.forEach((childSnapshot) => {
-            userDataCache[childSnapshot.key] = childSnapshot.val();
-          });
         });
       } else {
         window.location.href = 'index.html';
@@ -604,13 +645,12 @@
     const cancelReplyBtn = document.getElementById('cancel-reply');
 
     function setReply(message, messageId) {
+      const senderData = userDataCache[message.senderId] || {};
       replyTo = {
         messageId,
         senderId: message.senderId,
         text: message.text,
-        senderName: userDataCache[message.senderId]?.nickname || 
-                   userDataCache[message.senderId]?.displayName || 
-                   "Anonymous"
+        senderName: senderData.nickname || senderData.displayName || "Anonymous"
       };
       
       replyText.textContent = `${replyTo.senderName}: ${truncate(replyTo.text, 50)}`;
@@ -637,8 +677,34 @@
       
       const userData = userDataCache[message.senderId] || {};
       const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : 'Sending...';
-      const displayName = userData.nickname || userData.displayName || "Anonymous";
-      const photoURL = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=726dff&color=fff`;
+      
+      // Get user display info, prioritizing nickname over displayName
+      let displayName;
+      if (isOwn) {
+        // For own messages, use current user's data
+        const currentUserData = userDataCache[currentUser.uid] || {};
+        displayName = currentUserData.nickname || currentUserData.displayName || currentUser.displayName || "You";
+      } else {
+        // For other messages, use cached user data
+        displayName = userData.nickname || userData.displayName || "Anonymous";
+      }
+      
+      // Generate profile picture URL
+      let photoURL;
+      if (isOwn) {
+        // For own messages
+        const currentUserData = userDataCache[currentUser.uid] || {};
+        photoURL = currentUserData.photoURL || currentUser.photoURL;
+      } else {
+        // For other messages
+        photoURL = userData.photoURL;
+      }
+      
+      // If still no photoURL, generate one from display name
+      if (!photoURL) {
+        const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase();
+        photoURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=726dff&color=fff&size=128`;
+      }
 
       let replyHTML = '';
       if (message.replyTo) {
@@ -652,7 +718,7 @@
       }
 
       messageDiv.innerHTML = `
-        <img src="${photoURL}" alt="Profile" onclick="window.location.href='chat.html?uid=${message.senderId}'" />
+        <img src="${photoURL}" alt="${escapeHtml(displayName)}" onclick="window.location.href='chat.html?uid=${message.senderId}'" />
         <div class="message-content" onclick="event.stopPropagation();">
           ${!isOwn ? `<div class="message-sender">${escapeHtml(displayName)}</div>` : ''}
           ${replyHTML}
