@@ -54,9 +54,16 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const realtimeDb = getDatabase(app);
 
+// Track all active listeners
+const activeListeners = {
+    firestore: new Set(),
+    realtime: new Set(),
+    auth: null
+};
+
 // Auth state observer
 let currentUser = null;
-onAuthStateChanged(auth, (user) => {
+activeListeners.auth = onAuthStateChanged(auth, (user) => {
     currentUser = user;
 });
 
@@ -81,20 +88,28 @@ export function listenToMessages(chatId, callback) {
     const messagesRef = collection(db, `chats/${chatId}/messages`);
     const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(50));
     const unsubscribe = onSnapshot(q, callback);
-    return unsubscribe;
+    activeListeners.firestore.add(unsubscribe);
+    return () => {
+        unsubscribe();
+        activeListeners.firestore.delete(unsubscribe);
+    };
 }
 
 // Realtime Database functions
 export function listenToTyping(chatId, callback) {
     const typingRef = dbRef(realtimeDb, `typing/${chatId}`);
     onValue(typingRef, callback);
-    return () => off(typingRef);
+    const unsubscribe = () => off(typingRef);
+    activeListeners.realtime.add(unsubscribe);
+    return unsubscribe;
 }
 
 export function listenToOnlineStatus(userId, callback) {
     const statusRef = dbRef(realtimeDb, `onlineStatus/${userId}`);
     onValue(statusRef, callback);
-    return () => off(statusRef);
+    const unsubscribe = () => off(statusRef);
+    activeListeners.realtime.add(unsubscribe);
+    return unsubscribe;
 }
 
 // Storage functions
@@ -106,26 +121,39 @@ export async function uploadFile(file, path) {
 
 // Cleanup function
 export function cleanup() {
-    // Clean up Firestore listeners
-    const unsubscribeFunctions = [];
-    
-    // Clean up Realtime Database listeners
-    off(dbRef(realtimeDb, 'typing'));
-    off(dbRef(realtimeDb, 'onlineStatus'));
-    off(dbRef(realtimeDb, 'users'));
-    off(dbRef(realtimeDb, 'chats'));
-    
-    // Clean up auth state observer
-    if (typeof activeListeners?.auth === 'function') {
-        activeListeners.auth();
-    }
-    
-    // Clean up any remaining listeners
-    unsubscribeFunctions.forEach(unsubscribe => {
-        if (typeof unsubscribe === 'function') {
-            unsubscribe();
+    try {
+        // Clean up Firestore listeners
+        activeListeners.firestore.forEach(unsubscribe => {
+            if (typeof unsubscribe === 'function') {
+                unsubscribe();
+            }
+        });
+        activeListeners.firestore.clear();
+        
+        // Clean up Realtime Database listeners
+        activeListeners.realtime.forEach(unsubscribe => {
+            if (typeof unsubscribe === 'function') {
+                unsubscribe();
+            }
+        });
+        activeListeners.realtime.clear();
+        
+        // Clean up auth state observer
+        if (typeof activeListeners.auth === 'function') {
+            activeListeners.auth();
+            activeListeners.auth = null;
         }
-    });
+        
+        // Clean up any remaining listeners
+        off(dbRef(realtimeDb, 'typing'));
+        off(dbRef(realtimeDb, 'onlineStatus'));
+        off(dbRef(realtimeDb, 'users'));
+        off(dbRef(realtimeDb, 'chats'));
+    } catch (error) {
+        console.error('Error during cleanup:', error);
+        // Attempt to clean up remaining listeners even if there was an error
+        off(dbRef(realtimeDb));
+    }
 }
 
 // Export Firebase instances
