@@ -786,6 +786,12 @@
       color: var(--main);
     }
 
+    .recording-timer {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--main);
+    }
+
     .stop-recording-btn {
       background: var(--error);
       color: #fff;
@@ -1158,424 +1164,215 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { 
+        auth, 
+        db, 
+        storage, 
+        realtimeDb,
+        currentUser,
+        sendMessage,
+        updateMessage,
+        deleteMessage,
+        uploadFile,
+        listenToMessages,
+        listenToTyping,
+        listenToOnlineStatus,
+        cleanup
+    } from './firebaseConfig.js';
     import {
-      getAuth,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-    import {
-      getDatabase,
-      ref,
-      onValue,
-      push,
-      set,
-      update,
-      remove,
-      get
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-    import {
-      getStorage,
-      ref as storageRef,
-      uploadBytes,
-      getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
-    import {
-      addReaction,
-      updateTypingStatus,
-      editMessage,
-      sendMessage,
-      initIndexedDB
+        addReaction,
+        updateTypingStatus,
+        editMessage,
+        sendMessage as chatSendMessage,
+        initIndexedDB,
+        MESSAGE_TYPES,
+        MESSAGE_STATUS,
+        getCachedMessage,
+        setupMessageListeners,
+        setupTypingListener,
+        cleanup as chatCleanup,
+        currentChatId,
+        initializeChat
     } from './chatFeatures.js';
     import {
-      startVoiceRecording,
-      stopVoiceRecording,
-      showGifPicker,
-      sendGif
+        startVoiceRecording,
+        stopVoiceRecording,
+        showGifPicker,
+        sendGif
     } from './mediaFeatures.js';
     import {
-      initializeSecurity,
-      blockUser,
-      unblockUser,
-      isUserBlocked,
-      reportUser,
-      setMessageExpiration
+        initializeSecurity,
+        blockUser,
+        unblockUser,
+        isUserBlocked,
+        reportUser,
+        setMessageExpiration
     } from './security.js';
     import errorHandler from './errorHandler.js';
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
-      authDomain: "chatz-45df4.firebaseapp.com",
-      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
-      projectId: "chatz-45df4",
-      storageBucket: "chatz-45df4.appspot.com",
-      messagingSenderId: "463847844545",
-      appId: "1:463847844545:web:5006247d061c3e0dc28240"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
 
     // Initialize IndexedDB
     initIndexedDB();
 
-    const messageInput = document.getElementById('message-input');
-    const sendBtn = document.getElementById('send-btn');
-    const voiceBtn = document.getElementById('voice-btn');
-    const gifBtn = document.getElementById('gif-btn');
-    const blockBtn = document.getElementById('block-btn');
-    const reportBtn = document.getElementById('report-btn');
-    const disappearBtn = document.getElementById('disappear-btn');
+    const messageInput = document.querySelector('.message-input');
+    const sendButton = document.querySelector('.send-button');
+    const voiceButton = document.querySelector('.voice-button');
+    const gifButton = document.querySelector('.gif-button');
+    const blockButton = document.querySelector('#block-btn');
+    const reportButton = document.querySelector('#report-btn');
+    const disappearButton = document.querySelector('#disappear-btn');
     const chatMessages = document.querySelector('.chat-messages');
-    let currentChatId = null;
     let messageTimer = null;
 
     // Get chat ID from URL
     const urlParams = new URLSearchParams(window.location.search);
-    currentChatId = urlParams.get('chatId');
+    const contactId = urlParams.get('uid');
 
-    if (!currentChatId) {
-      window.location.href = 'global.html';
+    if (!contactId) {
+        window.location.href = 'global.html';
     }
+
+    // Initialize chat
+    initializeChat(contactId).catch(error => {
+        console.error('Failed to initialize chat:', error);
+        errorHandler.handleError(error, 'Chat Initialization');
+    });
 
     // Typing indicator
     let typingTimeout;
     messageInput.addEventListener('input', () => {
-      updateTypingStatus(true);
-      
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => {
-        updateTypingStatus(false);
-      }, 1000);
-    });
-
-    // Message reactions
-    function createReactionPicker(messageId) {
-      const picker = document.createElement('div');
-      picker.className = 'reaction-picker';
-      picker.innerHTML = `
-        <div class="reaction-options">
-          ${reactions.map(reaction => `
-            <button class="reaction-option" onclick="addReaction('${messageId}', '${reaction}')">
-              ${reaction}
-            </button>
-          `).join('')}
-        </div>
-      `;
-      return picker;
-    }
-
-    // Message template
-    function createMessageElement(message) {
-      const div = document.createElement('div');
-      div.className = `message ${message.sender === auth.currentUser.uid ? 'own' : ''}`;
-      div.innerHTML = `
-        <img src="${message.senderPhoto || 'https://ui-avatars.com/api/?name=U&background=726dff&color=fff'}" alt="Profile" />
-        <div class="message-content">
-          ${message.content}
-          <div class="message-actions">
-            <button class="message-action-btn" onclick="showReactionPicker('${message.id}')">
-              <i class="far fa-smile"></i>
-            </button>
-            ${message.sender === auth.currentUser.uid ? `
-              <button class="message-action-btn" onclick="editMessage('${message.id}')">
-                <i class="far fa-edit"></i>
-              </button>
-            ` : ''}
-          </div>
-          ${message.edited ? `
-            <div class="message-edit">
-              <i class="fas fa-pencil-alt"></i> edited
-            </div>
-          ` : ''}
-          <div class="message-reactions">
-            ${Object.entries(message.reactions || {}).map(([reaction, users]) => `
-              <div class="reaction" onclick="addReaction('${message.id}', '${reaction}')">
-                ${reaction} <span class="reaction-count">${Object.keys(users).length}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-        <div class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</div>
-      `;
-      return div;
-    }
-
-    // Load messages
-    function loadMessages() {
-      const messagesRef = ref(db, `messages/${currentChatId}`);
-      onValue(messagesRef, (snapshot) => {
-          chatMessages.innerHTML = '';
-        const messages = snapshot.val() || {};
+        updateTypingStatus(true);
         
-        Object.entries(messages)
-          .sort(([,a], [,b]) => a.timestamp - b.timestamp)
-          .forEach(([id, message]) => {
-            message.id = id;
-            chatMessages.appendChild(createMessageElement(message));
-          });
-        
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        });
-    }
-
-    // Voice message handling
-    let isRecording = false;
-    voiceBtn.addEventListener('mousedown', () => {
-      if (!isRecording) {
-        startVoiceRecording();
-        voiceBtn.classList.add('recording');
-        isRecording = true;
-      }
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            updateTypingStatus(false);
+        }, 1000);
     });
 
-    voiceBtn.addEventListener('mouseup', () => {
-      if (isRecording) {
-        stopVoiceRecording();
-        voiceBtn.classList.remove('recording');
-        isRecording = false;
-      }
-    });
-
-    // Prevent recording from stopping when mouse leaves button
-    voiceBtn.addEventListener('mouseleave', () => {
-      if (isRecording) {
-        stopVoiceRecording();
-        voiceBtn.classList.remove('recording');
-        isRecording = false;
-      }
-    });
-
-    // GIF button handling
-    gifBtn.onclick = () => {
-      showGifPicker();
-    };
-
-    // Initialize security features
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        await initializeSecurity();
-        loadMessages();
-      } else {
-        window.location.href = 'index.html';
-      }
-    });
-
-    // Block user handling
-    blockBtn.onclick = async () => {
-      const otherUserId = urlParams.get('uid');
-      const isBlocked = await isUserBlocked(otherUserId);
-      
-      if (isBlocked) {
-        await unblockUser(otherUserId);
-        blockBtn.innerHTML = '<i class="fas fa-ban"></i>';
-        blockBtn.title = 'Block User';
-      } else {
-        await blockUser(otherUserId);
-        blockBtn.innerHTML = '<i class="fas fa-check"></i>';
-        blockBtn.title = 'Unblock User';
-      }
-    };
-
-    // Report user handling
-    reportBtn.onclick = () => {
-      const reportModal = document.getElementById('report-modal');
-      reportModal.style.display = 'flex';
-    };
-
-    document.getElementById('submit-report').onclick = async () => {
-      const reason = document.getElementById('report-reason').value.trim();
-      if (!reason) {
-        alert('Please provide a reason for reporting');
-        return;
-      }
-
-      const otherUserId = urlParams.get('uid');
-      await reportUser(otherUserId, reason);
-      
-      document.getElementById('report-modal').style.display = 'none';
-      document.getElementById('report-reason').value = '';
-      alert('User has been reported. Thank you for helping keep our community safe.');
-    };
-
-    // Message timer handling
-    disappearBtn.onclick = () => {
-      const disappearModal = document.getElementById('disappear-modal');
-      disappearModal.style.display = 'flex';
-    };
-
-    document.querySelectorAll('.timer-options button').forEach(button => {
-      button.onclick = () => {
-        messageTimer = parseInt(button.dataset.time);
-        document.getElementById('disappear-modal').style.display = 'none';
-        disappearBtn.classList.add('active');
-      };
-    });
-
-    // Close modals
-    document.querySelectorAll('.close-modal').forEach(button => {
-      button.onclick = () => {
-        document.querySelectorAll('.modal').forEach(modal => {
-          modal.style.display = 'none';
-        });
-      };
-    });
-
-    // Enhanced message sending with timer
-    sendBtn.onclick = async () => {
-      const content = messageInput.value.trim();
-      if (!content) return;
-      
-      const messageRef = await sendMessage(content, currentChatId);
-      
-      if (messageTimer) {
-        await setMessageExpiration(messageRef.key, messageTimer);
-      }
-      
-      messageInput.value = '';
-      updateTypingStatus(false);
-    };
-
-    messageInput.onkeypress = (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendBtn.click();
-      }
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-        // Get URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const contactId = urlParams.get('contactId');
-        
-        if (contactId) {
-            initializeChat(contactId).catch(error => {
-                console.error('Failed to initialize chat:', error);
-                errorHandler.handleError(error, 'Chat Initialization');
-            });
+    // Message input handling
+    sendButton.addEventListener('click', async () => {
+        const content = messageInput.value.trim();
+        if (content) {
+            try {
+                await chatSendMessage(content, currentChatId);
+                messageInput.value = '';
+            } catch (error) {
+                errorHandler.handleError(error, 'Send Message');
+            }
         }
+    });
 
-        // Message input handling
-        const messageInput = document.querySelector('.message-input');
-        const sendButton = document.querySelector('.send-button');
-
-        sendButton.addEventListener('click', async () => {
+    messageInput.addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
             const content = messageInput.value.trim();
             if (content) {
                 try {
-                    await sendMessage(content);
+                    await chatSendMessage(content, currentChatId);
                     messageInput.value = '';
                 } catch (error) {
                     errorHandler.handleError(error, 'Send Message');
                 }
             }
-        });
+        }
+    });
 
-        messageInput.addEventListener('keypress', async (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                const content = messageInput.value.trim();
-                if (content) {
-                    try {
-                        await sendMessage(content);
-                        messageInput.value = '';
-                    } catch (error) {
-                        errorHandler.handleError(error, 'Send Message');
-                    }
-                }
+    // Voice recording
+    let isRecording = false;
+    voiceButton.addEventListener('click', async () => {
+        if (!isRecording) {
+            try {
+                await startVoiceRecording();
+                isRecording = true;
+                voiceButton.classList.add('recording');
+            } catch (error) {
+                errorHandler.handleError(error, 'Start Voice Recording');
             }
-        });
-
-        // Voice recording
-        const voiceButton = document.querySelector('.voice-button');
-        let isRecording = false;
-
-        voiceButton.addEventListener('click', async () => {
-            if (!isRecording) {
-                try {
-                    await startVoiceRecording();
-                    isRecording = true;
-                    voiceButton.classList.add('recording');
-                } catch (error) {
-                    errorHandler.handleError(error, 'Start Voice Recording');
-                }
-            } else {
-                try {
-                    await stopVoiceRecording();
-                    isRecording = false;
-                    voiceButton.classList.remove('recording');
-                } catch (error) {
-                    errorHandler.handleError(error, 'Stop Voice Recording');
-                }
+        } else {
+            try {
+                await stopVoiceRecording();
+                isRecording = false;
+                voiceButton.classList.remove('recording');
+            } catch (error) {
+                errorHandler.handleError(error, 'Stop Voice Recording');
             }
+        }
+    });
+
+    // GIF button handling
+    gifButton.addEventListener('click', () => {
+        showGifPicker();
+    });
+
+    // Initialize security features
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            await initializeSecurity();
+        } else {
+            window.location.href = 'index.html';
+        }
+    });
+
+    // Block user handling
+    blockButton.addEventListener('click', async () => {
+        const isBlocked = await isUserBlocked(contactId);
+        
+        if (isBlocked) {
+            await unblockUser(contactId);
+            blockButton.innerHTML = '<i class="fas fa-ban"></i>';
+            blockButton.title = 'Block User';
+        } else {
+            await blockUser(contactId);
+            blockButton.innerHTML = '<i class="fas fa-check"></i>';
+            blockButton.title = 'Unblock User';
+        }
+    });
+
+    // Report user handling
+    reportButton.addEventListener('click', () => {
+        const reportModal = document.getElementById('report-modal');
+        reportModal.style.display = 'flex';
+    });
+
+    document.getElementById('submit-report').addEventListener('click', async () => {
+        const reason = document.getElementById('report-reason').value.trim();
+        if (!reason) {
+            alert('Please provide a reason for reporting');
+            return;
+        }
+
+        await reportUser(contactId, reason);
+        
+        document.getElementById('report-modal').style.display = 'none';
+        document.getElementById('report-reason').value = '';
+        alert('User has been reported. Thank you for helping keep our community safe.');
+    });
+
+    // Message timer handling
+    disappearButton.addEventListener('click', () => {
+        const disappearModal = document.getElementById('disappear-modal');
+        disappearModal.style.display = 'flex';
+    });
+
+    document.querySelectorAll('.timer-options button').forEach(button => {
+        button.addEventListener('click', () => {
+            messageTimer = parseInt(button.dataset.time);
+            document.getElementById('disappear-modal').style.display = 'none';
+            disappearButton.classList.add('active');
         });
+    });
 
-        // GIF search
-        const gifButton = document.querySelector('.gif-button');
-        const gifPicker = document.querySelector('.gif-picker');
-        const gifSearch = document.querySelector('.gif-search');
-        const gifResults = document.querySelector('.gif-results');
-
-        gifButton.addEventListener('click', () => {
-            gifPicker.classList.toggle('active');
+    // Close modals
+    document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
+            });
         });
+    });
 
-        gifSearch.addEventListener('input', async (e) => {
-            const query = e.target.value.trim();
-            if (query) {
-                try {
-                    const gifs = await searchGifs(query);
-                    gifResults.innerHTML = gifs.map(gif => `
-                        <div class="gif-item" data-url="${gif.url}">
-                            <img src="${gif.preview}" alt="GIF">
-                        </div>
-                    `).join('');
-                } catch (error) {
-                    errorHandler.handleError(error, 'GIF Search');
-                }
-            }
-        });
-
-        gifResults.addEventListener('click', async (e) => {
-            const gifItem = e.target.closest('.gif-item');
-            if (gifItem) {
-                try {
-                    await sendGif(gifItem.dataset.url);
-                    gifPicker.classList.remove('active');
-                } catch (error) {
-                    errorHandler.handleError(error, 'Send GIF');
-                }
-            }
-        });
-
-        // Message actions
-        document.querySelector('.chat-messages').addEventListener('click', async (e) => {
-            const messageElement = e.target.closest('.message');
-            if (messageElement) {
-                const messageId = messageElement.dataset.messageId;
-                const action = e.target.dataset.action;
-
-                if (action === 'edit') {
-                    const newContent = prompt('Edit message:', messageElement.querySelector('.message-content').textContent);
-                    if (newContent) {
-                        try {
-                            await editMessage(messageId, newContent);
-                        } catch (error) {
-                            errorHandler.handleError(error, 'Edit Message');
-                        }
-                    }
-                } else if (action === 'react') {
-                    const reaction = prompt('Choose reaction (👍, ❤️, 😂, 😮, 😢, 👏):');
-                    if (reaction) {
-                        try {
-                            await addReaction(messageId, reaction);
-                        } catch (error) {
-                            errorHandler.handleError(error, 'Add Reaction');
-                        }
-                    }
-                }
-            }
-        });
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+        chatCleanup();
     });
   </script>
 </body>
