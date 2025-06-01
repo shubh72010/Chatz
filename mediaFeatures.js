@@ -26,7 +26,7 @@ let isRecording = false;
 const noChances = noChancesBrowser;
 
 // GIF API Configuration
-const GIPHY_API_KEY = 'YOUR_GIPHY_API_KEY'; // Replace with your Giphy API key
+const GIPHY_API_KEY = process.env.GIPHY_API_KEY || 'YOUR_GIPHY_API_KEY'; // Replace with your Giphy API key
 const GIPHY_API_URL = 'https://api.giphy.com/v1/gifs';
 
 // Start voice recording with enhanced error handling
@@ -213,7 +213,7 @@ export async function showGifPicker() {
 // Search GIFs from Giphy
 async function searchGifs(query) {
     try {
-        const response = await fetch(`${GIPHY_API_URL}/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=20`);
+        const response = await fetch(`${GIPHY_API_URL}/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=20&rating=g&lang=en`);
         const data = await response.json();
         return data.data;
     } catch (error) {
@@ -225,7 +225,7 @@ async function searchGifs(query) {
 // Get trending GIFs
 async function getTrendingGifs() {
     try {
-        const response = await fetch(`${GIPHY_API_URL}/trending?api_key=${GIPHY_API_KEY}&limit=20`);
+        const response = await fetch(`${GIPHY_API_URL}/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`);
         const data = await response.json();
         return data.data;
     } catch (error) {
@@ -237,8 +237,16 @@ async function getTrendingGifs() {
 // Display GIFs in the results container
 function displayGifs(gifs, container) {
     container.innerHTML = gifs.map(gif => `
-        <div class="gif-item" data-url="${gif.images.original.url}">
-            <img src="${gif.images.fixed_height.url}" alt="${gif.title}">
+        <div class="gif-item" data-url="${gif.images.original.url}" data-mp4="${gif.images.original.mp4}">
+            <img src="${gif.images.fixed_height_small.url}" 
+                 alt="${gif.title || 'GIF'}"
+                 loading="lazy"
+                 data-original="${gif.images.original.url}"
+                 data-mp4="${gif.images.original.mp4}">
+            <div class="gif-info">
+                <span class="gif-title">${gif.title || 'Untitled GIF'}</span>
+                <span class="gif-rating">${gif.rating.toUpperCase()}</span>
+            </div>
         </div>
     `).join('');
 
@@ -246,22 +254,26 @@ function displayGifs(gifs, container) {
     container.querySelectorAll('.gif-item').forEach(item => {
         item.addEventListener('click', () => {
             const gifUrl = item.dataset.url;
-            sendGif(gifUrl);
+            const gifMp4 = item.dataset.mp4;
+            sendGif(gifUrl, gifMp4);
             document.querySelector('.gif-picker').remove();
         });
     });
 }
 
 // Send GIF message
-async function sendGif(gifUrl) {
+async function sendGif(gifUrl, gifMp4) {
     try {
         // Create a temporary link to download the GIF
         const response = await fetch(gifUrl);
         const blob = await response.blob();
         const file = new File([blob], 'gif.gif', { type: 'image/gif' });
 
-        // Upload and send
-        await uploadFile(file, 'gif');
+        // Upload and send with both GIF and MP4 URLs
+        await uploadFile(file, 'gif', {
+            gifUrl,
+            mp4Url: gifMp4
+        });
     } catch (error) {
         noChances.handleError(error, 'Send GIF Error');
     }
@@ -287,30 +299,38 @@ style.textContent = `
         position: fixed;
         bottom: 80px;
         right: 20px;
-        width: 300px;
-        height: 400px;
+        width: 320px;
+        height: 450px;
         background: #1a1a1a;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         z-index: 1000;
         display: flex;
         flex-direction: column;
     }
 
     .gif-picker-header {
-        padding: 10px;
+        padding: 12px;
         border-bottom: 1px solid #333;
         display: flex;
         gap: 10px;
+        background: #222;
+        border-radius: 12px 12px 0 0;
     }
 
     .gif-search {
         flex: 1;
-        padding: 8px;
+        padding: 10px;
         border: 1px solid #444;
-        border-radius: 4px;
+        border-radius: 6px;
         background: #2a2a2a;
         color: #fff;
+        font-size: 14px;
+    }
+
+    .gif-search:focus {
+        outline: none;
+        border-color: #666;
     }
 
     .close-picker {
@@ -319,32 +339,85 @@ style.textContent = `
         color: #fff;
         font-size: 20px;
         cursor: pointer;
+        padding: 0 5px;
     }
 
     .gif-results {
         flex: 1;
         overflow-y: auto;
-        padding: 10px;
+        padding: 12px;
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        gap: 12px;
+        background: #1a1a1a;
     }
 
     .gif-item {
         cursor: pointer;
-        border-radius: 4px;
+        border-radius: 8px;
         overflow: hidden;
-        transition: transform 0.2s;
+        transition: transform 0.2s, box-shadow 0.2s;
+        background: #222;
+        position: relative;
     }
 
     .gif-item:hover {
-        transform: scale(1.05);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     .gif-item img {
         width: 100%;
-        height: 100%;
+        height: 120px;
         object-fit: cover;
+        display: block;
+    }
+
+    .gif-info {
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.7);
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .gif-title {
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 70%;
+    }
+
+    .gif-rating {
+        color: #aaa;
+        font-size: 10px;
+        padding: 2px 4px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Scrollbar styling */
+    .gif-results::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .gif-results::-webkit-scrollbar-track {
+        background: #1a1a1a;
+    }
+
+    .gif-results::-webkit-scrollbar-thumb {
+        background: #444;
+        border-radius: 4px;
+    }
+
+    .gif-results::-webkit-scrollbar-thumb:hover {
+        background: #555;
     }
 `;
 document.head.appendChild(style);
