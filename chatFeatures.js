@@ -131,7 +131,7 @@ function setupOnlineStatusListener() {
 }
 
 // Send message with error handling
-export async function sendMessage(content, chatId) {
+async function sendMessage(content, chatId) {
     try {
         if (!messagesRef) {
             throw new Error('Messages reference not initialized');
@@ -461,5 +461,6 @@ export {
     setupTypingListener,
     currentChatId,
     initializeChat,
-    loadOlderMessages
+    loadOlderMessages,
+    sendMessage
 };
