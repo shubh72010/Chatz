@@ -460,5 +460,6 @@ export {
     setupMessageListeners,
     setupTypingListener,
     currentChatId,
+    initializeChat,
     loadOlderMessages
 };
