@@ -6,6 +6,7 @@
   <title>Chatz | by Flakious</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="nochances.css"/>
+  <script src="themeManager.js"></script>
   <style>
     :root {
       --main: #726dff;
@@ -327,6 +328,11 @@
   </div>
 
   <script>
+    // Initialize theme manager when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        window.themeManager.initThemeManager();
+    });
+
     // Apply theme from localStorage on page load
     (function() {
       const theme = localStorage.getItem('chatzTheme') || 'default';
