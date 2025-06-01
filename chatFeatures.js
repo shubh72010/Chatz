@@ -158,20 +158,6 @@ async function sendMessage(content, chatId) {
     }
 }
 
-// Update typing status with error handling
-export function updateTypingStatus(isTyping) {
-    try {
-        if (!typingRef) {
-            throw new Error('Typing reference not initialized');
-        }
-
-        typingRef.child(auth.currentUser.uid).set(isTyping);
-    } catch (error) {
-        console.error('Error updating typing status:', error);
-        throw error;
-    }
-}
-
 // UI Helper functions
 function displayMessage(message) {
     const chatMessages = document.querySelector('.chat-messages');
@@ -448,10 +434,23 @@ async function loadOlderMessages() {
     }
 }
 
+// Update typing status with error handling
+function updateTypingStatus(isTyping) {
+    try {
+        if (!typingRef) {
+            throw new Error('Typing reference not initialized');
+        }
+
+        typingRef.child(auth.currentUser.uid).set(isTyping);
+    } catch (error) {
+        console.error('Error updating typing status:', error);
+        throw error;
+    }
+}
+
 // Export enhanced functions
 export {
     addReaction,
-    updateTypingStatus,
     editMessage,
     initIndexedDB,
     MESSAGE_TYPES,
@@ -462,5 +461,6 @@ export {
     currentChatId,
     initializeChat,
     loadOlderMessages,
-    sendMessage
+    sendMessage,
+    updateTypingStatus
 };
