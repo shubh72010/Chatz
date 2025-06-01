@@ -1064,8 +1064,8 @@
         <button class="send-btn" title="Send Message">
           <i class="fas fa-paper-plane"></i>
         </button>
-      </div>
     </div>
+  </div>
 
     <!-- Voice Recording UI -->
     <div class="voice-recording-ui" style="display: none;">
@@ -1268,8 +1268,8 @@
             if (content) {
                 try {
                     await chatSendMessage(content, currentChatId);
-                    messageInput.value = '';
-                } catch (error) {
+        messageInput.value = '';
+      } catch (error) {
                     errorHandler.handleError(error, 'Send Message');
                 }
             }
