@@ -67,17 +67,21 @@ if (!contactId) {
 // Initialize chat
 initializeChat(contactId).catch(error => {
     console.error('Failed to initialize chat:', error);
-    errorHandler.handleError(error, 'Chat Initialization');
+    errorHandler.handleError(error, 'Failed to initialize chat');
 });
 
 // Typing indicator
 let typingTimeout;
 messageInput.addEventListener('input', () => {
-    updateTypingStatus(true);
+    updateTypingStatus(true).catch(error => {
+        errorHandler.handleError(error, 'Failed to update typing status');
+    });
     
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
-        updateTypingStatus(false);
+        updateTypingStatus(false).catch(error => {
+            errorHandler.handleError(error, 'Failed to clear typing status');
+        });
     }, 1000);
 });
 
@@ -89,7 +93,7 @@ sendButton.addEventListener('click', async () => {
             await chatSendMessage(content, currentChatId);
             messageInput.value = '';
         } catch (error) {
-            errorHandler.handleError(error, 'Send Message');
+            errorHandler.handleError(error, 'Failed to send message');
         }
     }
 });
@@ -103,7 +107,7 @@ messageInput.addEventListener('keypress', async (e) => {
                 await chatSendMessage(content, currentChatId);
                 messageInput.value = '';
             } catch (error) {
-                errorHandler.handleError(error, 'Send Message');
+                errorHandler.handleError(error, 'Failed to send message');
             }
         }
     }
@@ -118,7 +122,9 @@ voiceButton.addEventListener('click', async () => {
             isRecording = true;
             voiceButton.classList.add('recording');
         } catch (error) {
-            errorHandler.handleError(error, 'Start Voice Recording');
+            errorHandler.handleError(error, 'Failed to start voice recording');
+            isRecording = false;
+            voiceButton.classList.remove('recording');
         }
     } else {
         try {
@@ -126,7 +132,9 @@ voiceButton.addEventListener('click', async () => {
             isRecording = false;
             voiceButton.classList.remove('recording');
         } catch (error) {
-            errorHandler.handleError(error, 'Stop Voice Recording');
+            errorHandler.handleError(error, 'Failed to stop voice recording');
+            isRecording = false;
+            voiceButton.classList.remove('recording');
         }
     }
 });
@@ -147,16 +155,20 @@ auth.onAuthStateChanged(async (user) => {
 
 // Block user handling
 blockButton.addEventListener('click', async () => {
-    const isBlocked = await isUserBlocked(contactId);
-    
-    if (isBlocked) {
-        await unblockUser(contactId);
-        blockButton.innerHTML = '<i class="fas fa-ban"></i>';
-        blockButton.title = 'Block User';
-    } else {
-        await blockUser(contactId);
-        blockButton.innerHTML = '<i class="fas fa-check"></i>';
-        blockButton.title = 'Unblock User';
+    try {
+        const isBlocked = await isUserBlocked(contactId);
+        
+        if (isBlocked) {
+            await unblockUser(contactId);
+            blockButton.innerHTML = '<i class="fas fa-ban"></i>';
+            blockButton.title = 'Block User';
+        } else {
+            await blockUser(contactId);
+            blockButton.innerHTML = '<i class="fas fa-check"></i>';
+            blockButton.title = 'Unblock User';
+        }
+    } catch (error) {
+        errorHandler.handleError(error, 'Failed to update block status');
     }
 });
 
@@ -169,15 +181,18 @@ reportButton.addEventListener('click', () => {
 document.getElementById('submit-report').addEventListener('click', async () => {
     const reason = document.getElementById('report-reason').value.trim();
     if (!reason) {
-        alert('Please provide a reason for reporting');
+        errorHandler.handleError(new Error('Please provide a reason for reporting'), 'Report User');
         return;
     }
 
-    await reportUser(contactId, reason);
-    
-    document.getElementById('report-modal').style.display = 'none';
-    document.getElementById('report-reason').value = '';
-    alert('User has been reported. Thank you for helping keep our community safe.');
+    try {
+        await reportUser(contactId, reason);
+        document.getElementById('report-modal').style.display = 'none';
+        document.getElementById('report-reason').value = '';
+        alert('User has been reported. Thank you for helping keep our community safe.');
+    } catch (error) {
+        errorHandler.handleError(error, 'Failed to report user');
+    }
 });
 
 // Message timer handling
