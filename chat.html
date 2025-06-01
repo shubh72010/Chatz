@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="styles.css" />
-  <script src="themeManager.js"></script>
   <style>
     * { 
       box-sizing: border-box; 
@@ -1163,15 +1162,11 @@
     </div>
   </div>
 
-  <!-- Firebase App (the core Firebase SDK) -->
+  <!-- Firebase Scripts -->
   <script type="module" src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-  <!-- Firebase Auth -->
   <script type="module" src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
-  <!-- Firebase Firestore -->
   <script type="module" src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
-  <!-- Firebase Storage -->
   <script type="module" src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js"></script>
-  <!-- Firebase Realtime Database -->
   <script type="module" src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"></script>
   
   <!-- Custom Scripts -->
@@ -1180,11 +1175,17 @@
   <script type="module" src="./errorHandler.js"></script>
   <script type="module" src="./noChancesBrowser.js"></script>
   <script type="module" src="./chat.js"></script>
-
+  
+  <!-- Theme Manager -->
+  <script src="themeManager.js"></script>
   <script>
-    // Initialize theme manager when the page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      window.themeManager.initThemeManager();
+    // Wait for the theme manager script to load
+    window.addEventListener('load', function() {
+      if (window.themeManager && typeof window.themeManager.initThemeManager === 'function') {
+        window.themeManager.initThemeManager();
+      } else {
+        console.error('Theme manager not properly loaded');
+      }
     });
   </script>
 </body>
