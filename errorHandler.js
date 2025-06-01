@@ -826,6 +826,16 @@ class NoChancesErrorHandler {
         this.retryStrategy = new AdaptiveRetryStrategy(this.performanceMetrics);
         this.learningSystem = new NoChancesLearningSystem();
         
+        // Initialize optimization state
+        this.optimizationState = {
+            lastOptimization: Date.now(),
+            optimizationInterval: 300000, // 5 minutes
+            batchSize: 100,
+            cleanupThreshold: 3600000, // 1 hour
+            metricsWindow: 100,
+            recoveryWindow: 50
+        };
+        
         // Initialize protection systems
         this.protectionSystems = {
             errorPrevention: new Map(),
