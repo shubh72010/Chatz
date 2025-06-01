@@ -172,20 +172,6 @@ export function updateTypingStatus(isTyping) {
     }
 }
 
-// Cleanup function
-export function cleanup() {
-    if (typingRef) {
-        typingRef.off();
-    }
-    if (onlineStatusRef) {
-        onlineStatusRef.off();
-    }
-    if (messagesRef) {
-        messagesRef.onSnapshot(() => {});
-    }
-    firebaseCleanup();
-}
-
 // UI Helper functions
 function displayMessage(message) {
     const chatMessages = document.querySelector('.chat-messages');
