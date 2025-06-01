@@ -5,7 +5,7 @@ import {
     storage, 
     realtimeDb,
     currentUser,
-    sendMessage,
+    sendMessage as firebaseSendMessage,
     updateMessage,
     deleteMessage,
     uploadFile,
@@ -320,16 +320,18 @@ async function sendMessage(content, chatId, type = MESSAGE_TYPES.TEXT, options =
             ...options
         };
         
+        let messageId;
+        
         // Handle disappearing messages
         if (options.disappearAfter) {
             message.status = MESSAGE_STATUS.DISAPPEARING;
-            const messageId = await sendMessage(chatId, message);
+            messageId = await firebaseSendMessage(chatId, message);
             const timer = setTimeout(async () => {
                 await deleteMessage(chatId, messageId);
             }, options.disappearAfter);
             DISAPPEAR_TIMERS.set(messageId, timer);
         } else {
-            await sendMessage(chatId, message);
+            messageId = await firebaseSendMessage(chatId, message);
         }
         
         // Cache the message
@@ -337,9 +339,8 @@ async function sendMessage(content, chatId, type = MESSAGE_TYPES.TEXT, options =
         
         return messageId;
     } catch (error) {
-        await errorHandler.handleError(error, 'Send Message', async () => {
-            return await sendMessage(content, chatId, type, options);
-        });
+        await errorHandler.handleError(error, 'Send Message');
+        throw error; // Re-throw the error instead of recursive call
     }
 }
 
@@ -483,5 +484,7 @@ export {
     getCachedMessage,
     setupMessageListeners,
     setupTypingListener,
-    cleanup
-}; 
+    cleanup,
+    currentChatId,
+    initializeChat
+};
