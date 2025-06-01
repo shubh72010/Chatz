@@ -435,7 +435,7 @@ async function loadOlderMessages() {
 }
 
 // Update typing status with error handling
-export function updateTypingStatus(isTyping) {
+function updateTypingStatus(isTyping) {
     try {
         if (!typingRef) {
             throw new Error('Typing reference not initialized');
@@ -461,5 +461,6 @@ export {
     currentChatId,
     initializeChat,
     loadOlderMessages,
-    sendMessage
+    sendMessage,
+    updateTypingStatus
 };
