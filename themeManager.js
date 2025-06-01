@@ -1,37 +1,64 @@
 // Theme Manager for Chatz
 const themes = {
     light: {
-        primary: '#ffffff',
-        secondary: '#f5f5f5',
-        text: '#333333',
-        accent: '#2196f3',
-        border: '#e0e0e0',
-        shadow: 'rgba(0, 0, 0, 0.1)',
-        messageOwn: '#e3f2fd',
-        messageOther: '#f5f5f5',
-        inputBg: '#ffffff',
+        main: '#7b5cff',
+        mainDark: '#5a3ec8',
+        mainLight: '#b3aaff',
+        bg: '#f4f6fb',
+        bgLight: '#fff',
+        bgGradient: 'linear-gradient(135deg, #e9e6ff 0%, #f4f6fb 100%)',
+        bubbleOwn: '#7b5cff',
+        bubbleOther: '#e9e6ff',
+        bubbleOwnText: '#fff',
+        bubbleOtherText: '#23272f',
+        headerBg: '#fff',
+        headerShadow: '0 2px 12px 0 rgba(0,0,0,0.08)',
+        inputBg: '#f4f6fb',
+        inputBorder: '#b3aaff',
+        replyBg: '#e9e6ff',
+        replyBorder: '#7b5cff',
+        scrollbarThumb: '#b3aaff',
+        scrollbarTrack: '#f4f6fb'
     },
     purple: {
-        primary: '#f3e5f5',
-        secondary: '#e1bee7',
-        text: '#4a148c',
-        accent: '#9c27b0',
-        border: '#ce93d8',
-        shadow: 'rgba(156, 39, 176, 0.1)',
-        messageOwn: '#e1bee7',
-        messageOther: '#f3e5f5',
-        inputBg: '#ffffff',
+        main: '#726dff',
+        mainDark: '#554fa6',
+        mainLight: '#a3a0ff',
+        bg: '#23272f',
+        bgLight: '#2e323c',
+        bgGradient: 'linear-gradient(135deg, #726dff 0%, #554fa6 100%)',
+        bubbleOwn: '#726dff',
+        bubbleOther: '#2e323c',
+        bubbleOwnText: '#fff',
+        bubbleOtherText: '#e6e6fa',
+        headerBg: '#23272f',
+        headerShadow: '0 2px 12px 0 rgba(0,0,0,0.08)',
+        inputBg: '#292d36',
+        inputBorder: '#44415e',
+        replyBg: '#554fa6',
+        replyBorder: '#a3a0ff',
+        scrollbarThumb: '#726dff55',
+        scrollbarTrack: '#23272f'
     },
     dark: {
-        primary: '#1a1a1a',
-        secondary: '#2d2d2d',
-        text: '#ffffff',
-        accent: '#bb86fc',
-        border: '#404040',
-        shadow: 'rgba(0, 0, 0, 0.3)',
-        messageOwn: '#4a4a4a',
-        messageOther: '#2d2d2d',
-        inputBg: '#333333',
+        main: '#23272f',
+        mainDark: '#181b20',
+        mainLight: '#44415e',
+        bg: '#181b20',
+        bgLight: '#23272f',
+        bgGradient: 'linear-gradient(135deg, #181b20 0%, #23272f 100%)',
+        bubbleOwn: '#44415e',
+        bubbleOther: '#23272f',
+        bubbleOwnText: '#fff',
+        bubbleOtherText: '#e6e6fa',
+        headerBg: '#181b20',
+        headerShadow: '0 2px 12px 0 rgba(0,0,0,0.15)',
+        inputBg: '#23232f',
+        inputBorder: '#44415e',
+        replyBg: '#23272f',
+        replyBorder: '#726dff',
+        scrollbarThumb: '#44415e',
+        scrollbarTrack: '#181b20'
     }
 };
 
@@ -71,15 +98,24 @@ function applyTheme(themeName) {
 
         // Only apply theme if it's different from current
         if (currentTheme !== themeName) {
-            root.style.setProperty('--primary-bg', theme.primary);
-            root.style.setProperty('--secondary-bg', theme.secondary);
-            root.style.setProperty('--text-color', theme.text);
-            root.style.setProperty('--accent-color', theme.accent);
-            root.style.setProperty('--border-color', theme.border);
-            root.style.setProperty('--shadow-color', theme.shadow);
-            root.style.setProperty('--message-own-bg', theme.messageOwn);
-            root.style.setProperty('--message-other-bg', theme.messageOther);
+            root.style.setProperty('--main', theme.main);
+            root.style.setProperty('--main-dark', theme.mainDark);
+            root.style.setProperty('--main-light', theme.mainLight);
+            root.style.setProperty('--bg', theme.bg);
+            root.style.setProperty('--bg-light', theme.bgLight);
+            root.style.setProperty('--bg-gradient', theme.bgGradient);
+            root.style.setProperty('--bubble-own', theme.bubbleOwn);
+            root.style.setProperty('--bubble-other', theme.bubbleOther);
+            root.style.setProperty('--bubble-own-text', theme.bubbleOwnText);
+            root.style.setProperty('--bubble-other-text', theme.bubbleOtherText);
+            root.style.setProperty('--header-bg', theme.headerBg);
+            root.style.setProperty('--header-shadow', theme.headerShadow);
             root.style.setProperty('--input-bg', theme.inputBg);
+            root.style.setProperty('--input-border', theme.inputBorder);
+            root.style.setProperty('--reply-bg', theme.replyBg);
+            root.style.setProperty('--reply-border', theme.replyBorder);
+            root.style.setProperty('--scrollbar-thumb', theme.scrollbarThumb);
+            root.style.setProperty('--scrollbar-track', theme.scrollbarTrack);
             
             currentTheme = themeName;
             
@@ -131,6 +167,5 @@ window.themeManager = {
     getCurrentTheme,
     applyTheme,
     initThemeManager,
-    // Add method to get current theme object
     getThemeColors: (themeName) => themes[themeName] || themes.light
 }; 
