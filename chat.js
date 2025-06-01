@@ -11,7 +11,7 @@ import {
     listenToMessages,
     listenToTyping,
     listenToOnlineStatus,
-    cleanup
+    cleanup as firebaseCleanup
 } from './firebaseConfig.js';
 import {
     addReaction,
@@ -205,6 +205,6 @@ document.querySelectorAll('.close-modal').forEach(button => {
 });
 
 // Cleanup on page unload
-window.addEventListener('beforeunload', () => {
-    chatCleanup();
+window.addEventListener('unload', () => {
+    firebaseCleanup();
 }); 
