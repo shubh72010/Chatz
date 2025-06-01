@@ -137,6 +137,9 @@ class NoChancesLearningSystem {
             recovery: new Map(),
             verification: new Map()
         };
+
+        this.recoveryStatus = new Map();
+        this.redundancyChecks = new Map();
     }
 
     startProtectionSystems() {
@@ -201,10 +204,7 @@ class NoChancesLearningSystem {
     }
 
     validateAll() {
-        // Multiple layers of validation
-        for (let i = 0; i < this.protectionConfig.validationDepth; i++) {
-            this.validateLayer(i);
-        }
+        return this.validateLayer('all');
     }
 
     validateLayer(layer) {
@@ -224,25 +224,12 @@ class NoChancesLearningSystem {
         if (!validation.features.success) this.fixFeatureRegistry();
         if (!validation.performance.success) this.fixPerformanceMetrics();
         if (!validation.state.success) this.fixSystemState();
+
+        return validation.success;
     }
 
     verifyAll() {
-        // Verify everything is perfect
-        const verification = {
-            redundancy: this.verifyRedundancy(),
-            validation: this.verifyValidation(),
-            recovery: this.verifyRecovery(),
-            success: this.verifySuccess(),
-            timestamp: Date.now()
-        };
-
-        // If anything is not perfect, fix it immediately
-        if (!verification.redundancy) this.createRedundancy();
-        if (!verification.validation) this.validateAll();
-        if (!verification.recovery) this.optimizeRecovery();
-        if (!verification.success) this.forceSuccess();
-
-        return verification;
+        return this.verifyRedundancy();
     }
 
     ensureSuccess() {
@@ -507,6 +494,18 @@ class NoChancesLearningSystem {
         if (this.learningHistory.length > 1000) {
             this.learningHistory.shift();
         }
+    }
+
+    validateKnowledgeBase() {
+        return Array.from(this.knowledgeBase.values()).every(entry => entry.valid);
+    }
+
+    checkRecoveryStatus() {
+        return Array.from(this.recoveryStatus.values()).every(status => status.recovered);
+    }
+
+    verifyRedundancy() {
+        return Array.from(this.redundancyChecks.values()).every(check => check.verified);
     }
 }
 
