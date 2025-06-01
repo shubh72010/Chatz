@@ -14,6 +14,14 @@ import {
     listenToOnlineStatus,
     cleanup as firebaseCleanup
 } from './firebaseConfig.js';
+import { 
+    collection,
+    query,
+    where,
+    orderBy,
+    limit,
+    getDocs
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import errorHandler from './errorHandler.js';
 import noChancesBrowser from './noChancesBrowser.js';
 
@@ -165,7 +173,7 @@ export function updateTypingStatus(isTyping) {
 }
 
 // Cleanup function
-export function cleanup() {
+function cleanup() {
     if (typingRef) {
         typingRef.off();
     }
@@ -423,6 +431,37 @@ async function storeOfflineMessage(content, chatId, type, options = {}) {
     }
 }
 
+// Load older messages
+async function loadOlderMessages() {
+    try {
+        if (!messagesRef) {
+            throw new Error('Messages reference not initialized');
+        }
+
+        const lastMessage = messageCache.size > 0 ? 
+            Array.from(messageCache.values())[messageCache.size - 1] : null;
+
+        const q = query(
+            messagesRef,
+            orderBy('timestamp', 'desc'),
+            limit(20),
+            ...(lastMessage ? [where('timestamp', '<', lastMessage.timestamp)] : [])
+        );
+
+        const snapshot = await getDocs(q);
+        snapshot.forEach(doc => {
+            const message = doc.data();
+            cacheMessage(doc.id, message);
+            displayMessage(message);
+        });
+
+        return snapshot.docs.length > 0;
+    } catch (error) {
+        console.error('Error loading older messages:', error);
+        throw error;
+    }
+}
+
 // Export enhanced functions
 export {
     addReaction,
@@ -435,7 +474,7 @@ export {
     getCachedMessage,
     setupMessageListeners,
     setupTypingListener,
-    cleanup,
     currentChatId,
-    initializeChat
+    initializeChat,
+    loadOlderMessages
 };
