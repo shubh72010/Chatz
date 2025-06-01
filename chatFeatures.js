@@ -41,7 +41,7 @@ let typingListener = null;
 let onlineStatusListener = null;
 
 // Initialize chat with a contact
-export async function initializeChat(contactId) {
+async function initializeChat(contactId) {
     try {
         if (!auth.currentUser) {
             throw new Error('User not authenticated');
