@@ -461,6 +461,5 @@ export {
     currentChatId,
     initializeChat,
     loadOlderMessages,
-    sendMessage,
-    updateTypingStatus
+    sendMessage
 };
