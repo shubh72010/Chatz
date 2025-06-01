@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz | by Flakious</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="nochances.css"/>
   <style>
     :root {
       --main: #726dff;
@@ -358,6 +359,10 @@
       get,
       onDisconnect
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+    import noChancesBrowser from './noChancesBrowser.js';
+
+    // Initialize NoChances
+    const noChances = noChancesBrowser;
 
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
@@ -369,145 +374,157 @@
       appId: "1:463847844545:web:5006247d061c3e0dc28240"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
+    // Wrap Firebase initialization in error handling
+    try {
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getDatabase(app);
 
-    const signInBtn = document.getElementById("sign-in");
-    const usersGrid = document.getElementById("users-grid");
-    const noUsersContainer = document.getElementById("no-users-container");
+      const signInBtn = document.getElementById("sign-in");
+      const usersGrid = document.getElementById("users-grid");
+      const noUsersContainer = document.getElementById("no-users-container");
 
-    function renderUsers(users) {
-      const usersGrid = document.getElementById('users-grid');
-      usersGrid.innerHTML = '';
-      
-      users.forEach(user => {
-        if (user.uid === auth.currentUser?.uid) return;
+      function renderUsers(users) {
+        const usersGrid = document.getElementById('users-grid');
+        usersGrid.innerHTML = '';
         
-        const userCard = document.createElement('div');
-        userCard.className = 'user-card';
-        userCard.innerHTML = `
-          <img src="${user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nickname || user.displayName || 'U')}&background=726dff&color=fff`}" alt="Profile" />
-          <div class="user-info">
-            <div class="user-name">${user.nickname || user.displayName || "Anonymous"}</div>
-            <div class="user-status">${user.online ? "Online" : "Offline"}</div>
-          </div>
-          <button class="dm-btn" onclick="event.stopPropagation(); window.location.href='chat.html?uid=${user.uid}'">
-            <i class="fas fa-comment"></i> DM
-          </button>
-        `;
-        
-        userCard.onclick = () => {
-          window.location.href = 'chat.html?uid=' + user.uid;
-        };
-        
-        usersGrid.appendChild(userCard);
-      });
-    }
-
-    // Listen for user data changes
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        signInBtn.style.display = "none";
-        
-        const userRef = ref(db, "users/" + user.uid);
-        const userStatusRef = ref(db, "users/" + user.uid + "/online");
-        const userStatusDatabaseRef = ref(db, "users/" + user.uid + "/lastActive");
-        
-        // Set up online status
-        set(userStatusRef, true);
-        set(userStatusDatabaseRef, serverTimestamp());
-        
-        // Set up disconnect handlers
-        onDisconnect(userStatusRef).set(false);
-        onDisconnect(userStatusDatabaseRef).set(serverTimestamp());
-        
-        // First check if user data exists
-        get(userRef).then((snapshot) => {
-          if (snapshot.exists()) {
-            // Update user data while preserving online status
-            update(userRef, {
-              displayName: user.displayName,
-              photoURL: user.photoURL,
-              lastActive: serverTimestamp()
-            });
-          } else {
-            // Initialize user data if it doesn't exist
-            set(userRef, {
-              displayName: user.displayName,
-              photoURL: user.photoURL,
-              lastActive: serverTimestamp(),
-              online: true
-            });
-          }
-        }).catch((err) => {
-          console.error("Error loading user data:", err);
-        });
-
-        // Listen for all users
-        onValue(ref(db, "users"), (snapshot) => {
-          const users = [];
-          snapshot.forEach((childSnapshot) => {
-            const data = childSnapshot.val();
-            users.push({
-              uid: childSnapshot.key,
-              displayName: data.displayName || "Anonymous",
-              nickname: data.nickname || "",
-              photoURL: data.photoURL,
-              online: data.online,
-              lastActive: data.lastActive
-            });
-          });
-          renderUsers(users);
-        });
-      } else {
-        signInBtn.style.display = "inline-block";
-      }
-    });
-
-    // Handle sign in
-    signInBtn.onclick = () => {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({
-        prompt: 'select_account'
-      });
-      signInWithPopup(auth, provider)
-        .then(async (result) => {
-          const user = result.user;
-          console.log("Sign in successful:", user);
+        users.forEach(user => {
+          if (user.uid === auth.currentUser?.uid) return;
           
-          try {
-            const userRef = ref(db, `users/${user.uid}`);
-            const userData = {
-              displayName: user.displayName,
-              email: user.email,
-              photoURL: user.photoURL,
-              lastActive: serverTimestamp(),
-              online: true
-            };
-            
-            console.log("Saving user data:", userData);
-            await set(userRef, userData);
-            console.log("User data saved successfully");
-          } catch (error) {
-            console.error("Error saving user data:", error);
-            alert("Error saving user data: " + error.message);
-          }
-        })
-        .catch((error) => {
-          console.error("Sign in error:", error);
-          alert("Sign in failed: " + error.message);
+          const userCard = document.createElement('div');
+          userCard.className = 'user-card';
+          userCard.innerHTML = `
+            <img src="${user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nickname || user.displayName || 'U')}&background=726dff&color=fff`}" alt="Profile" />
+            <div class="user-info">
+              <div class="user-name">${user.nickname || user.displayName || "Anonymous"}</div>
+              <div class="user-status">${user.online ? "Online" : "Offline"}</div>
+            </div>
+            <button class="dm-btn" onclick="event.stopPropagation(); window.location.href='chat.html?uid=${user.uid}'">
+              <i class="fas fa-comment"></i> DM
+            </button>
+          `;
+          
+          userCard.onclick = () => {
+            window.location.href = 'chat.html?uid=' + user.uid;
+          };
+          
+          usersGrid.appendChild(userCard);
         });
-    };
+      }
 
-    // Handle navigation buttons
-    document.getElementById("global-chat-btn").onclick = () => {
-      window.location.href = "global.html";
-    };
+      // Listen for user data changes
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          signInBtn.style.display = "none";
+          
+          const userRef = ref(db, "users/" + user.uid);
+          const userStatusRef = ref(db, "users/" + user.uid + "/online");
+          const userStatusDatabaseRef = ref(db, "users/" + user.uid + "/lastActive");
+          
+          // Set up online status
+          set(userStatusRef, true);
+          set(userStatusDatabaseRef, serverTimestamp());
+          
+          // Set up disconnect handlers
+          onDisconnect(userStatusRef).set(false);
+          onDisconnect(userStatusDatabaseRef).set(serverTimestamp());
+          
+          // First check if user data exists
+          get(userRef).then((snapshot) => {
+            if (snapshot.exists()) {
+              // Update user data while preserving online status
+              update(userRef, {
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                lastActive: serverTimestamp()
+              });
+            } else {
+              // Initialize user data if it doesn't exist
+              set(userRef, {
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                lastActive: serverTimestamp(),
+                online: true
+              });
+            }
+          }).catch((err) => {
+            console.error("Error loading user data:", err);
+          });
 
-    document.getElementById("settings-btn").onclick = () => {
-      window.location.href = "settings.html";
-    };
+          // Listen for all users
+          onValue(ref(db, "users"), (snapshot) => {
+            const users = [];
+            snapshot.forEach((childSnapshot) => {
+              const data = childSnapshot.val();
+              users.push({
+                uid: childSnapshot.key,
+                displayName: data.displayName || "Anonymous",
+                nickname: data.nickname || "",
+                photoURL: data.photoURL,
+                online: data.online,
+                lastActive: data.lastActive
+              });
+            });
+            renderUsers(users);
+          });
+        } else {
+          signInBtn.style.display = "inline-block";
+        }
+      });
+
+      // Add error handling to sign in
+      signInBtn.onclick = () => {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({
+          prompt: 'select_account'
+        });
+        signInWithPopup(auth, provider)
+          .then(async (result) => {
+            const user = result.user;
+            console.log("Sign in successful:", user);
+            
+            try {
+              const userRef = ref(db, `users/${user.uid}`);
+              const userData = {
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+                lastActive: serverTimestamp(),
+                online: true
+              };
+              
+              console.log("Saving user data:", userData);
+              await set(userRef, userData);
+              console.log("User data saved successfully");
+            } catch (error) {
+              noChances.handleError(error, 'User Data Save Error');
+            }
+          })
+          .catch((error) => {
+            noChances.handleError(error, 'Sign In Error');
+          });
+      };
+
+      // Add error handling to navigation
+      document.getElementById("global-chat-btn").onclick = () => {
+        try {
+          window.location.href = "global.html";
+        } catch (error) {
+          noChances.handleError(error, 'Navigation Error');
+        }
+      };
+
+      document.getElementById("settings-btn").onclick = () => {
+        try {
+          window.location.href = "settings.html";
+        } catch (error) {
+          noChances.handleError(error, 'Navigation Error');
+        }
+      };
+
+    } catch (error) {
+      noChances.handleError(error, 'Firebase Initialization Error');
+    }
   </script>
 </body>
 </html>

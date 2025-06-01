@@ -15,6 +15,10 @@ import {
     cleanup
 } from './firebaseConfig.js';
 import errorHandler from './errorHandler.js';
+import noChancesBrowser from './noChancesBrowser.js';
+
+// Initialize NoChances
+const noChances = noChancesBrowser;
 
 // Chat state
 let currentChatId = null;
