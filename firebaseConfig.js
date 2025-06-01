@@ -1,11 +1,11 @@
-// Import Firebase modules
-import { initializeApp } from 'firebase/app';
+// Import Firebase modules from CDN
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { 
     getAuth, 
     onAuthStateChanged,
     signInWithEmailAndPassword,
     signOut
-} from 'firebase/auth';
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { 
     getFirestore,
     collection,
@@ -20,13 +20,13 @@ import {
     orderBy,
     limit,
     onSnapshot
-} from 'firebase/firestore';
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { 
     getStorage,
     ref as storageRef,
     uploadBytes,
     getDownloadURL
-} from 'firebase/storage';
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 import { 
     getDatabase,
     ref as dbRef,
@@ -34,17 +34,17 @@ import {
     remove,
     onValue,
     off
-} from 'firebase/database';
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
 
 // Your Firebase configuration
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID",
-    databaseURL: "YOUR_DATABASE_URL"
+    apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+    authDomain: "chatz-45df4.firebaseapp.com",
+    databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
+    projectId: "chatz-45df4",
+    storageBucket: "chatz-45df4.appspot.com",
+    messagingSenderId: "463847844545",
+    appId: "1:463847844545:web:5006247d061c3e0dc28240"
 };
 
 // Initialize Firebase
