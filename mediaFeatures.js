@@ -29,76 +29,64 @@ const noChances = noChancesBrowser;
 const GIPHY_API_KEY = 'YOUR_GIPHY_API_KEY'; // Replace with your Giphy API key
 const GIPHY_API_URL = 'https://api.giphy.com/v1/gifs';
 
-// Start voice recording with enhanced error handling
-async function startVoiceRecording() {
+// Start voice recording
+export async function startVoiceRecording() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
-        
+
         mediaRecorder.ondataavailable = (event) => {
             audioChunks.push(event.data);
         };
-        
-        mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            await uploadVoiceMessage(audioBlob);
-            
-            // Stop all tracks
-            stream.getTracks().forEach(track => track.stop());
-        };
-        
+
         mediaRecorder.start();
-        isRecording = true;
-        
-        // Show recording UI
         showRecordingUI();
     } catch (error) {
-        await errorHandler.handleError(error, 'Start Voice Recording', async () => {
-            return await startVoiceRecording();
-        });
+        errorHandler.handleError(error, 'Failed to start voice recording');
+        throw error; // Re-throw to update UI state
     }
 }
 
 // Stop voice recording
-async function stopVoiceRecording() {
+export async function stopVoiceRecording() {
     try {
-        if (mediaRecorder && isRecording) {
-            mediaRecorder.stop();
-            isRecording = false;
-            
-            // Hide recording UI
-            hideRecordingUI();
+        if (!mediaRecorder) {
+            throw new Error('No active recording');
         }
+
+        return new Promise((resolve, reject) => {
+            mediaRecorder.onstop = async () => {
+                try {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const audioUrl = await uploadVoiceMessage(audioBlob);
+                    hideRecordingUI();
+                    resolve(audioUrl);
+                } catch (error) {
+                    reject(error);
+                }
+            };
+
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        });
     } catch (error) {
-        await errorHandler.handleError(error, 'Stop Voice Recording');
+        errorHandler.handleError(error, 'Failed to stop voice recording');
+        throw error; // Re-throw to update UI state
     }
 }
 
-// Upload voice message with auto-transcription
+// Upload voice message
 async function uploadVoiceMessage(audioBlob) {
     try {
-        if (!currentUser) throw new Error('User not authenticated');
+        const fileName = `voice_${Date.now()}.webm`;
+        const storageRef = storage.ref(`voice_messages/${fileName}`);
         
-        // Get audio duration
-        const duration = await getAudioDuration(audioBlob);
-        
-        // Upload to storage
-        const path = `voice-messages/${currentUser.uid}/${Date.now()}.webm`;
-        const url = await uploadFile(audioBlob, path);
-        
-        // Auto-transcribe for accessibility
-        const transcription = await transcribeAudio(audioBlob);
-        
-        // Send message
-        await sendMessage(url, currentChatId, MEDIA_TYPES.VOICE, {
-            duration,
-            transcription
-        });
+        await storageRef.put(audioBlob);
+        return await storageRef.getDownloadURL();
     } catch (error) {
-        await errorHandler.handleError(error, 'Upload Voice Message', async () => {
-            return await uploadVoiceMessage(audioBlob);
-        });
+        errorHandler.handleError(error, 'Failed to upload voice message');
+        throw error;
     }
 }
 
@@ -158,79 +146,51 @@ function blobToBase64(blob) {
 }
 
 // Show GIF picker
-export async function showGifPicker() {
+export function showGifPicker() {
+    const gifPicker = document.querySelector('.gif-picker');
+    gifPicker.style.display = 'block';
+    
+    // Load trending GIFs
+    loadTrendingGifs().catch(error => {
+        errorHandler.handleError(error, 'Failed to load GIFs');
+    });
+}
+
+// Load trending GIFs
+async function loadTrendingGifs() {
     try {
-        // Create GIF picker container
-        const pickerContainer = document.createElement('div');
-        pickerContainer.className = 'gif-picker';
-        pickerContainer.innerHTML = `
-            <div class="gif-picker-header">
-                <input type="text" class="gif-search" placeholder="Search GIFs...">
-                <button class="close-picker">×</button>
-            </div>
-            <div class="gif-results"></div>
-        `;
+        const response = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20`);
+        const data = await response.json();
+        displayGifs(data.data);
+    } catch (error) {
+        errorHandler.handleError(error, 'Failed to load trending GIFs');
+    }
+}
 
-        // Add to DOM
-        document.body.appendChild(pickerContainer);
+// Search GIFs
+export async function searchGifs(query) {
+    try {
+        const response = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${query}&limit=20`);
+        const data = await response.json();
+        displayGifs(data.data);
+    } catch (error) {
+        errorHandler.handleError(error, 'Failed to search GIFs');
+    }
+}
 
-        // Setup event listeners
-        const searchInput = pickerContainer.querySelector('.gif-search');
-        const resultsContainer = pickerContainer.querySelector('.gif-results');
-        const closeButton = pickerContainer.querySelector('.close-picker');
-
-        // Search GIFs
-        searchInput.addEventListener('input', debounce(async (e) => {
-            const query = e.target.value;
-            if (query.length < 2) return;
-
-            try {
-                const gifs = await searchGifs(query);
-                displayGifs(gifs, resultsContainer);
-            } catch (error) {
-                noChances.handleError(error, 'GIF Search Error');
-            }
-        }, 300));
-
-        // Close picker
-        closeButton.addEventListener('click', () => {
-            pickerContainer.remove();
+// Send GIF
+export async function sendGif(gifUrl) {
+    try {
+        await sendMessage({
+            type: 'gif',
+            content: gifUrl
         });
-
-        // Load trending GIFs initially
-        try {
-            const trendingGifs = await getTrendingGifs();
-            displayGifs(trendingGifs, resultsContainer);
-        } catch (error) {
-            noChances.handleError(error, 'Trending GIFs Error');
-        }
-
+        
+        // Hide GIF picker
+        const gifPicker = document.querySelector('.gif-picker');
+        gifPicker.style.display = 'none';
     } catch (error) {
-        noChances.handleError(error, 'Show GIF Picker Error');
-    }
-}
-
-// Search GIFs from Giphy
-async function searchGifs(query) {
-    try {
-        const response = await fetch(`${GIPHY_API_URL}/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=20&rating=g&lang=en`);
-        const data = await response.json();
-        return data.data;
-    } catch (error) {
-        noChances.handleError(error, 'GIF Search API Error');
-        return [];
-    }
-}
-
-// Get trending GIFs
-async function getTrendingGifs() {
-    try {
-        const response = await fetch(`${GIPHY_API_URL}/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`);
-        const data = await response.json();
-        return data.data;
-    } catch (error) {
-        noChances.handleError(error, 'Trending GIFs API Error');
-        return [];
+        errorHandler.handleError(error, 'Failed to send GIF');
     }
 }
 
@@ -259,24 +219,6 @@ function displayGifs(gifs, container) {
             document.querySelector('.gif-picker').remove();
         });
     });
-}
-
-// Send GIF message
-async function sendGif(gifUrl, gifMp4) {
-    try {
-        // Create a temporary link to download the GIF
-        const response = await fetch(gifUrl);
-        const blob = await response.blob();
-        const file = new File([blob], 'gif.gif', { type: 'image/gif' });
-
-        // Upload and send with both GIF and MP4 URLs
-        await uploadFile(file, 'gif', {
-            gifUrl,
-            mp4Url: gifMp4
-        });
-    } catch (error) {
-        noChances.handleError(error, 'Send GIF Error');
-    }
 }
 
 // Utility: Debounce function
