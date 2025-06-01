@@ -227,125 +227,81 @@ const MESSAGE_CACHE_SIZE = 100;
 const EDIT_WINDOW = 60000; // 1 minute edit window
 const DISAPPEAR_TIMERS = new Map();
 
-// Add reaction to message with enhanced error handling
-async function addReaction(messageId, reaction) {
+// Add reaction to message
+export async function addReaction(messageId, reaction) {
     try {
-        const messageRef = db.collection('messages').doc(messageId);
-        const message = await messageRef.get();
-        
-        if (!message.exists()) return;
-        
-        const reactions = message.data().reactions || {};
-        const userReaction = reactions[reaction] || [];
-        
-        if (userReaction.includes(auth.currentUser.uid)) {
-            userReaction.splice(userReaction.indexOf(auth.currentUser.uid), 1);
-        } else {
-            userReaction.push(auth.currentUser.uid);
-        }
-        
-        reactions[reaction] = userReaction;
-        
-        await updateMessage(messageId, { reactions });
-    } catch (error) {
-        await errorHandler.handleError(error, 'Add Reaction', async () => {
-            return await addReaction(messageId, reaction);
+        // Add reaction logic here
+        await db.collection('messages').doc(messageId).update({
+            reactions: firebase.firestore.FieldValue.arrayUnion({
+                userId: currentUser.uid,
+                reaction,
+                timestamp: Date.now()
+            })
         });
+    } catch (error) {
+        errorHandler.handleError(error, 'Failed to add reaction');
     }
 }
 
-// Enhanced Message Editing with time window
-async function editMessage(messageId, newContent) {
+// Edit message
+export async function editMessage(messageId, newContent) {
     try {
-        const messageRef = db.collection('messages').doc(messageId);
-        const message = await messageRef.get();
-        
-        if (!message.exists()) return;
-        
-        const messageData = message.data();
-        const editTime = Date.now() - messageData.timestamp;
-        
-        // Only allow editing within 1 minute
-        if (editTime > EDIT_WINDOW) {
-            throw new Error('Messages can only be edited within 1 minute of sending');
-        }
-        
-        await updateMessage(messageId, {
+        await db.collection('messages').doc(messageId).update({
             content: newContent,
             edited: true,
-            editHistory: [...(messageData.editHistory || []), {
-                content: messageData.content,
-                timestamp: messageData.timestamp
-            }]
+            editedAt: Date.now()
         });
     } catch (error) {
-        await errorHandler.handleError(error, 'Edit Message');
+        errorHandler.handleError(error, 'Failed to edit message');
     }
 }
 
-// Enhanced Pull to Refresh with offline support
-let isRefreshing = false;
-let startY = 0;
-const chatMessages = document.querySelector('.chat-messages');
-const pullToRefresh = document.querySelector('.pull-to-refresh');
-
-chatMessages.addEventListener('touchstart', (e) => {
-    startY = e.touches[0].clientY;
-});
-
-chatMessages.addEventListener('touchmove', (e) => {
-    if (isRefreshing) return;
-    
-    const currentY = e.touches[0].clientY;
-    const pullDistance = currentY - startY;
-    
-    if (pullDistance > 0 && chatMessages.scrollTop === 0) {
-        pullToRefresh.classList.add('active');
-        pullToRefresh.textContent = 'Refreshing...';
-        
-        if (pullDistance > 100) {
-            isRefreshing = true;
-            loadOlderMessages().then(() => {
-                pullToRefresh.classList.remove('active');
-                isRefreshing = false;
-            }).catch(async (error) => {
-                await errorHandler.handleError(error, 'Load Older Messages', async () => {
-                    return await loadOlderMessages();
-                });
-                pullToRefresh.classList.remove('active');
-                isRefreshing = false;
-            });
-        }
-    }
-});
-
-chatMessages.addEventListener('touchend', () => {
-    pullToRefresh.classList.remove('active');
-});
-
-// Enhanced Offline Support
-let offlineMessages = [];
-let isOnline = navigator.onLine;
-
-window.addEventListener('online', async () => {
-    isOnline = true;
-    await syncOfflineMessages();
-});
-
-window.addEventListener('offline', () => {
-    isOnline = false;
-});
-
-async function syncOfflineMessages() {
+// Load older messages
+export async function loadOlderMessages() {
     try {
-        while (offlineMessages.length > 0) {
-            const message = offlineMessages.shift();
+        // Load older messages logic here
+        const messages = await db.collection('messages')
+            .where('chatId', '==', currentChatId)
+            .orderBy('timestamp', 'desc')
+            .limit(20)
+            .get();
+
+        return messages.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+    } catch (error) {
+        errorHandler.handleError(error, 'Failed to load older messages');
+        return [];
+    }
+}
+
+// Sync offline messages
+export async function syncOfflineMessages() {
+    try {
+        const offlineMessages = await getOfflineMessages();
+        for (const message of offlineMessages) {
             await sendMessage(message.content, message.chatId);
+            await removeOfflineMessage(message.id);
         }
     } catch (error) {
-        await errorHandler.handleError(error, 'Sync Offline Messages', async () => {
-            return await syncOfflineMessages();
-        });
+        errorHandler.handleError(error, 'Failed to sync offline messages');
+    }
+}
+
+// Store offline message
+export async function storeOfflineMessage(content, chatId) {
+    try {
+        const message = {
+            content,
+            chatId,
+            timestamp: Date.now(),
+            senderId: currentUser.uid,
+            status: 'pending'
+        };
+        await db.collection('offlineMessages').add(message);
+    } catch (error) {
+        errorHandler.handleError(error, 'Failed to store offline message');
     }
 }
 
@@ -400,37 +356,6 @@ async function storeOfflineMessage(content, chatId, type, options = {}) {
         await errorHandler.handleError(error, 'Store Offline Message', async () => {
             return await storeOfflineMessage(content, chatId, type, options);
         });
-    }
-}
-
-// Load older messages
-async function loadOlderMessages() {
-    try {
-        if (!messagesRef) {
-            throw new Error('Messages reference not initialized');
-        }
-
-        const lastMessage = messageCache.size > 0 ? 
-            Array.from(messageCache.values())[messageCache.size - 1] : null;
-
-        const q = query(
-            messagesRef,
-            orderBy('timestamp', 'desc'),
-            limit(20),
-            ...(lastMessage ? [where('timestamp', '<', lastMessage.timestamp)] : [])
-        );
-
-        const snapshot = await getDocs(q);
-        snapshot.forEach(doc => {
-            const message = doc.data();
-            cacheMessage(doc.id, message);
-            displayMessage(message);
-        });
-
-        return snapshot.docs.length > 0;
-    } catch (error) {
-        console.error('Error loading older messages:', error);
-        throw error;
     }
 }
 
