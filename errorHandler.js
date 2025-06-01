@@ -811,6 +811,12 @@ class NoChancesErrorHandler {
             protection: 'MAXIMUM'
         };
         
+        // Bind methods to ensure proper 'this' context
+        this.startErrorPrevention = this.startErrorPrevention.bind(this);
+        this.startErrorRecovery = this.startErrorRecovery.bind(this);
+        this.startSuccessVerification = this.startSuccessVerification.bind(this);
+        this.startProtectionSystems = this.startProtectionSystems.bind(this);
+        
         // Initialize with maximum protection
         this.initializeMaximumProtection();
         
@@ -845,10 +851,25 @@ class NoChancesErrorHandler {
     }
 
     startProtectionSystems() {
-        // Start all protection systems
-        this.startErrorPrevention();
-        this.startErrorRecovery();
-        this.startSuccessVerification();
+        try {
+            // Start all protection systems
+            this.startErrorPrevention();
+            this.startErrorRecovery();
+            this.startSuccessVerification();
+        } catch (error) {
+            console.error('Failed to start protection systems:', error);
+            // Fallback to basic protection
+            this.initializeBasicProtection();
+        }
+    }
+
+    initializeBasicProtection() {
+        // Basic protection fallback
+        this.protectionSystems = {
+            errorPrevention: new Map([['basic', { active: true }]]),
+            errorRecovery: new Map([['basic', { active: true }]]),
+            successVerification: new Map([['basic', { active: true }]])
+        };
     }
 
     startErrorPrevention() {

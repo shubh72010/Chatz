@@ -1,0 +1,21 @@
+{
+  "name": "chatz",
+  "version": "1.0.0",
+  "description": "Modern chat application with advanced error handling",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@babel/core": "^7.23.9",
+    "@babel/plugin-transform-modules-commonjs": "^7.23.3",
+    "acorn": "^8.11.3",
+    "escodegen": "^2.1.0",
+    "firebase": "^10.8.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+} 
