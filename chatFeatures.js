@@ -453,7 +453,6 @@ export {
     addReaction,
     updateTypingStatus,
     editMessage,
-    sendMessage,
     initIndexedDB,
     MESSAGE_TYPES,
     MESSAGE_STATUS,
