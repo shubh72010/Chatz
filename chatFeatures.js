@@ -173,7 +173,7 @@ export function updateTypingStatus(isTyping) {
 }
 
 // Cleanup function
-function cleanup() {
+export function cleanup() {
     if (typingRef) {
         typingRef.off();
     }
