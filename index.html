@@ -70,172 +70,58 @@
       --scrollbar-track: #f4f6fb;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+
     body {
       margin: 0;
       font-family: 'Segoe UI', 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--bg-gradient);
+      background: var(--bg);
       color: #f5f5f5;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
+
     header {
       background: var(--header-bg);
       color: #fff;
       padding: 1rem 2rem;
       font-size: 1.5rem;
       font-weight: 700;
-      border-radius: 0 0 1.2rem 1.2rem;
       box-shadow: var(--header-shadow);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
     }
+
     .main-container {
       display: flex;
       flex: 1;
       min-height: 0;
       min-width: 0;
+      margin-top: 4rem;
+      height: calc(100vh - 4rem);
     }
-    .left-container {
-      width: 320px;
-      background: var(--bg-light);
-      border-right: 1.5px solid var(--main-dark);
-      display: flex;
-      flex-direction: column;
-      min-width: 220px;
-      max-width: 100vw;
-      transition: transform 0.25s;
-      z-index: 1000;
-    }
-    .sidebar-header {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-      padding: 1rem;
-      border-bottom: 1px solid var(--main-dark);
-      background: var(--header-bg);
-    }
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-      flex: 1;
-    }
-    .user-img img {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #44415e;
-      border: 2px solid var(--main);
-    }
-    .user-name {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--main-light);
-    }
-    .sign-in-btn {
-      background: var(--main);
-      border: none;
-      color: white;
-      font-weight: 600;
-      padding: 0.4rem 1.1rem;
-      border-radius: 1.2rem;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background 0.18s;
-      margin-left: 0.5rem;
-    }
-    .sign-in-btn:hover { background: var(--main-dark); }
-    .global-chat-btn {
-      width: 90%;
-      margin: 1rem auto 0.5rem auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      background: var(--main);
-      color: #fff;
-      border: none;
-      border-radius: 1.2rem;
-      font-size: 1.1rem;
-      font-weight: 600;
-      padding: 0.6rem 0;
-      cursor: pointer;
-      transition: background 0.18s;
-    }
-    .global-chat-btn:hover {
-      background: var(--main-dark);
-    }
-    .chat-list {
-      flex: 1;
-      overflow-y: auto;
-      background: var(--bg-light);
-      padding: 0.5rem 0;
-    }
-    .chat-box {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-      padding: 0.7rem 1.2rem;
-      cursor: pointer;
-      border-bottom: 1px solid var(--main-dark);
-      transition: background 0.15s;
-    }
-    .chat-box:hover {
-      background: var(--main-light);
-    }
-    .img-box img {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #44415e;
-      border: 2px solid var(--main-dark);
-    }
-    .chat-details h4 {
-      margin: 0;
-      font-size: 1.1rem;
-      color: var(--main);
-    }
-    .chat-details p {
-      margin: 0;
-      font-size: 0.9rem;
-      color: #aaa;
-    }
-    .no-users-msg {
-      color: #aaa;
-      text-align: center;
-      margin-top: 2rem;
-    }
-    .sidebar-bottom {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-      padding: 1.2rem 0 0.7rem 0;
-    }
-    .settings-btn {
-      background: none;
-      border: none;
-      color: var(--main);
-      font-size: 2rem;
-      cursor: pointer;
-      transition: color 0.18s;
-    }
-    .settings-btn:hover {
-      color: var(--main-dark);
-    }
+
     .right-container {
       flex: 1;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
       background: var(--bg);
+      padding: 2rem;
+      overflow-y: auto;
+      width: 100%;
     }
+
     .right-header {
       width: 100%;
       text-align: center;
@@ -243,7 +129,171 @@
       font-weight: 900;
       color: var(--main);
       letter-spacing: 2px;
-      margin: 2rem 0 1rem 0;
+      margin-bottom: 2rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .users-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      padding: 1rem;
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .user-card {
+      background: var(--bg-light);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .user-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .user-card img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--main);
+    }
+
+    .user-info {
+      flex: 1;
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: var(--main);
+    }
+
+    .user-status {
+      font-size: 0.9rem;
+      color: var(--main-light);
+    }
+
+    .dm-btn {
+      background: var(--main);
+      color: #fff;
+      border: none;
+      border-radius: 1.2rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .dm-btn:hover {
+      background: var(--main-dark);
+    }
+
+    .dm-btn i {
+      font-size: 0.9rem;
+    }
+
+    .no-users-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--main-light);
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .no-users-icon {
+      font-size: 4rem;
+      margin-bottom: 1.5rem;
+      color: var(--main);
+    }
+
+    .no-users-text {
+      font-size: 1.4rem;
+      margin-bottom: 0.8rem;
+      color: var(--main);
+    }
+
+    .no-users-subtext {
+      font-size: 1rem;
+      color: var(--main-light);
+      max-width: 400px;
+      line-height: 1.5;
+    }
+
+    .floating-actions {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      display: flex;
+      gap: 1rem;
+      z-index: 1000;
+    }
+
+    .action-button {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--main);
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .action-button:hover {
+      transform: translateY(-4px);
+      background: var(--main-dark);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .action-button i {
+      transition: transform 0.2s ease;
+    }
+
+    .action-button:hover i {
+      transform: scale(1.1);
+    }
+
+    .action-button.settings:hover i {
+      transform: rotate(30deg);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--main);
     }
   </style>
 </head>
@@ -253,29 +303,43 @@
     <button class="sign-in-btn" id="sign-in">Sign In</button>
   </header>
   <div class="main-container">
-    <div class="left-container" id="left-container">
-      <div class="sidebar-header">
-        <div class="user-info">
-          <div class="user-img"><img id="user-pfp" src="https://via.placeholder.com/46/2c2045/f0eaff?text=?" alt="Profile Picture" /></div>
-          <span class="user-name" id="display-username">Guest</span>
-        </div>
-        <button id="global-chat-btn" class="global-chat-btn">
-          <i class="fa fa-globe"></i> Global Chat
-        </button>
-      </div>
-      <div class="chat-list" id="users-list"></div>
-      <div class="no-users-msg" id="no-users-msg" style="display:none;">No users found.</div>
-      <div class="sidebar-bottom">
-        <button id="settings-btn" class="settings-btn" title="Settings">
-          <i class="fa fa-gear"></i>
-        </button>
-      </div>
-    </div>
     <div class="right-container">
-      <div class="right-header">Chatz</div>
-      <div style="color:#aaa;text-align:center;">Select a user to start chatting</div>
+      <div class="right-header">Active Users</div>
+      <div class="users-grid" id="users-grid">
+        <!-- Users will be populated here -->
+      </div>
+      <div class="no-users-container" id="no-users-container" style="display: none;">
+        <i class="fa fa-users no-users-icon"></i>
+        <div class="no-users-text">No Active Users</div>
+        <div class="no-users-subtext">Be the first to sign in and start chatting with others!</div>
+      </div>
     </div>
   </div>
+
+  <div class="floating-actions">
+    <button class="action-button" id="global-chat-btn" title="Global Chat">
+      <i class="fa fa-globe"></i>
+    </button>
+    <button class="action-button settings" id="settings-btn" title="Settings">
+      <i class="fa fa-gear"></i>
+    </button>
+  </div>
+
+  <script>
+    // Apply theme from localStorage on page load
+    (function() {
+      const theme = localStorage.getItem('chatzTheme') || 'default';
+      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
+    })();
+
+    // Listen for theme changes in other tabs
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'chatzTheme') {
+        const theme = e.newValue || 'default';
+        document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
+      }
+    });
+  </script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
@@ -287,7 +351,12 @@
     import {
       getDatabase,
       ref,
-      onValue
+      onValue,
+      set,
+      serverTimestamp,
+      update,
+      get,
+      onDisconnect
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -299,104 +368,146 @@
       messagingSenderId: "463847844545",
       appId: "1:463847844545:web:5006247d061c3e0dc28240"
     };
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
 
     const signInBtn = document.getElementById("sign-in");
-    const userPfp = document.getElementById("user-pfp");
-    const displayUsername = document.getElementById("display-username");
-    const usersList = document.getElementById("users-list");
-    const noUsersMsg = document.getElementById("no-users-msg");
+    const usersGrid = document.getElementById("users-grid");
+    const noUsersContainer = document.getElementById("no-users-container");
 
-    let allUsers = [];
-    let myUid = null;
-
-    signInBtn.onclick = () => {
-      const provider = new GoogleAuthProvider();
-      signInWithPopup(auth, provider).catch(e => alert("Sign-in failed: " + e.message));
-    };
-
-    function renderUsers() {
-      usersList.innerHTML = "";
-      if (allUsers.length === 0) {
-        noUsersMsg.style.display = "block";
-      } else {
-        noUsersMsg.style.display = "none";
-        allUsers.forEach(user => {
-          const nameToDisplay = user.nickname || user.displayName || "Anonymous";
-          const avatarUrl = user.photoURL || "https://via.placeholder.com/38/2c2045/f0eaff?text=U";
-          const box = document.createElement("div");
-          box.className = "chat-box";
-          box.innerHTML = `
-            <div class="img-box">
-              <img src="${avatarUrl}" alt="Avatar" />
-            </div>
-            <div class="chat-details">
-              <h4>${nameToDisplay}</h4>
-              <p>Start chat</p>
-            </div>
-          `;
-          box.onclick = () => window.location.href = `global.html?type=dm&uid=${user.uid}`;
-          usersList.appendChild(box);
-        });
-      }
+    function renderUsers(users) {
+      const usersGrid = document.getElementById('users-grid');
+      usersGrid.innerHTML = '';
+      
+      users.forEach(user => {
+        if (user.uid === auth.currentUser?.uid) return;
+        
+        const userCard = document.createElement('div');
+        userCard.className = 'user-card';
+        userCard.innerHTML = `
+          <img src="${user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nickname || user.displayName || 'U')}&background=726dff&color=fff`}" alt="Profile" />
+          <div class="user-info">
+            <div class="user-name">${user.nickname || user.displayName || "Anonymous"}</div>
+            <div class="user-status">${user.online ? "Online" : "Offline"}</div>
+          </div>
+          <button class="dm-btn" onclick="event.stopPropagation(); window.location.href='chat.html?uid=${user.uid}'">
+            <i class="fas fa-comment"></i> DM
+          </button>
+        `;
+        
+        userCard.onclick = () => {
+          window.location.href = 'chat.html?uid=' + user.uid;
+        };
+        
+        usersGrid.appendChild(userCard);
+      });
     }
 
-    // Always fetch and render all users, regardless of auth state
-    onValue(ref(db, "users"), (snap) => {
-      const users = snap.val() || {};
-      allUsers = [];
-      Object.entries(users).forEach(([uid, userData]) => {
-        allUsers.push({ uid, ...userData });
-      });
-      renderUsers();
-    });
-
+    // Listen for user data changes
     onAuthStateChanged(auth, (user) => {
       if (user) {
         signInBtn.style.display = "none";
-        displayUsername.textContent = user.displayName || "Anonymous";
-        userPfp.src = user.photoURL || "https://via.placeholder.com/46/2c2045/f0eaff?text=?";
-        myUid = user.uid;
+        
+        const userRef = ref(db, "users/" + user.uid);
+        const userStatusRef = ref(db, "users/" + user.uid + "/online");
+        const userStatusDatabaseRef = ref(db, "users/" + user.uid + "/lastActive");
+        
+        // Set up online status
+        set(userStatusRef, true);
+        set(userStatusDatabaseRef, serverTimestamp());
+        
+        // Set up disconnect handlers
+        onDisconnect(userStatusRef).set(false);
+        onDisconnect(userStatusDatabaseRef).set(serverTimestamp());
+        
+        // First check if user data exists
+        get(userRef).then((snapshot) => {
+          if (snapshot.exists()) {
+            // Update user data while preserving online status
+            update(userRef, {
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              lastActive: serverTimestamp()
+            });
+          } else {
+            // Initialize user data if it doesn't exist
+            set(userRef, {
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              lastActive: serverTimestamp(),
+              online: true
+            });
+          }
+        }).catch((err) => {
+          console.error("Error loading user data:", err);
+        });
+
+        // Listen for all users
+        onValue(ref(db, "users"), (snapshot) => {
+          const users = [];
+          snapshot.forEach((childSnapshot) => {
+            const data = childSnapshot.val();
+            users.push({
+              uid: childSnapshot.key,
+              displayName: data.displayName || "Anonymous",
+              nickname: data.nickname || "",
+              photoURL: data.photoURL,
+              online: data.online,
+              lastActive: data.lastActive
+            });
+          });
+          renderUsers(users);
+        });
       } else {
         signInBtn.style.display = "inline-block";
-        displayUsername.textContent = "Guest";
-        userPfp.src = "https://via.placeholder.com/46/2c2045/f0eaff?text=?";
-        myUid = null;
       }
     });
 
-    // Desktop buttons
-    const globalChatBtn = document.getElementById("global-chat-btn");
-    if (globalChatBtn) {
-      globalChatBtn.onclick = () => window.location.href = "global.html";
-    }
-    const settingsBtn = document.getElementById("settings-btn");
-    if (settingsBtn) {
-      settingsBtn.onclick = () => window.location.href = "settings.html";
-    }
-  </script>
-  <script>
-    // Apply theme from localStorage on page load
-    (function() {
-      const theme = localStorage.getItem('chatzTheme') || 'default';
-      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
-    })();
-    // Listen for theme changes in other tabs
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'chatzTheme') {
-        const theme = e.newValue || 'default';
-        document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
-      }
-    });
+    // Handle sign in
+    signInBtn.onclick = () => {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      signInWithPopup(auth, provider)
+        .then(async (result) => {
+          const user = result.user;
+          console.log("Sign in successful:", user);
+          
+          try {
+            const userRef = ref(db, `users/${user.uid}`);
+            const userData = {
+              displayName: user.displayName,
+              email: user.email,
+              photoURL: user.photoURL,
+              lastActive: serverTimestamp(),
+              online: true
+            };
+            
+            console.log("Saving user data:", userData);
+            await set(userRef, userData);
+            console.log("User data saved successfully");
+          } catch (error) {
+            console.error("Error saving user data:", error);
+            alert("Error saving user data: " + error.message);
+          }
+        })
+        .catch((error) => {
+          console.error("Sign in error:", error);
+          alert("Sign in failed: " + error.message);
+        });
+    };
 
-    // Example for your settings page
-    document.getElementById('theme-select').addEventListener('change', function() {
-      const theme = this.value;
-      localStorage.setItem('chatzTheme', theme);
-      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
-    });
+    // Handle navigation buttons
+    document.getElementById("global-chat-btn").onclick = () => {
+      window.location.href = "global.html";
+    };
+
+    document.getElementById("settings-btn").onclick = () => {
+      window.location.href = "settings.html";
+    };
   </script>
 </body>
 </html>

@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chatz | by Flakious</title>
+  <title>Chatz | Global Chat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <style>
-    /* Use the same theme CSS as index.html for consistency */
-    :root { 
+    :root {
       --main: #726dff;
       --main-dark: #554fa6;
       --main-light: #a3a0ff;
@@ -70,146 +71,176 @@
       --scrollbar-track: #f4f6fb;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+
     body {
-      font-family: 'Segoe UI', 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--bg-gradient);
+      margin: 0;
+      font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
       color: #f5f5f5;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      margin: 0;
-      min-width: 0;
-      min-height: 0;
-      overflow: hidden;
     }
+
     header {
       background: var(--header-bg);
       color: #fff;
-      padding: 1rem 2rem 1rem 1.5rem;
+      padding: 1rem 2rem;
       font-size: 1.5rem;
       font-weight: 700;
-      border-radius: 0 0 1.2rem 1.2rem;
       box-shadow: var(--header-shadow);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      z-index: 2;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
     }
-    #user-info {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-    }
-    #user-pic {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #44415e;
-      border: 2px solid var(--main);
-      display: none;
-    }
-    #user-name {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--main-light);
-      display: none;
-    }
-    #auth-btns {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-    button.auth-btn {
+
+    .back-btn {
       background: var(--main);
+      color: #fff;
       border: none;
-      color: white;
-      font-weight: 600;
-      padding: 0.4rem 1.1rem;
-      border-radius: 1.2rem;
-      cursor: pointer;
+      border-radius: 1.5rem;
+      padding: 0.6rem 1.3rem;
       font-size: 1rem;
-      transition: background 0.18s, box-shadow 0.18s;
-      box-shadow: 0 2px 8px 0 rgba(114,109,255,0.08);
-      outline: none;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #726dff33;
+      transition: background 0.2s;
     }
-    button.auth-btn:hover { background: var(--main-dark); }
-    #chat {
+
+    .back-btn:hover {
+      background: var(--main-dark);
+    }
+
+    .chat-container {
       flex: 1;
-      overflow-y: auto;
-      padding: 2.2rem 0.5rem 1.2rem 0.5rem;
       display: flex;
       flex-direction: column;
-      gap: 0.7rem;
-      background: transparent;
-      min-height: 0;
-      min-width: 0;
-      scrollbar-width: thin;
-      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+      margin-top: 4rem;
+      height: calc(100vh - 4rem);
+      padding: 1rem;
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
     }
-    #chat::-webkit-scrollbar {
-      width: 8px;
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg-light);
+      border-radius: 1rem;
+      margin-bottom: 1rem;
     }
-    #chat::-webkit-scrollbar-thumb {
-      background: var(--scrollbar-thumb);
-      border-radius: 8px;
+
+    .chat-header-info {
+      flex: 1;
     }
-    #chat::-webkit-scrollbar-track {
-      background: var(--scrollbar-track);
+
+    .chat-header-title {
+      font-weight: 600;
+      color: var(--main);
+      font-size: 1.2rem;
     }
+
+    .chat-header-subtitle {
+      font-size: 0.9rem;
+      color: var(--main-light);
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
     .message {
       display: flex;
-      align-items: flex-end;
-      gap: 0.7rem;
+      gap: 0.8rem;
       max-width: 80%;
-      margin-bottom: 0.2rem;
-      position: relative;
-      transition: background 0.15s;
+      animation: messageAppear 0.3s ease;
     }
+
+    @keyframes messageAppear {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     .message.own {
-      align-self: flex-end;
+      margin-left: auto;
       flex-direction: row-reverse;
     }
-    .bubble {
-      padding: 0.7rem 1.2rem;
-      border-radius: 1.3rem;
+
+    .message img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--main);
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .message img:hover {
+      transform: scale(1.1);
+    }
+
+    .message-content {
       background: var(--bubble-other);
       color: var(--bubble-other-text);
-      font-size: 1.07rem;
-      box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
+      padding: 0.8rem 1.2rem;
+      border-radius: 1.2rem;
       position: relative;
-      min-width: 0;
       word-break: break-word;
-      transition: background 0.15s;
+      cursor: pointer;
+      transition: transform 0.2s;
     }
-    .message.own .bubble {
+
+    .message-content:hover {
+      transform: translateY(-1px);
+    }
+
+    .message.own .message-content {
       background: var(--bubble-own);
       color: var(--bubble-own-text);
-      border-bottom-right-radius: 0.4rem;
-      border-bottom-left-radius: 1.3rem;
     }
-    .message:not(.own) .bubble {
-      border-bottom-left-radius: 0.4rem;
-      border-bottom-right-radius: 1.3rem;
+
+    .message-sender {
+      font-size: 0.8rem;
+      color: var(--main);
+      margin-bottom: 0.3rem;
     }
-    .sender {
-      font-size: 0.92rem;
-      font-weight: 600;
-      color: var(--main-light);
-      margin-bottom: 2px;
-      display: block;
-      opacity: 0.85;
-    }
-    .message.own .sender { color: #fff; }
-    .meta {
-      font-size: 0.75rem;
-      opacity: 0.5;
-      margin-top: 0.2rem;
-      user-select: none;
+
+    .message-time {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.5);
+      margin-top: 0.3rem;
       text-align: right;
     }
+
     .reply-preview {
+      display: none;
       background: var(--reply-bg);
       padding: 0.5rem 1.1rem;
       margin: 0 1.2rem 0.7rem 1.2rem;
@@ -223,125 +254,206 @@
       border-radius: 0.7rem;
       box-shadow: 0 2px 8px 0 rgba(114,109,255,0.08);
     }
-    .reply-preview span {
-      font-weight: 600;
+
+    .reply-preview-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .reply-preview-text {
+      flex: 1;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 80%;
     }
-    .reply-preview button {
-      background: transparent;
+
+    .reply-preview-sender {
+      color: var(--main);
+      font-weight: 600;
+    }
+
+    .reply-preview-cancel {
+      background: none;
       border: none;
-      color: #dcdcff;
+      color: var(--bubble-other-text);
       font-size: 1.2rem;
       cursor: pointer;
-      font-weight: bold;
-      user-select: none;
-      margin-left: 1rem;
-    }
-    form {
-      display: flex;
-      flex-wrap: nowrap;
-      padding: 1.1rem 1.2rem 1.1rem 1.2rem;
-      background: var(--input-bg);
-      gap: 0.7rem;
-      align-items: center;
-      border-radius: 1.2rem 1.2rem 0 0;
-      box-shadow: var(--input-shadow);
-      z-index: 2;
-    }
-    #message {
-      flex: 3 1 auto;
-      padding: 0.7rem 1.2rem;
-      border-radius: 1.3rem;
-      border: 1.5px solid var(--input-border);
-      outline: none;
-      background: #23232f;
-      color: white;
-      font-size: 1.07rem;
-      transition: border 0.18s;
-    }
-    #message:focus {
-      border: 1.5px solid var(--main);
-      background: #23232f;
-    }
-    button#send-btn {
-      flex: 0 0 auto;
-      padding: 0.7rem 1.3rem;
-      border-radius: 1.3rem;
-      border: none;
-      background: var(--main);
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 1.07rem;
-      transition: background 0.18s, box-shadow 0.18s;
-      box-shadow: 0 2px 8px 0 rgba(114,109,255,0.08);
-      outline: none;
-    }
-    button#send-btn:disabled {
-      background: #44415e;
-      cursor: not-allowed;
+      padding: 0.2rem;
       opacity: 0.7;
+      transition: opacity 0.2s;
     }
-    button#send-btn:hover:not(:disabled) { background: var(--main-dark); }
-    @media (max-width: 600px) {
-      header { font-size: 1.1rem; padding: 0.7rem 0.7rem; }
-      #chat { padding: 1.1rem 0.2rem 0.7rem 0.2rem; }
-      form { padding: 0.7rem 0.7rem; }
-      .reply-preview { margin: 0 0.5rem 0.5rem 0.5rem; }
+
+    .reply-preview-cancel:hover {
+      opacity: 1;
+    }
+
+    .reply-to {
+      font-size: 0.8rem;
+      color: var(--main);
+      margin-bottom: 0.3rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--main);
+    }
+
+    .chat-input {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg-light);
+      border-radius: 1rem;
+      margin-top: 1rem;
+    }
+
+    .chat-input input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1.5px solid var(--input-border);
+      border-radius: 1.2rem;
+      padding: 0.8rem 1.2rem;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .chat-input input:focus {
+      border-color: var(--main);
+    }
+
+    .chat-input button {
+      background: var(--main);
+      color: #fff;
+      border: none;
+      border-radius: 1.2rem;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .chat-input button:hover {
+      background: var(--main-dark);
+    }
+
+    .chat-input button:disabled {
+      background: var(--input-border);
+      cursor: not-allowed;
+    }
+
+    .typing-indicator {
+      font-size: 0.9rem;
+      color: var(--main-light);
+      padding: 0.5rem 1rem;
+      display: none;
+    }
+
+    .typing-indicator.active {
+      display: block;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--main);
+    }
+
+    @media (max-width: 768px) {
+      .chat-container {
+        padding: 0.5rem;
+      }
+      .message {
+        max-width: 90%;
+      }
     }
   </style>
   <script>
-    // Theme sync
+    // Apply theme from localStorage on page load
     (function() {
       const theme = localStorage.getItem('chatzTheme') || 'default';
-      document.documentElement.className = 'theme-' + theme;
+      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
     })();
+
+    // Listen for theme changes in other tabs
     window.addEventListener('storage', function(e) {
       if (e.key === 'chatzTheme') {
         const theme = e.newValue || 'default';
-        document.documentElement.className = 'theme-' + theme;
+        document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
       }
     });
   </script>
 </head>
 <body>
   <header>
-    <div id="user-info">
-      <img id="user-pic" src="" alt="Profile" />
-      <span id="user-name"></span>
-    </div>
-    <span style="margin-left:1rem;letter-spacing:1px;">Chatz</span>
-    <div id="auth-btns">
-      <button id="sign-in" class="auth-btn">Sign In</button>
-      <button id="back-btn" class="auth-btn" style="display:none;">&larr; Back</button>
-    </div>
+    <button class="back-btn" onclick="window.location.href='index.html'">&larr; Back</button>
+    <span>Global Chat</span>
+    <div style="width: 100px;"></div>
   </header>
-  <div id="chat"></div>
-  <div id="reply-preview" class="reply-preview" style="display:none;">
-    <span id="reply-text"></span>
-    <button id="cancel-reply" title="Cancel reply">&times;</button>
+
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <div class="chat-header-title">Global Chat</div>
+        <div class="chat-header-subtitle">Chat with everyone in real-time</div>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <!-- Messages will be populated here -->
+    </div>
+
+    <div class="typing-indicator" id="typing-indicator">
+      <span id="typing-text"></span>
+    </div>
+
+    <div class="reply-preview" id="reply-preview">
+      <div class="reply-preview-content">
+        <div class="reply-preview-text">
+          <span class="reply-preview-sender" id="reply-sender"></span>
+          <span id="reply-text"></span>
+        </div>
+        <button class="reply-preview-cancel" id="cancel-reply">&times;</button>
+      </div>
+    </div>
+
+    <div class="chat-input">
+      <input type="text" id="message-input" placeholder="Type a message..." />
+      <button id="send-btn">Send</button>
+    </div>
   </div>
-  <form id="chat-form">
-    <input type="text" id="message" placeholder="Type a message..." disabled autocomplete="off" required />
-    <button id="send-btn" type="submit" disabled>Send</button>
-  </form>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
     import {
       getDatabase,
       ref,
       push,
-      onChildAdded
+      set,
+      onValue,
+      serverTimestamp,
+      query,
+      orderByChild,
+      get
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-    import {
-      getAuth,
-      GoogleAuthProvider,
-      signInWithPopup,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
       authDomain: "chatz-45df4.firebaseapp.com",
@@ -349,135 +461,221 @@
       projectId: "chatz-45df4",
       storageBucket: "chatz-45df4.appspot.com",
       messagingSenderId: "463847844545",
-      appId: "1:463847844545:web:5006247d061c3e0dc28240",
-      measurementId: "G-2VHETC9V8B"
+      appId: "1:463847844545:web:5006247d061c3e0dc28240"
     };
+
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
     const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-    const chat = document.getElementById("chat");
-    const form = document.getElementById("chat-form");
-    const messageInput = document.getElementById("message");
-    const sendBtn = document.getElementById("send-btn");
-    const replyPreview = document.getElementById("reply-preview");
-    const replyText = document.getElementById("reply-text");
-    const cancelReplyBtn = document.getElementById("cancel-reply");
-    const signInBtn = document.getElementById("sign-in");
-    const backBtn = document.getElementById("back-btn");
-    const userPic = document.getElementById("user-pic");
-    const userName = document.getElementById("user-name");
+    const db = getDatabase(app);
+
+    const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const typingText = document.getElementById('typing-text');
+
+    let currentUser = null;
+    let typingTimeout = null;
+    let userDataCache = {};
     let replyTo = null;
 
-    const scrollToBottom = () => { chat.scrollTop = chat.scrollHeight; };
+    // Escape HTML to prevent XSS
     function escapeHtml(text) {
-      return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
+
+    // Initialize chat
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        
+        // Load messages
+        const messagesRef = ref(db, 'global_messages');
+        const messagesQuery = query(messagesRef, orderByChild('timestamp'));
+        
+        onValue(messagesQuery, (snapshot) => {
+          chatMessages.innerHTML = '';
+          snapshot.forEach((childSnapshot) => {
+            const message = childSnapshot.val();
+            renderMessage(message, childSnapshot.key);
+          });
+          scrollToBottom();
+        });
+
+        // Listen for typing status
+        onValue(ref(db, 'global_typing'), (snapshot) => {
+          const typingUsers = [];
+          snapshot.forEach((childSnapshot) => {
+            if (childSnapshot.key !== currentUser.uid && childSnapshot.val()) {
+              const userData = userDataCache[childSnapshot.key];
+              if (userData) {
+                typingUsers.push(userData.nickname || userData.displayName || "Anonymous");
+              }
+            }
+          });
+
+          if (typingUsers.length > 0) {
+            typingIndicator.classList.add('active');
+            typingText.textContent = typingUsers.length === 1 
+              ? `${typingUsers[0]} is typing...`
+              : `${typingUsers.length} people are typing...`;
+          } else {
+            typingIndicator.classList.remove('active');
+          }
+        });
+
+        // Cache user data
+        onValue(ref(db, 'users'), (snapshot) => {
+          snapshot.forEach((childSnapshot) => {
+            userDataCache[childSnapshot.key] = childSnapshot.val();
+          });
+        });
+      } else {
+        window.location.href = 'index.html';
+      }
+    });
+
+    // Send message
+    sendBtn.onclick = async () => {
+      const message = messageInput.value.trim();
+      if (!message || !currentUser) return;
+
+      try {
+        const messageRef = push(ref(db, 'global_messages'));
+        const messageData = {
+          text: message,
+          senderId: currentUser.uid,
+          timestamp: serverTimestamp()
+        };
+
+        if (replyTo) {
+          messageData.replyTo = {
+            messageId: replyTo.messageId,
+            senderId: replyTo.senderId,
+            text: replyTo.text,
+            senderName: replyTo.senderName
+          };
+        }
+
+        await set(messageRef, messageData);
+
+        messageInput.value = '';
+        cancelReply();
+        scrollToBottom();
+      } catch (error) {
+        console.error("Error sending message:", error);
+        alert("Failed to send message. Please try again.");
+      }
+    };
+
+    // Handle enter key
+    messageInput.onkeypress = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    };
+
+    // Typing indicator
+    messageInput.oninput = () => {
+      if (!currentUser) return;
+
+      // Set typing status
+      const typingRef = ref(db, `global_typing/${currentUser.uid}`);
+      set(typingRef, true);
+
+      // Clear previous timeout
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
+
+      // Set timeout to clear typing status
+      typingTimeout = setTimeout(() => {
+        set(typingRef, false);
+      }, 2000);
+    };
+
+    // Handle reply preview
+    const replyPreview = document.getElementById('reply-preview');
+    const replySender = document.getElementById('reply-sender');
+    const replyText = document.getElementById('reply-text');
+    const cancelReplyBtn = document.getElementById('cancel-reply');
+
+    function setReply(message, messageId) {
+      replyTo = {
+        messageId,
+        senderId: message.senderId,
+        text: message.text,
+        senderName: userDataCache[message.senderId]?.nickname || 
+                   userDataCache[message.senderId]?.displayName || 
+                   "Anonymous"
+      };
+      
+      replyText.textContent = `${replyTo.senderName}: ${truncate(replyTo.text, 50)}`;
+      replyPreview.style.display = "flex";
+      messageInput.focus();
+    }
+
     function truncate(str, n) {
       return str.length > n ? str.substr(0, n - 1) + "…" : str;
     }
-    const messagesRef = ref(db, "messages");
-    onChildAdded(messagesRef, (snapshot) => {
-      const data = snapshot.val();
-      const msgDiv = document.createElement("div");
-      msgDiv.className = "message";
-      if (auth.currentUser && data.uid === auth.currentUser.uid) {
-        msgDiv.classList.add("own");
-      }
-      let replyHTML = "";
-      if (data.replyTo) {
-        replyHTML = `<div style="font-size:0.8rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--reply-border); padding-left: 6px; color:#ccc;">
-          Reply to: <strong>${escapeHtml(data.replyTo.name || "Anonymous")}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
-        </div>`;
-      }
-      const bubble = document.createElement("div");
-      bubble.className = "bubble";
-      bubble.innerHTML = `
-        ${replyHTML}
-        <span class="sender">${escapeHtml(data.name || "Anonymous")}</span>
-        ${escapeHtml(data.message)}
-        <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-      `;
-      msgDiv.appendChild(bubble);
 
-      msgDiv.addEventListener("click", () => {
-        if (!auth.currentUser) return;
-        if (data.uid === auth.currentUser.uid) return;
-        replyTo = {
-          id: snapshot.key,
-          name: data.name,
-          message: data.message,
-        };
-        replyText.textContent = `${replyTo.name || "Anonymous"}: ${truncate(replyTo.message, 50)}`;
-        replyPreview.style.display = "flex";
-        messageInput.focus();
-      });
-      chat.appendChild(msgDiv);
-      scrollToBottom();
-    });
-    cancelReplyBtn.addEventListener("click", () => {
+    function cancelReply() {
       replyTo = null;
       replyPreview.style.display = "none";
-    });
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      if (!auth.currentUser) return alert("You must be signed in to send messages.");
-      const msg = messageInput.value.trim();
-      if (!msg) return;
-      const newMsg = {
-        uid: auth.currentUser.uid,
-        name: auth.currentUser.displayName || "Anonymous",
-        message: msg,
-        timestamp: Date.now(),
-      };
-      if (replyTo) newMsg.replyTo = replyTo;
-      push(messagesRef, newMsg)
-        .then(() => {
-          messageInput.value = "";
-          replyTo = null;
-          replyPreview.style.display = "none";
-        })
-        .catch((err) => {
-          console.error("Error sending message:", err);
-        });
-    });
-    signInBtn.addEventListener("click", () => {
-      signInWithPopup(auth, provider).catch((error) => {
-        console.error("Sign-in error:", error);
-      });
-    });
-    backBtn.addEventListener("click", () => {
-      window.location.href = "index.html";
-    });
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        messageInput.disabled = false;
-        sendBtn.disabled = false;
-        signInBtn.style.display = "none";
-        backBtn.style.display = "inline-block";
-        messageInput.placeholder = "Type a message...";
-        userPic.style.display = "block";
-        userName.style.display = "block";
-        userPic.src = user.photoURL || "https://via.placeholder.com/38/726dff/fff?text=U";
-        userName.textContent = user.displayName || "Anonymous";
-      } else {
-        messageInput.value = "";
-        messageInput.placeholder = "Sign in to chat";
-        messageInput.disabled = true;
-        sendBtn.disabled = true;
-        signInBtn.style.display = "inline-block";
-        backBtn.style.display = "none";
-        replyTo = null;
-        replyPreview.style.display = "none";
-        userPic.style.display = "none";
-        userName.style.display = "none";
+    }
+
+    cancelReplyBtn.onclick = cancelReply;
+
+    // Render message
+    function renderMessage(message, messageId) {
+      const isOwn = message.senderId === currentUser?.uid;
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isOwn ? 'own' : ''}`;
+      
+      const userData = userDataCache[message.senderId] || {};
+      const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : 'Sending...';
+      const displayName = userData.nickname || userData.displayName || "Anonymous";
+      const photoURL = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=726dff&color=fff`;
+
+      let replyHTML = '';
+      if (message.replyTo) {
+        const replyUserData = userDataCache[message.replyTo.senderId] || {};
+        const replyDisplayName = replyUserData.nickname || replyUserData.displayName || "Anonymous";
+        replyHTML = `
+          <div class="reply-to">
+            Reply to ${escapeHtml(replyDisplayName)}: ${escapeHtml(truncate(message.replyTo.text, 40))}
+          </div>
+        `;
       }
-    });
+
+      messageDiv.innerHTML = `
+        <img src="${photoURL}" alt="Profile" onclick="window.location.href='chat.html?uid=${message.senderId}'" />
+        <div class="message-content" onclick="event.stopPropagation();">
+          ${!isOwn ? `<div class="message-sender">${escapeHtml(displayName)}</div>` : ''}
+          ${replyHTML}
+          ${escapeHtml(message.text)}
+          <div class="message-time">${timestamp}</div>
+        </div>
+      `;
+
+      // Add click handler for reply
+      const messageContent = messageDiv.querySelector('.message-content');
+      messageContent.onclick = () => {
+        if (!isOwn) {
+          setReply(message, messageId);
+        }
+      };
+
+      chatMessages.appendChild(messageDiv);
+    }
+
+    // Scroll to bottom
+    function scrollToBottom() {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
   </script>
 </body>
 </html>
