@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chatz | by Flakious</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="nochances.css"/>
+  <style>
+    :root {
+      --main: #726dff;
+      --main-dark: #554fa6;
+      --main-light: #a3a0ff;
+      --bg: #23272f;
+      --bg-light: #2e323c;
+      --bg-gradient: linear-gradient(135deg, #726dff 0%, #554fa6 100%);
+      --bubble-own: #726dff;
+      --bubble-other: #2e323c;
+      --bubble-own-text: #fff;
+      --bubble-other-text: #e6e6fa;
+      --header-bg: #23272f;
+      --header-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
+      --input-bg: #292d36;
+      --input-border: #44415e;
+      --input-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+      --reply-bg: #554fa6;
+      --reply-border: #a3a0ff;
+      --scrollbar-thumb: #726dff55;
+      --scrollbar-track: #23272f;
+    }
+
+    /* DARK THEME */
+    .theme-dark {
+      --main: #23272f;
+      --main-dark: #181b20;
+      --main-light: #44415e;
+      --bg: #181b20;
+      --bg-light: #23272f;
+      --bg-gradient: linear-gradient(135deg, #181b20 0%, #23272f 100%);
+      --bubble-own: #44415e;
+      --bubble-other: #23272f;
+      --bubble-own-text: #fff;
+      --bubble-other-text: #e6e6fa;
+      --header-bg: #181b20;
+      --input-bg: #23232f;
+      --input-border: #44415e;
+      --reply-bg: #23272f;
+      --reply-border: #726dff;
+      --scrollbar-thumb: #44415e;
+      --scrollbar-track: #181b20;
+    }
+
+    /* LIGHT THEME */
+    .theme-light {
+      --main: #7b5cff;
+      --main-dark: #5a3ec8;
+      --main-light: #b3aaff;
+      --bg: #f4f6fb;
+      --bg-light: #fff;
+      --bg-gradient: linear-gradient(135deg, #e9e6ff 0%, #f4f6fb 100%);
+      --bubble-own: #7b5cff;
+      --bubble-other: #e9e6ff;
+      --bubble-own-text: #fff;
+      --bubble-other-text: #23272f;
+      --header-bg: #fff;
+      --input-bg: #f4f6fb;
+      --input-border: #b3aaff;
+      --reply-bg: #e9e6ff;
+      --reply-border: #7b5cff;
+      --scrollbar-thumb: #b3aaff;
+      --scrollbar-track: #f4f6fb;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--header-bg);
+      color: #fff;
+      padding: 1rem 2rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      box-shadow: var(--header-shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+    }
+
+    .main-container {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+      margin-top: 4rem;
+      height: calc(100vh - 4rem);
+    }
+
+    .right-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      padding: 2rem;
+      overflow-y: auto;
+      width: 100%;
+    }
+
+    .right-header {
+      width: 100%;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--main);
+      letter-spacing: 2px;
+      margin-bottom: 2rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .users-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      padding: 1rem;
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .user-card {
+      background: var(--bg-light);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .user-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .user-card img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--main);
+    }
+
+    .user-info {
+      flex: 1;
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: var(--main);
+    }
+
+    .user-status {
+      font-size: 0.9rem;
+      color: var(--main-light);
+    }
+
+    .dm-btn {
+      background: var(--main);
+      color: #fff;
+      border: none;
+      border-radius: 1.2rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .dm-btn:hover {
+      background: var(--main-dark);
+    }
+
+    .dm-btn i {
+      font-size: 0.9rem;
+    }
+
+    .no-users-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--main-light);
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .no-users-icon {
+      font-size: 4rem;
+      margin-bottom: 1.5rem;
+      color: var(--main);
+    }
+
+    .no-users-text {
+      font-size: 1.4rem;
+      margin-bottom: 0.8rem;
+      color: var(--main);
+    }
+
+    .no-users-subtext {
+      font-size: 1rem;
+      color: var(--main-light);
+      max-width: 400px;
+      line-height: 1.5;
+    }
+
+    .floating-actions {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      display: flex;
+      gap: 1rem;
+      z-index: 1000;
+    }
+
+    .action-button {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--main);
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .action-button:hover {
+      transform: translateY(-4px);
+      background: var(--main-dark);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .action-button i {
+      transition: transform 0.2s ease;
+    }
+
+    .action-button:hover i {
+      transform: scale(1.1);
+    }
+
+    .action-button.settings:hover i {
+      transform: rotate(30deg);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--main);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span>Chatz</span>
+    <button class="sign-in-btn" id="sign-in">Sign In</button>
+  </header>
+  <div class="main-container">
+    <div class="right-container">
+      <div class="right-header">Active Users</div>
+      <div class="users-grid" id="users-grid">
+        <!-- Users will be populated here -->
+      </div>
+      <div class="no-users-container" id="no-users-container" style="display: none;">
+        <i class="fa fa-users no-users-icon"></i>
+        <div class="no-users-text">No Active Users</div>
+        <div class="no-users-subtext">Be the first to sign in and start chatting with others!</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="floating-actions">
+    <button class="action-button" id="global-chat-btn" title="Global Chat">
+      <i class="fa fa-globe"></i>
+    </button>
+    <button class="action-button settings" id="settings-btn" title="Settings">
+      <i class="fa fa-gear"></i>
+    </button>
+  </div>
+
+  <script>
+    // Apply theme from localStorage on page load
+    (function() {
+      const theme = localStorage.getItem('chatzTheme') || 'default';
+      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
+    })();
+
+    // Listen for theme changes in other tabs
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'chatzTheme') {
+        const theme = e.newValue || 'default';
+        document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
+      }
+    });
+  </script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      onValue,
+      set,
+      serverTimestamp,
+      update,
+      get,
+      onDisconnect
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+    import noChancesBrowser from './noChancesBrowser.js';
+
+    // Initialize NoChances
+    const noChances = noChancesBrowser;
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+      authDomain: "chatz-45df4.firebaseapp.com",
+      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
+      projectId: "chatz-45df4",
+      storageBucket: "chatz-45df4.appspot.com",
+      messagingSenderId: "463847844545",
+      appId: "1:463847844545:web:5006247d061c3e0dc28240"
+    };
+
+    // Wrap Firebase initialization in error handling
+    try {
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getDatabase(app);
+
+      const signInBtn = document.getElementById("sign-in");
+      const usersGrid = document.getElementById("users-grid");
+      const noUsersContainer = document.getElementById("no-users-container");
+
+      function renderUsers(users) {
+        const usersGrid = document.getElementById('users-grid');
+        usersGrid.innerHTML = '';
+        
+        users.forEach(user => {
+          if (user.uid === auth.currentUser?.uid) return;
+          
+          const userCard = document.createElement('div');
+          userCard.className = 'user-card';
+          userCard.innerHTML = `
+            <img src="${user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nickname || user.displayName || 'U')}&background=726dff&color=fff`}" alt="Profile" />
+            <div class="user-info">
+              <div class="user-name">${user.nickname || user.displayName || "Anonymous"}</div>
+              <div class="user-status">${user.online ? "Online" : "Offline"}</div>
+            </div>
+            <button class="dm-btn" onclick="event.stopPropagation(); window.location.href='chat.html?uid=${user.uid}'">
+              <i class="fas fa-comment"></i> DM
+            </button>
+          `;
+          
+          userCard.onclick = () => {
+            window.location.href = 'chat.html?uid=' + user.uid;
+          };
+          
+          usersGrid.appendChild(userCard);
+        });
+      }
+
+      // Listen for user data changes
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          signInBtn.style.display = "none";
+          
+          const userRef = ref(db, "users/" + user.uid);
+          const userStatusRef = ref(db, "users/" + user.uid + "/online");
+          const userStatusDatabaseRef = ref(db, "users/" + user.uid + "/lastActive");
+          
+          // Set up online status
+          set(userStatusRef, true);
+          set(userStatusDatabaseRef, serverTimestamp());
+          
+          // Set up disconnect handlers
+          onDisconnect(userStatusRef).set(false);
+          onDisconnect(userStatusDatabaseRef).set(serverTimestamp());
+          
+          // First check if user data exists
+          get(userRef).then((snapshot) => {
+            if (snapshot.exists()) {
+              // Update user data while preserving online status
+              update(userRef, {
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                lastActive: serverTimestamp()
+              });
+            } else {
+              // Initialize user data if it doesn't exist
+              set(userRef, {
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                lastActive: serverTimestamp(),
+                online: true
+              });
+            }
+          }).catch((err) => {
+            console.error("Error loading user data:", err);
+          });
+
+          // Listen for all users
+          onValue(ref(db, "users"), (snapshot) => {
+            const users = [];
+            snapshot.forEach((childSnapshot) => {
+              const data = childSnapshot.val();
+              users.push({
+                uid: childSnapshot.key,
+                displayName: data.displayName || "Anonymous",
+                nickname: data.nickname || "",
+                photoURL: data.photoURL,
+                online: data.online,
+                lastActive: data.lastActive
+              });
+            });
+            renderUsers(users);
+          });
+        } else {
+          signInBtn.style.display = "inline-block";
+        }
+      });
+
+      // Add error handling to sign in
+      signInBtn.onclick = () => {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({
+          prompt: 'select_account'
+        });
+        signInWithPopup(auth, provider)
+          .then(async (result) => {
+            const user = result.user;
+            console.log("Sign in successful:", user);
+            
+            try {
+              const userRef = ref(db, `users/${user.uid}`);
+              const userData = {
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+                lastActive: serverTimestamp(),
+                online: true
+              };
+              
+              console.log("Saving user data:", userData);
+              await set(userRef, userData);
+              console.log("User data saved successfully");
+            } catch (error) {
+              noChances.handleError(error, 'User Data Save Error');
+            }
+          })
+          .catch((error) => {
+            noChances.handleError(error, 'Sign In Error');
+          });
+      };
+
+      // Add error handling to navigation
+      document.getElementById("global-chat-btn").onclick = () => {
+        try {
+          window.location.href = "global.html";
+        } catch (error) {
+          noChances.handleError(error, 'Navigation Error');
+        }
+      };
+
+      document.getElementById("settings-btn").onclick = () => {
+        try {
+          window.location.href = "settings.html";
+        } catch (error) {
+          noChances.handleError(error, 'Navigation Error');
+        }
+      };
+
+    } catch (error) {
+      noChances.handleError(error, 'Firebase Initialization Error');
+    }
+  </script>
+</body>
+</html>

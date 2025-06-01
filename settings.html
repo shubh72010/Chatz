@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chatz | Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --main: #a259ff;
+      --accent: #5f27cd;
+      --danger: #ff5252;
+      --settings-bg: rgba(44,32,69,0.96);
+      --text: #f0eaff;
+      --input-bg: rgba(255,255,255,0.16);
+      --dark-bg: #131324;
+      --dark-card: #191938;
+      --dark-input: #191938;
+      --dark-text: #f0eaff;
+      --light-bg: #f7f4fb;
+      --light-card: #fff;
+      --light-input: #f0eaff;
+      --light-text: #2c2045;
+    }
+    body {
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+      background: var(--bg-gradient);
+      color: #f5f5f5;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    header {
+      width: 100%;
+      background: var(--header-bg);
+      color: #fff;
+      padding: 1rem 2rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      border-radius: 0 0 1.2rem 1.2rem;
+      box-shadow: var(--header-shadow);
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .back-btn {
+      position: absolute;
+      left: 1.5rem;
+      background: var(--main);
+      color: #fff;
+      border: none;
+      border-radius: 1.5rem;
+      padding: 0.6rem 1.3rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #a259ff33;
+      transition: background 0.2s;
+    }
+    .back-btn:hover {
+      background: var(--accent);
+    }
+    .settings-card {
+      margin-top: 110px;
+      background: var(--settings-bg);
+      border-radius: 1.2rem;
+      box-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
+      padding: 2rem 2.5rem;
+      max-width: 500px;
+      width: 100%;
+      margin: 2rem auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .section {
+      width: 100%;
+      margin-bottom: 1.2rem;
+    }
+    .section label {
+      font-weight: 600;
+      color: var(--main);
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    .profile-section {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .profile-pic-container {
+      position: relative;
+      width: 80px;
+      height: 80px;
+    }
+    .profile-pic {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--main);
+      box-shadow: 0 2px 8px rgba(114,109,255,0.15);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .profile-pic:hover {
+      filter: brightness(0.8);
+    }
+    .profile-pic-edit {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      background: var(--main);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border: 2px solid var(--settings-bg);
+      transition: all 0.2s ease;
+    }
+    .profile-pic-edit:hover {
+      transform: scale(1.1);
+      background: var(--accent);
+    }
+    .profile-info {
+      flex: 1;
+    }
+    .profile-name {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--main);
+      margin-bottom: 0.3rem;
+    }
+    .profile-email {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+    }
+    select, input[type="text"], input[type="color"] {
+      width: 100%;
+      padding: 0.7rem 1.1rem;
+      border-radius: 1.2rem;
+      border: 1.5px solid var(--input-border);
+      background: var(--input-bg);
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      outline: none;
+      transition: border 0.18s;
+    }
+    input[type="color"] {
+      height: 40px;
+      padding: 0.2rem;
+    }
+    select:focus, input[type="text"]:focus, input[type="color"]:focus {
+      border: 1.5px solid var(--main);
+    }
+    .save-btn, .signout-btn {
+      background: var(--main);
+      border: none;
+      color: white;
+      font-weight: 600;
+      padding: 0.8rem 1.5rem;
+      border-radius: 1.2rem;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+    .save-btn:hover { background: var(--main-dark); }
+    .signout-btn {
+      background: var(--danger);
+      margin-top: 1rem;
+    }
+    .signout-btn:hover {
+      background: #ff3333;
+      transform: translateY(-2px);
+    }
+    .color-preview {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 8px;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+    .settings-group {
+      background: rgba(255,255,255,0.05);
+      padding: 1.5rem;
+      border-radius: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .settings-group h3 {
+      color: var(--main);
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+    .notification-preview {
+      background: rgba(255,255,255,0.1);
+      padding: 1rem;
+      border-radius: 0.8rem;
+      margin-top: 1rem;
+      display: none;
+    }
+    .notification-preview.active {
+      display: block;
+    }
+    .notification-preview-header {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+    .notification-preview-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.8rem;
+    }
+    .notification-preview-title {
+      font-weight: 600;
+      color: var(--main);
+    }
+    .notification-preview-content {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.8);
+    }
+    .notification-sound {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .notification-sound label {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+    }
+    .notification-sound select {
+      flex: 1;
+      padding: 0.4rem;
+      font-size: 0.9rem;
+    }
+    .notification-volume {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .notification-volume label {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+      min-width: 60px;
+    }
+    .notification-volume input[type="range"] {
+      flex: 1;
+      height: 4px;
+      -webkit-appearance: none;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      outline: none;
+    }
+    .notification-volume input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--main);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .notification-volume input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+    }
+
+    /* PURPLE THEME */
+    .theme-default body {
+      background: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%) !important;
+      color: var(--text) !important;
+    }
+    .theme-default .settings-card {
+      background: rgba(44,32,69,0.96)!important;
+      color: #fff!important;
+    }
+    .theme-default header {
+      background: rgba(44,32,69,0.85)!important;
+      color: #fff!important;
+    }
+    .theme-default .profile-info .profile-name,
+    .theme-default .section label { color: var(--main)!important; }
+    .theme-default select,
+    .theme-default input[type="text"] {
+      background: rgba(255,255,255,0.16)!important;
+      color: var(--main)!important;
+      border-color: var(--main)!important;
+    }
+    .theme-default .save-btn, .theme-default .signout-btn {
+      background: var(--main)!important;
+      color: #fff!important;
+    }
+
+    /* DARK THEME */
+    .theme-dark body {
+      background: var(--dark-bg)!important;
+      color: var(--dark-text)!important;
+    }
+    .theme-dark .settings-card {
+      background: var(--dark-card)!important;
+      color: var(--dark-text)!important;
+      box-shadow: 0 8px 32px #0004!important;
+    }
+    .theme-dark header {
+      background: #191938!important;
+      color: var(--dark-text)!important;
+    }
+    .theme-dark .profile-info .profile-name,
+    .theme-dark .section label { color: #a259ff!important; }
+    .theme-dark select,
+    .theme-dark input[type="text"] {
+      background: var(--dark-input)!important;
+      color: #a259ff!important;
+      border-color: #5f27cd!important;
+    }
+    .theme-dark select:focus, .theme-dark input[type="text"]:focus {
+      background: #1c1c38!important;
+      color: #a259ff!important;
+      border-color: var(--main)!important;
+    }
+    .theme-dark .save-btn, .theme-dark .signout-btn {
+      background: #a259ff!important;
+      color: #fff!important;
+    }
+
+    /* LIGHT THEME */
+    .theme-light body {
+      background: var(--light-bg)!important;
+      color: var(--light-text)!important;
+    }
+    .theme-light .settings-card {
+      background: var(--light-card)!important;
+      color: var(--light-text)!important;
+      box-shadow: 0 8px 32px #a259ff0d!important;
+    }
+    .theme-light header {
+      background: #fff!important;
+      color: var(--main)!important;
+    }
+    .theme-light .profile-info .profile-name,
+    .theme-light .section label { color: var(--accent)!important; }
+    .theme-light select,
+    .theme-light input[type="text"] {
+      background: #f2edfd!important;
+      color: var(--accent)!important;
+      border-color: var(--main)!important;
+    }
+    .theme-light select:focus, .theme-light input[type="text"]:focus {
+      background: #fff!important;
+      color: var(--main)!important;
+      border-color: var(--accent)!important;
+    }
+    .theme-light .save-btn, .theme-light .signout-btn {
+      background: var(--accent)!important;
+      color: #fff!important;
+    }
+    .theme-light .save-btn:hover, .theme-light .signout-btn:hover {
+      background: var(--main)!important;
+    }
+    @media (max-width: 600px) {
+      .settings-card {
+        padding: 1.2rem 0.7rem 1rem 0.7rem;
+        margin-top: 80px;
+      }
+      header {
+        font-size: 1.4rem;
+        padding: 0.8rem 0 0.6rem 0;
+      }
+      .back-btn {
+        left: 0.5rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+      }
+      .profile-info img {
+        width: 52px;
+        height: 52px;
+      }
+    }
+  </style>
+  <script>
+    // Theme sync
+    (function() {
+      const theme = localStorage.getItem('chatzTheme') || 'default';
+      document.documentElement.className = 'theme-' + theme;
+    })();
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'chatzTheme') {
+        const theme = e.newValue || 'default';
+        document.documentElement.className = 'theme-' + theme;
+      }
+    });
+  </script>
+</head>
+<body>
+  <header>Chatz Settings</header>
+  <button class="back-btn" onclick="window.location.href='index.html'">&larr; Back</button>
+  <div class="settings-card">
+    <div class="profile-section">
+      <div class="profile-pic-container">
+        <img id="profile-pic" src="" alt="Profile" class="profile-pic" />
+        <div class="profile-pic-edit" id="profile-pic-edit">
+          <i class="fas fa-camera"></i>
+        </div>
+        <input type="file" id="profile-pic-input" accept="image/*" style="display: none;" />
+      </div>
+      <div class="profile-info">
+        <div id="profile-name" class="profile-name"></div>
+        <div id="profile-email" class="profile-email"></div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>Profile Settings</h3>
+      <div class="section">
+        <label for="nickname">Nickname</label>
+        <input type="text" id="nickname" placeholder="Enter your nickname" maxlength="24" />
+        <small style="color: var(--text); opacity: 0.7; font-size: 0.8rem; margin-top: 0.5rem; display: block;">
+          This will be your display name in the chat
+        </small>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>Appearance</h3>
+      <div class="section">
+        <label for="theme-select">Theme</label>
+        <select id="theme-select">
+          <option value="default">Purple</option>
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </div>
+      <div class="section">
+        <label for="accent-color">Accent Color</label>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <input type="color" id="accent-color" value="#726dff" />
+          <span class="color-preview" id="color-preview"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>Notifications</h3>
+      <div class="section">
+        <label for="notifications">Enable Notifications</label>
+        <select id="notifications">
+          <option value="all">All Messages</option>
+          <option value="mentions">Mentions Only</option>
+          <option value="none">None</option>
+        </select>
+      </div>
+      <div class="section">
+        <label>Notification Sound</label>
+        <div class="notification-sound">
+          <label>Sound:</label>
+          <select id="notification-sound">
+            <option value="default">Default</option>
+            <option value="chime">Chime</option>
+            <option value="bell">Bell</option>
+            <option value="message">Message</option>
+          </select>
+        </div>
+        <div class="notification-volume">
+          <label>Volume:</label>
+          <input type="range" id="notification-volume" min="0" max="100" value="50" />
+        </div>
+      </div>
+      <div class="notification-preview" id="notification-preview">
+        <div class="notification-preview-header">
+          <div class="notification-preview-icon">
+            <i class="fas fa-bell"></i>
+          </div>
+          <div class="notification-preview-title">New Message</div>
+        </div>
+        <div class="notification-preview-content">
+          This is how your notifications will look
+        </div>
+      </div>
+    </div>
+
+    <button class="save-btn" id="save-btn">Save Changes</button>
+    <button class="signout-btn" id="signout-btn">Sign Out</button>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      set,
+      get,
+      update
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+    import {
+      getStorage,
+      ref as storageRef,
+      uploadBytes,
+      getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+      authDomain: "chatz-45df4.firebaseapp.com",
+      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
+      projectId: "chatz-45df4",
+      storageBucket: "chatz-45df4.appspot.com",
+      messagingSenderId: "463847844545",
+      appId: "1:463847844545:web:5006247d061c3e0dc28240"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const storage = getStorage(app);
+
+    const themeSelect = document.getElementById('theme-select');
+    const nicknameInput = document.getElementById('nickname');
+    const saveBtn = document.getElementById('save-btn');
+    const signoutBtn = document.getElementById('signout-btn');
+    const profilePic = document.getElementById('profile-pic');
+    const profileName = document.getElementById('profile-name');
+    const profileEmail = document.getElementById('profile-email');
+    const accentColor = document.getElementById('accent-color');
+    const colorPreview = document.getElementById('color-preview');
+    const notifications = document.getElementById('notifications');
+    const profilePicEdit = document.getElementById('profile-pic-edit');
+    const profilePicInput = document.getElementById('profile-pic-input');
+    const notificationSound = document.getElementById('notification-sound');
+    const notificationVolume = document.getElementById('notification-volume');
+    const notificationPreview = document.getElementById('notification-preview');
+
+    // Load theme from localStorage
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('chatzTheme') || 'default';
+      themeSelect.value = savedTheme;
+      
+      const savedColor = localStorage.getItem('chatzAccentColor') || '#726dff';
+      accentColor.value = savedColor;
+      colorPreview.style.backgroundColor = savedColor;
+      
+      const savedSound = localStorage.getItem('chatzNotificationSound') || 'default';
+      const savedVolume = localStorage.getItem('chatzNotificationVolume') || '50';
+      
+      notificationSound.value = savedSound;
+      notificationVolume.value = savedVolume;
+    });
+
+    themeSelect.addEventListener('change', (event) => {
+      const theme = event.target.value;
+      document.documentElement.className = 'theme-' + theme;
+      localStorage.setItem('chatzTheme', theme);
+    });
+
+    accentColor.addEventListener('input', (event) => {
+      const color = event.target.value;
+      colorPreview.style.backgroundColor = color;
+      localStorage.setItem('chatzAccentColor', color);
+    });
+
+    // Handle profile picture upload
+    profilePicEdit.onclick = () => {
+      profilePicInput.click();
+    };
+
+    profilePicInput.onchange = async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          alert('Please sign in to update profile picture');
+          return;
+        }
+
+        // Show loading state
+        profilePic.style.opacity = '0.5';
+        profilePicEdit.style.pointerEvents = 'none';
+        
+        // Create a unique filename
+        const timestamp = Date.now();
+        const fileExtension = file.name.split('.').pop();
+        const fileName = `${user.uid}_${timestamp}.${fileExtension}`;
+        
+        // Upload to Firebase Storage
+        const storageReference = storageRef(storage, `profile_pics/${fileName}`);
+        const uploadResult = await uploadBytes(storageReference, file);
+        console.log('Upload successful:', uploadResult);
+
+        // Get download URL
+        const downloadURL = await getDownloadURL(uploadResult.ref);
+        console.log('Download URL:', downloadURL);
+
+        // Update user profile in database
+        const userRef = ref(db, "users/" + user.uid);
+        await update(userRef, {
+          photoURL: downloadURL,
+          lastActive: Date.now()
+        });
+
+        // Update UI
+        profilePic.src = downloadURL;
+        profilePic.style.opacity = '1';
+        profilePicEdit.style.pointerEvents = 'auto';
+
+        // Show success message
+        saveBtn.textContent = "Profile Picture Updated!";
+        saveBtn.style.background = "#4CAF50";
+        setTimeout(() => {
+          saveBtn.textContent = "Save Changes";
+          saveBtn.style.background = "";
+        }, 2000);
+
+      } catch (error) {
+        console.error("Error uploading profile picture:", error);
+        alert("Failed to upload profile picture: " + error.message);
+        profilePic.style.opacity = '1';
+        profilePicEdit.style.pointerEvents = 'auto';
+      }
+    };
+
+    // Load user data if signed in
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Set profile picture with fallback
+        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=726dff&color=fff`;
+        profilePic.src = photoURL;
+        profileName.textContent = user.displayName || "Anonymous";
+        profileEmail.textContent = user.email || "";
+
+        try {
+          const userRef = ref(db, "users/" + user.uid);
+          const snapshot = await get(userRef);
+          
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            nicknameInput.value = data.nickname || "";
+            notifications.value = data.notifications || "all";
+            // Update profile picture if it exists in database
+            if (data.photoURL) {
+              profilePic.src = data.photoURL;
+            }
+          } else {
+            // Initialize user data if it doesn't exist
+            await set(userRef, {
+              nickname: "",
+              displayName: user.displayName,
+              photoURL: photoURL,
+              email: user.email,
+              lastActive: Date.now(),
+              notifications: "all"
+            });
+          }
+        } catch (error) {
+          console.error("Error loading user data:", error);
+        }
+      } else {
+        window.location.href = "index.html";
+      }
+    });
+
+    // Handle notification settings
+    notificationSound.onchange = () => {
+      localStorage.setItem('chatzNotificationSound', notificationSound.value);
+      showNotificationPreview();
+    };
+
+    notificationVolume.oninput = () => {
+      localStorage.setItem('chatzNotificationVolume', notificationVolume.value);
+    };
+
+    function showNotificationPreview() {
+      notificationPreview.classList.add('active');
+      setTimeout(() => {
+        notificationPreview.classList.remove('active');
+      }, 3000);
+    }
+
+    // Update save button handler
+    saveBtn.onclick = async () => {
+      const theme = themeSelect.value;
+      document.documentElement.className = 'theme-' + theme;
+      localStorage.setItem('chatzTheme', theme);
+      localStorage.setItem('chatzAccentColor', accentColor.value);
+
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const nickname = nicknameInput.value.trim();
+          const userRef = ref(db, "users/" + user.uid);
+          
+          const snapshot = await get(userRef);
+          if (snapshot.exists()) {
+            await set(userRef, {
+              ...snapshot.val(),
+              nickname: nickname,
+              notifications: notifications.value,
+              notificationSound: notificationSound.value,
+              notificationVolume: notificationVolume.value,
+              lastActive: Date.now()
+            });
+          } else {
+            await set(userRef, {
+              nickname: nickname,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              email: user.email,
+              lastActive: Date.now(),
+              notifications: notifications.value,
+              notificationSound: notificationSound.value,
+              notificationVolume: notificationVolume.value
+            });
+          }
+          
+          // Show success message
+          saveBtn.textContent = "Saved!";
+          saveBtn.style.background = "#4CAF50";
+          setTimeout(() => {
+            saveBtn.textContent = "Save Changes";
+            saveBtn.style.background = "";
+          }, 2000);
+
+          console.log("Settings saved successfully:", { 
+            nickname, 
+            theme, 
+            accentColor: accentColor.value,
+            notifications: notifications.value,
+            notificationSound: notificationSound.value,
+            notificationVolume: notificationVolume.value
+          });
+
+          // Wait for data to be saved before redirecting
+          setTimeout(() => {
+            window.location.href = "global.html";
+          }, 1000);
+        } catch (error) {
+          console.error("Error saving settings:", error);
+          alert("Failed to save settings. Please try again.");
+        }
+      } else {
+        alert("Please sign in to save settings.");
+      }
+    };
+
+    signoutBtn.onclick = async () => {
+      try {
+        await signOut(auth);
+        window.location.href = "index.html";
+      } catch (error) {
+        console.error("Error signing out:", error);
+        alert("Failed to sign out. Please try again.");
+      }
+    };
+  </script>
+</body>
+</html>
