@@ -6,6 +6,8 @@
   <title>Chatz | Global Chat</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="themeManager.js"></script>
   <style>
     :root {
       --main: #726dff;
@@ -394,6 +396,11 @@
         const theme = e.newValue || 'default';
         document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
       }
+    });
+
+    // Initialize theme manager when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      window.themeManager.initThemeManager();
     });
   </script>
 </head>
