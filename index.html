@@ -6,7 +6,6 @@
   <title>Chatz | by Flakious</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="nochances.css"/>
-  <script src="themeManager.js"></script>
   <style>
     :root {
       --main: #726dff;
@@ -327,23 +326,15 @@
     </button>
   </div>
 
+  <!-- Load scripts at the end of body -->
+  <script src="themeManager.js"></script>
   <script>
-    // Initialize theme manager when the page loads
-    document.addEventListener('DOMContentLoaded', () => {
+    // Wait for the theme manager script to load
+    window.addEventListener('load', function() {
+      if (window.themeManager && typeof window.themeManager.initThemeManager === 'function') {
         window.themeManager.initThemeManager();
-    });
-
-    // Apply theme from localStorage on page load
-    (function() {
-      const theme = localStorage.getItem('chatzTheme') || 'default';
-      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
-    })();
-
-    // Listen for theme changes in other tabs
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'chatzTheme') {
-        const theme = e.newValue || 'default';
-        document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
+      } else {
+        console.error('Theme manager not properly loaded');
       }
     });
   </script>
