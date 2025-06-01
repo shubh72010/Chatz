@@ -5,7 +5,7 @@ import {
     storage, 
     realtimeDb,
     currentUser,
-    sendMessage as firebaseSendMessage,
+    sendMessage,
     updateMessage,
     deleteMessage,
     uploadFile,
@@ -20,6 +20,12 @@ import noChancesBrowser from './noChancesBrowser.js';
 // Initialize NoChances
 const noChances = noChancesBrowser;
 
+// Initialize Firebase references
+let chatRef = null;
+let messagesRef = null;
+let typingRef = null;
+let onlineStatusRef = null;
+
 // Chat state
 let currentChatId = null;
 let messageListener = null;
@@ -27,74 +33,189 @@ let typingListener = null;
 let onlineStatusListener = null;
 
 // Initialize chat with a contact
-async function initializeChat(contactId) {
+export async function initializeChat(contactId) {
     try {
-        if (!currentUser) {
+        if (!auth.currentUser) {
             throw new Error('User not authenticated');
         }
 
-        // Check if chat already exists
-        const chatsRef = collection(db, 'chats');
-        const q = query(chatsRef, where('participants', 'array-contains', currentUser.uid));
-        const querySnapshot = await getDocs(q);
-        
-        let chatDoc = null;
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            if (data.participants.includes(contactId)) {
-                chatDoc = doc;
-            }
-        });
+        // Create chat reference
+        const chatId = [auth.currentUser.uid, contactId].sort().join('_');
+        chatRef = db.collection('chats').doc(chatId);
+        messagesRef = chatRef.collection('messages');
+        typingRef = realtimeDb.ref(`typing/${chatId}`);
+        onlineStatusRef = realtimeDb.ref(`onlineStatus/${contactId}`);
 
-        if (chatDoc) {
-            currentChatId = chatDoc.id;
-        } else {
-            // Create new chat
-            const chatData = {
-                participants: [currentUser.uid, contactId],
-                createdAt: Date.now(),
+        // Initialize chat document if it doesn't exist
+        const chatDoc = await chatRef.get();
+        if (!chatDoc.exists) {
+            await chatRef.set({
+                participants: [auth.currentUser.uid, contactId],
+                createdAt: new Date(),
                 lastMessage: null,
-                type: 'direct'
-            };
-            const chatRef = await addDoc(chatsRef, chatData);
-            currentChatId = chatRef.id;
+                lastMessageTime: null
+            });
         }
 
-        // Clean up existing listeners
-        if (messageListener) messageListener();
-        if (typingListener) typingListener();
-        if (onlineStatusListener) onlineStatusListener();
+        // Set up listeners
+        setupMessageListeners();
+        setupTypingListener();
+        setupOnlineStatusListener();
 
-        // Set up new listeners
-        messageListener = setupMessageListeners(currentChatId);
-        typingListener = setupTypingListener(currentChatId);
-        onlineStatusListener = listenToOnlineStatus(contactId, (snapshot) => {
-            const status = snapshot.val();
-            updateOnlineStatus(status);
-        });
-
-        // Initialize IndexedDB for offline support
-        await initIndexedDB();
-
-        return currentChatId;
+        return chatId;
     } catch (error) {
-        await errorHandler.handleError(error, 'Initialize Chat');
+        console.error('Failed to initialize chat:', error);
         throw error;
     }
 }
 
-// Update online status in UI
-function updateOnlineStatus(status) {
-    const statusElement = document.querySelector('.chat-header-status');
-    if (statusElement) {
-        if (status?.online) {
-            statusElement.textContent = 'Online';
-            statusElement.classList.add('online');
+// Set up message listeners with error handling
+function setupMessageListeners() {
+    if (!messagesRef) {
+        throw new Error('Messages reference not initialized');
+    }
+
+    return messagesRef
+        .orderBy('timestamp', 'desc')
+        .limit(50)
+        .onSnapshot(
+            (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        const message = change.doc.data();
+                        displayMessage(message);
+                    }
+                });
+            },
+            (error) => {
+                console.error('Error listening to messages:', error);
+                throw error;
+            }
+        );
+}
+
+// Set up typing listener with error handling
+function setupTypingListener() {
+    if (!typingRef) {
+        throw new Error('Typing reference not initialized');
+    }
+
+    return typingRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data && data[auth.currentUser.uid]) {
+            showTypingIndicator();
         } else {
-            const lastSeen = new Date(status?.lastSeen);
-            statusElement.textContent = `Last seen ${lastSeen.toLocaleTimeString()}`;
-            statusElement.classList.remove('online');
+            hideTypingIndicator();
         }
+    });
+}
+
+// Set up online status listener with error handling
+function setupOnlineStatusListener() {
+    if (!onlineStatusRef) {
+        throw new Error('Online status reference not initialized');
+    }
+
+    return onlineStatusRef.on('value', (snapshot) => {
+        const isOnline = snapshot.val();
+        updateOnlineStatus(isOnline);
+    });
+}
+
+// Send message with error handling
+export async function sendMessage(content, chatId) {
+    try {
+        if (!messagesRef) {
+            throw new Error('Messages reference not initialized');
+        }
+
+        const message = {
+            content,
+            senderId: auth.currentUser.uid,
+            timestamp: new Date(),
+            type: 'text',
+            status: 'sent'
+        };
+
+        await messagesRef.add(message);
+        await chatRef.update({
+            lastMessage: content,
+            lastMessageTime: new Date()
+        });
+
+        return message;
+    } catch (error) {
+        console.error('Error sending message:', error);
+        throw error;
+    }
+}
+
+// Update typing status with error handling
+export function updateTypingStatus(isTyping) {
+    try {
+        if (!typingRef) {
+            throw new Error('Typing reference not initialized');
+        }
+
+        typingRef.child(auth.currentUser.uid).set(isTyping);
+    } catch (error) {
+        console.error('Error updating typing status:', error);
+        throw error;
+    }
+}
+
+// Cleanup function
+export function cleanup() {
+    if (typingRef) {
+        typingRef.off();
+    }
+    if (onlineStatusRef) {
+        onlineStatusRef.off();
+    }
+    if (messagesRef) {
+        messagesRef.onSnapshot(() => {});
+    }
+}
+
+// UI Helper functions
+function displayMessage(message) {
+    const chatMessages = document.querySelector('.chat-messages');
+    if (!chatMessages) return;
+
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${message.senderId === auth.currentUser.uid ? 'own' : ''}`;
+    messageElement.innerHTML = `
+        <div class="message-content">
+            <div class="message-sender">${message.senderId === auth.currentUser.uid ? 'You' : 'Other User'}</div>
+            <div class="message-text">${message.content}</div>
+            <div class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</div>
+            <div class="message-status">${message.status}</div>
+        </div>
+    `;
+
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function showTypingIndicator() {
+    const indicator = document.querySelector('.typing-indicator');
+    if (indicator) {
+        indicator.classList.add('active');
+    }
+}
+
+function hideTypingIndicator() {
+    const indicator = document.querySelector('.typing-indicator');
+    if (indicator) {
+        indicator.classList.remove('active');
+    }
+}
+
+function updateOnlineStatus(isOnline) {
+    const statusElement = document.querySelector('#other-user-status');
+    if (statusElement) {
+        statusElement.textContent = isOnline ? 'Online' : 'Offline';
+        statusElement.className = `chat-header-status ${isOnline ? 'online' : 'offline'}`;
     }
 }
 
@@ -128,18 +249,18 @@ const DISAPPEAR_TIMERS = new Map();
 // Add reaction to message with enhanced error handling
 async function addReaction(messageId, reaction) {
     try {
-        const messageRef = doc(db, `messages/${messageId}`);
-        const message = await getDoc(messageRef);
+        const messageRef = db.collection('messages').doc(messageId);
+        const message = await messageRef.get();
         
         if (!message.exists()) return;
         
         const reactions = message.data().reactions || {};
         const userReaction = reactions[reaction] || [];
         
-        if (userReaction.includes(currentUser.uid)) {
-            userReaction.splice(userReaction.indexOf(currentUser.uid), 1);
+        if (userReaction.includes(auth.currentUser.uid)) {
+            userReaction.splice(userReaction.indexOf(auth.currentUser.uid), 1);
         } else {
-            userReaction.push(currentUser.uid);
+            userReaction.push(auth.currentUser.uid);
         }
         
         reactions[reaction] = userReaction;
@@ -152,70 +273,11 @@ async function addReaction(messageId, reaction) {
     }
 }
 
-// Typing Indicator
-let typingTimeout;
-const typingRef = ref(realtimeDb, `typing/${currentChatId}`);
-
-async function updateTypingStatus(isTyping) {
-    try {
-        if (!currentUser) return;
-        
-        const userTypingRef = ref(realtimeDb, `typing/${currentChatId}/${currentUser.uid}`);
-        
-        if (isTyping) {
-            await set(userTypingRef, {
-                timestamp: Date.now()
-            });
-        } else {
-            await remove(userTypingRef);
-        }
-    } catch (error) {
-        await errorHandler.handleError(error, 'Update Typing Status');
-    }
-}
-
-// Listen for typing status
-const setupTypingListener = (chatId) => {
-    const typingRef = ref(realtimeDb, `typing/${chatId}`);
-    return onValue(typingRef, (snapshot) => {
-        try {
-            const typingUsers = snapshot.val() || {};
-            
-            // Remove expired typing indicators (older than 5 seconds)
-            Object.entries(typingUsers).forEach(([userId, data]) => {
-                if (Date.now() - data.timestamp > 5000) {
-                    remove(ref(realtimeDb, `typing/${chatId}/${userId}`));
-                }
-            });
-            
-            // Show typing indicator if other users are typing
-            const otherTypingUsers = Object.keys(typingUsers).filter(id => id !== currentUser?.uid);
-            const typingIndicator = document.querySelector('.typing-indicator');
-            
-            if (otherTypingUsers.length > 0) {
-                typingIndicator.classList.add('active');
-                typingIndicator.innerHTML = `
-                    <span>${otherTypingUsers.length} user${otherTypingUsers.length > 1 ? 's' : ''} typing</span>
-                    <div class="typing-dots">
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                    </div>
-                `;
-            } else {
-                typingIndicator.classList.remove('active');
-            }
-        } catch (error) {
-            errorHandler.handleError(error, 'Typing Status Update');
-        }
-    });
-};
-
 // Enhanced Message Editing with time window
 async function editMessage(messageId, newContent) {
     try {
-        const messageRef = doc(db, `messages/${messageId}`);
-        const message = await getDoc(messageRef);
+        const messageRef = db.collection('messages').doc(messageId);
+        const message = await messageRef.get();
         
         if (!message.exists()) return;
         
@@ -297,54 +359,12 @@ async function syncOfflineMessages() {
     try {
         while (offlineMessages.length > 0) {
             const message = offlineMessages.shift();
-            await sendMessage(message.content, message.chatId, message.type, message.options);
+            await sendMessage(message.content, message.chatId);
         }
     } catch (error) {
         await errorHandler.handleError(error, 'Sync Offline Messages', async () => {
             return await syncOfflineMessages();
         });
-    }
-}
-
-// Enhanced Message Sending with disappearing messages
-async function sendMessage(content, chatId, type = MESSAGE_TYPES.TEXT, options = {}) {
-    try {
-        if (!navigator.onLine) {
-            await storeOfflineMessage(content, chatId, type, options);
-            return;
-        }
-        
-        const message = {
-            content,
-            chatId,
-            type,
-            sender: currentUser.uid,
-            timestamp: Date.now(),
-            status: MESSAGE_STATUS.SENDING,
-            ...options
-        };
-        
-        let messageId;
-        
-        // Handle disappearing messages
-        if (options.disappearAfter) {
-            message.status = MESSAGE_STATUS.DISAPPEARING;
-            messageId = await firebaseSendMessage(chatId, message);
-            const timer = setTimeout(async () => {
-                await deleteMessage(chatId, messageId);
-            }, options.disappearAfter);
-            DISAPPEAR_TIMERS.set(messageId, timer);
-        } else {
-            messageId = await firebaseSendMessage(chatId, message);
-        }
-        
-        // Cache the message
-        cacheMessage(messageId, message);
-        
-        return messageId;
-    } catch (error) {
-        await errorHandler.handleError(error, 'Send Message');
-        throw error; // Re-throw the error instead of recursive call
     }
 }
 
@@ -400,80 +420,6 @@ async function storeOfflineMessage(content, chatId, type, options = {}) {
             return await storeOfflineMessage(content, chatId, type, options);
         });
     }
-}
-
-// Setup message listeners
-const setupMessageListeners = (chatId) => {
-    const unsubscribe = listenToMessages(chatId, (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-            if (change.type === 'added') {
-                const message = change.doc.data();
-                cacheMessage(change.doc.id, message);
-                // Update UI with new message
-                updateMessageUI(change.doc.id, message);
-            } else if (change.type === 'modified') {
-                const message = change.doc.data();
-                cacheMessage(change.doc.id, message);
-                // Update UI with modified message
-                updateMessageUI(change.doc.id, message);
-            } else if (change.type === 'removed') {
-                // Remove message from UI
-                removeMessageUI(change.doc.id);
-            }
-        });
-    });
-    
-    return unsubscribe;
-};
-
-// Update message UI
-function updateMessageUI(messageId, message) {
-    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-    if (messageElement) {
-        // Update existing message
-        messageElement.innerHTML = createMessageHTML(message);
-    } else {
-        // Create new message
-        const messagesContainer = document.querySelector('.chat-messages');
-        const messageElement = document.createElement('div');
-        messageElement.className = `message ${message.sender === currentUser.uid ? 'own' : ''}`;
-        messageElement.setAttribute('data-message-id', messageId);
-        messageElement.innerHTML = createMessageHTML(message);
-        messagesContainer.appendChild(messageElement);
-    }
-}
-
-// Remove message UI
-function removeMessageUI(messageId) {
-    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-    if (messageElement) {
-        messageElement.remove();
-    }
-}
-
-// Create message HTML
-function createMessageHTML(message) {
-    return `
-        <div class="message-content">
-            ${message.content}
-            ${message.edited ? '<span class="edited-indicator">(edited)</span>' : ''}
-            <div class="message-reactions">
-                ${createReactionsHTML(message.reactions)}
-            </div>
-        </div>
-    `;
-}
-
-// Create reactions HTML
-function createReactionsHTML(reactions = {}) {
-    return Object.entries(reactions)
-        .map(([reaction, users]) => `
-            <div class="reaction" data-reaction="${reaction}">
-                ${reaction}
-                <span class="reaction-count">${users.length}</span>
-            </div>
-        `)
-        .join('');
 }
 
 // Export enhanced functions
