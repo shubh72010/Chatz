@@ -26,7 +26,7 @@ let isRecording = false;
 const noChances = noChancesBrowser;
 
 // GIF API Configuration
-const GIPHY_API_KEY = process.env.GIPHY_API_KEY || 'YOUR_GIPHY_API_KEY'; // Replace with your Giphy API key
+const GIPHY_API_KEY = 'YOUR_GIPHY_API_KEY'; // Replace with your Giphy API key
 const GIPHY_API_URL = 'https://api.giphy.com/v1/gifs';
 
 // Start voice recording with enhanced error handling
