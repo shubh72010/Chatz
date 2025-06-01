@@ -12,7 +12,7 @@ import {
     listenToMessages,
     listenToTyping,
     listenToOnlineStatus,
-    cleanup
+    cleanup as firebaseCleanup
 } from './firebaseConfig.js';
 import errorHandler from './errorHandler.js';
 import noChancesBrowser from './noChancesBrowser.js';
@@ -175,6 +175,7 @@ export function cleanup() {
     if (messagesRef) {
         messagesRef.onSnapshot(() => {});
     }
+    firebaseCleanup();
 }
 
 // UI Helper functions
