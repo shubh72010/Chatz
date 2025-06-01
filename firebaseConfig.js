@@ -80,7 +80,8 @@ export async function deleteMessage(chatId, messageId) {
 export function listenToMessages(chatId, callback) {
     const messagesRef = collection(db, `chats/${chatId}/messages`);
     const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(50));
-    return onSnapshot(q, callback);
+    const unsubscribe = onSnapshot(q, callback);
+    return unsubscribe;
 }
 
 // Realtime Database functions
@@ -105,8 +106,15 @@ export async function uploadFile(file, path) {
 
 // Cleanup function
 export function cleanup() {
-    // Clean up any listeners or resources
-    off(dbRef(realtimeDb));
+    // Clean up Firestore listeners
+    const unsubscribeFunctions = [];
+    
+    // Clean up Realtime Database listeners
+    off(dbRef(realtimeDb, 'typing'));
+    off(dbRef(realtimeDb, 'onlineStatus'));
+    
+    // Clean up any remaining listeners
+    unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
 }
 
 // Export Firebase instances
