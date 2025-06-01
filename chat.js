@@ -24,7 +24,6 @@ import {
     getCachedMessage,
     setupMessageListeners,
     setupTypingListener,
-    cleanup as chatCleanup,
     currentChatId,
     initializeChat
 } from './chatFeatures.js';
