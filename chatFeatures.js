@@ -16,6 +16,84 @@ import {
 } from './firebaseConfig.js';
 import errorHandler from './errorHandler.js';
 
+// Chat state
+let currentChatId = null;
+let messageListener = null;
+let typingListener = null;
+let onlineStatusListener = null;
+
+// Initialize chat with a contact
+async function initializeChat(contactId) {
+    try {
+        if (!currentUser) {
+            throw new Error('User not authenticated');
+        }
+
+        // Check if chat already exists
+        const chatsRef = collection(db, 'chats');
+        const q = query(chatsRef, where('participants', 'array-contains', currentUser.uid));
+        const querySnapshot = await getDocs(q);
+        
+        let chatDoc = null;
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.participants.includes(contactId)) {
+                chatDoc = doc;
+            }
+        });
+
+        if (chatDoc) {
+            currentChatId = chatDoc.id;
+        } else {
+            // Create new chat
+            const chatData = {
+                participants: [currentUser.uid, contactId],
+                createdAt: Date.now(),
+                lastMessage: null,
+                type: 'direct'
+            };
+            const chatRef = await addDoc(chatsRef, chatData);
+            currentChatId = chatRef.id;
+        }
+
+        // Clean up existing listeners
+        if (messageListener) messageListener();
+        if (typingListener) typingListener();
+        if (onlineStatusListener) onlineStatusListener();
+
+        // Set up new listeners
+        messageListener = setupMessageListeners(currentChatId);
+        typingListener = setupTypingListener(currentChatId);
+        onlineStatusListener = listenToOnlineStatus(contactId, (snapshot) => {
+            const status = snapshot.val();
+            updateOnlineStatus(status);
+        });
+
+        // Initialize IndexedDB for offline support
+        await initIndexedDB();
+
+        return currentChatId;
+    } catch (error) {
+        await errorHandler.handleError(error, 'Initialize Chat');
+        throw error;
+    }
+}
+
+// Update online status in UI
+function updateOnlineStatus(status) {
+    const statusElement = document.querySelector('.chat-header-status');
+    if (statusElement) {
+        if (status?.online) {
+            statusElement.textContent = 'Online';
+            statusElement.classList.add('online');
+        } else {
+            const lastSeen = new Date(status?.lastSeen);
+            statusElement.textContent = `Last seen ${lastSeen.toLocaleTimeString()}`;
+            statusElement.classList.remove('online');
+        }
+    }
+}
+
 // Message Reactions
 const reactions = ['👍', '❤️', '😂', '😮', '😢', '👏'];
 

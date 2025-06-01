@@ -1200,6 +1200,7 @@
       reportUser,
       setMessageExpiration
     } from './security.js';
+    import errorHandler from './errorHandler.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
@@ -1441,6 +1442,141 @@
         sendBtn.click();
       }
     };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const contactId = urlParams.get('contactId');
+        
+        if (contactId) {
+            initializeChat(contactId).catch(error => {
+                console.error('Failed to initialize chat:', error);
+                errorHandler.handleError(error, 'Chat Initialization');
+            });
+        }
+
+        // Message input handling
+        const messageInput = document.querySelector('.message-input');
+        const sendButton = document.querySelector('.send-button');
+
+        sendButton.addEventListener('click', async () => {
+            const content = messageInput.value.trim();
+            if (content) {
+                try {
+                    await sendMessage(content);
+                    messageInput.value = '';
+                } catch (error) {
+                    errorHandler.handleError(error, 'Send Message');
+                }
+            }
+        });
+
+        messageInput.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const content = messageInput.value.trim();
+                if (content) {
+                    try {
+                        await sendMessage(content);
+                        messageInput.value = '';
+                    } catch (error) {
+                        errorHandler.handleError(error, 'Send Message');
+                    }
+                }
+            }
+        });
+
+        // Voice recording
+        const voiceButton = document.querySelector('.voice-button');
+        let isRecording = false;
+
+        voiceButton.addEventListener('click', async () => {
+            if (!isRecording) {
+                try {
+                    await startVoiceRecording();
+                    isRecording = true;
+                    voiceButton.classList.add('recording');
+                } catch (error) {
+                    errorHandler.handleError(error, 'Start Voice Recording');
+                }
+            } else {
+                try {
+                    await stopVoiceRecording();
+                    isRecording = false;
+                    voiceButton.classList.remove('recording');
+                } catch (error) {
+                    errorHandler.handleError(error, 'Stop Voice Recording');
+                }
+            }
+        });
+
+        // GIF search
+        const gifButton = document.querySelector('.gif-button');
+        const gifPicker = document.querySelector('.gif-picker');
+        const gifSearch = document.querySelector('.gif-search');
+        const gifResults = document.querySelector('.gif-results');
+
+        gifButton.addEventListener('click', () => {
+            gifPicker.classList.toggle('active');
+        });
+
+        gifSearch.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            if (query) {
+                try {
+                    const gifs = await searchGifs(query);
+                    gifResults.innerHTML = gifs.map(gif => `
+                        <div class="gif-item" data-url="${gif.url}">
+                            <img src="${gif.preview}" alt="GIF">
+                        </div>
+                    `).join('');
+                } catch (error) {
+                    errorHandler.handleError(error, 'GIF Search');
+                }
+            }
+        });
+
+        gifResults.addEventListener('click', async (e) => {
+            const gifItem = e.target.closest('.gif-item');
+            if (gifItem) {
+                try {
+                    await sendGif(gifItem.dataset.url);
+                    gifPicker.classList.remove('active');
+                } catch (error) {
+                    errorHandler.handleError(error, 'Send GIF');
+                }
+            }
+        });
+
+        // Message actions
+        document.querySelector('.chat-messages').addEventListener('click', async (e) => {
+            const messageElement = e.target.closest('.message');
+            if (messageElement) {
+                const messageId = messageElement.dataset.messageId;
+                const action = e.target.dataset.action;
+
+                if (action === 'edit') {
+                    const newContent = prompt('Edit message:', messageElement.querySelector('.message-content').textContent);
+                    if (newContent) {
+                        try {
+                            await editMessage(messageId, newContent);
+                        } catch (error) {
+                            errorHandler.handleError(error, 'Edit Message');
+                        }
+                    }
+                } else if (action === 'react') {
+                    const reaction = prompt('Choose reaction (👍, ❤️, 😂, 😮, 😢, 👏):');
+                    if (reaction) {
+                        try {
+                            await addReaction(messageId, reaction);
+                        } catch (error) {
+                            errorHandler.handleError(error, 'Add Reaction');
+                        }
+                    }
+                }
+            }
+        });
+    });
   </script>
 </body>
 </html> 

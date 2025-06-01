@@ -4,19 +4,22 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, query, orderBy, limit, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDoc, getDocs } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getDatabase, ref as dbRef, set, get, update, remove, push, onValue, off } from 'firebase/database';
+import { getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID",
-    databaseURL: "YOUR_DATABASE_URL"
+    apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+    authDomain: "chatz-45df4.firebaseapp.com",
+    databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
+    projectId: "chatz-45df4",
+    storageBucket: "chatz-45df4.firebasestorage.app",
+    messagingSenderId: "463847844545",
+    appId: "1:463847844545:web:5006247d061c3e0dc28240",
+    measurementId: "G-2VHETC9V8B"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
