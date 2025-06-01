@@ -112,9 +112,20 @@ export function cleanup() {
     // Clean up Realtime Database listeners
     off(dbRef(realtimeDb, 'typing'));
     off(dbRef(realtimeDb, 'onlineStatus'));
+    off(dbRef(realtimeDb, 'users'));
+    off(dbRef(realtimeDb, 'chats'));
+    
+    // Clean up auth state observer
+    if (typeof activeListeners?.auth === 'function') {
+        activeListeners.auth();
+    }
     
     // Clean up any remaining listeners
-    unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
+    unsubscribeFunctions.forEach(unsubscribe => {
+        if (typeof unsubscribe === 'function') {
+            unsubscribe();
+        }
+    });
 }
 
 // Export Firebase instances
