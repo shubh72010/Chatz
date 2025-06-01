@@ -1,3 +1,22 @@
+/* Root Variables */
+:root {
+    --primary-bg: #ffffff;
+    --secondary-bg: #f5f5f5;
+    --text-color: #333333;
+    --accent-color: #2196f3;
+    --border-color: #e0e0e0;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --message-own-bg: #e3f2fd;
+    --message-other-bg: #f5f5f5;
+    --input-bg: #ffffff;
+}
+
+body {
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 /* Error Message Styles */
 .error-message {
     position: fixed;
@@ -5,16 +24,17 @@
     right: 20px;
     min-width: 300px;
     max-width: 400px;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--secondary-bg);
     border-radius: 12px;
     padding: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--shadow-color);
     display: flex;
     align-items: flex-start;
     gap: 12px;
     z-index: 9999;
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
 }
 
 .error-icon {
@@ -40,7 +60,6 @@
 
 .error-message {
     font-size: 13px;
-    color: #666;
     line-height: 1.4;
 }
 
@@ -320,15 +339,16 @@
 }
 
 .message-content {
-    background: var(--bubble-other);
-    color: var(--bubble-other-text);
+    background-color: var(--message-other-bg);
+    color: var(--text-color);
     padding: 0.8rem 1.2rem;
     border-radius: 1.2rem;
     position: relative;
     word-break: break-word;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px var(--shadow-color);
+    border: 1px solid var(--border-color);
 }
 
 .message-content:hover {
@@ -337,8 +357,7 @@
 }
 
 .message.own .message-content {
-    background: linear-gradient(135deg, var(--bubble-own) 0%, var(--main-dark) 100%);
-    color: var(--bubble-own-text);
+    background-color: var(--message-own-bg);
 }
 
 /* Message Animations */
@@ -370,14 +389,14 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    color: var(--main-light);
+    color: var(--accent-color);
     font-size: 0.9rem;
     opacity: 0;
     transition: opacity 0.3s ease;
     position: absolute;
     bottom: 100%;
     left: 0;
-    background: var(--bg-light);
+    background: var(--secondary-bg);
     border-radius: 1rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
@@ -394,7 +413,7 @@
 .typing-dot {
     width: 6px;
     height: 6px;
-    background: var(--main);
+    background: var(--accent-color);
     border-radius: 50%;
     animation: typingAnimation 1.4s infinite;
 }
@@ -441,14 +460,14 @@
 .pull-to-refresh {
     text-align: center;
     padding: 1rem;
-    color: var(--main-light);
+    color: var(--accent-color);
     font-size: 0.9rem;
     display: none;
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    background: var(--bg-light);
+    background: var(--secondary-bg);
     z-index: 1;
 }
 
@@ -481,7 +500,7 @@
 .voice-message-play {
     width: 32px;
     height: 32px;
-    background: var(--main);
+    background: var(--accent-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -514,7 +533,7 @@
     left: 0;
     top: 0;
     height: 100%;
-    background: var(--main);
+    background: var(--accent-color);
     width: 0%;
     transition: width 0.1s linear;
 }
@@ -525,7 +544,7 @@
     bottom: 100px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--bg-light);
+    background: var(--secondary-bg);
     width: 90%;
     max-width: 500px;
     border-radius: 1rem;
@@ -543,10 +562,10 @@
 .gif-search input {
     flex: 1;
     background: var(--input-bg);
-    border: 1.5px solid var(--input-border);
+    border: 1.5px solid var(--border-color);
     border-radius: 1.2rem;
     padding: 0.8rem 1.2rem;
-    color: #fff;
+    color: var(--text-color);
     font-size: 1rem;
     outline: none;
 }
@@ -579,27 +598,27 @@
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
     .message-content {
-        background: var(--bubble-other-dark);
-        color: var(--bubble-other-text-dark);
+        background: var(--message-other-bg-dark);
+        color: var(--text-color-dark);
     }
 
     .message.own .message-content {
-        background: linear-gradient(135deg, var(--bubble-own-dark) 0%, var(--main-dark) 100%);
-        color: var(--bubble-own-text-dark);
+        background: var(--message-own-bg-dark);
+        color: var(--text-color-dark);
     }
 
     .typing-indicator {
-        background: var(--bg-dark);
+        background: var(--secondary-bg-dark);
     }
 
     .gif-picker {
-        background: var(--bg-dark);
+        background: var(--secondary-bg-dark);
     }
 
     .gif-search input {
         background: var(--input-bg-dark);
-        border-color: var(--input-border-dark);
-        color: var(--text-dark);
+        border-color: var(--border-color-dark);
+        color: var(--text-color-dark);
     }
 }
 
@@ -618,7 +637,7 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--main);
+    background: var(--accent-color);
 }
 
 /* Responsive Design */
@@ -642,7 +661,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: var(--bg-light);
+    background-color: var(--secondary-bg);
     padding: 1rem;
     border-top: 1px solid var(--border-color);
 }
@@ -665,15 +684,15 @@
     display: flex;
     align-items: flex-end;
     gap: 0.8rem;
-    background: var(--input-bg);
+    background-color: var(--input-bg);
     border-radius: 1.2rem;
     padding: 0.5rem 1rem;
 }
 
 .message-input {
     flex: 1;
-    background: none;
-    border: none;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
     outline: none;
     color: var(--text-color);
     font-size: 1rem;
@@ -691,7 +710,7 @@
 .send-btn {
     background: none;
     border: none;
-    color: var(--icon-color);
+    color: var(--accent-color);
     font-size: 1.2rem;
     padding: 0.5rem;
     cursor: pointer;
@@ -704,8 +723,8 @@
 .gif-btn:hover,
 .sticker-btn:hover,
 .send-btn:hover {
-    background: var(--hover-bg);
-    color: var(--main);
+    background: var(--secondary-bg);
+    color: var(--accent-color);
 }
 
 .voice-btn.recording {
@@ -721,7 +740,7 @@
     transform: translateY(-50%);
     display: none;
     gap: 0.5rem;
-    background: var(--bg-light);
+    background: var(--secondary-bg);
     padding: 0.5rem;
     border-radius: 1rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -736,7 +755,7 @@
 .delete-btn {
     background: none;
     border: none;
-    color: var(--icon-color);
+    color: var(--accent-color);
     font-size: 1rem;
     padding: 0.3rem;
     cursor: pointer;
@@ -745,7 +764,7 @@
 }
 
 .edit-btn:hover {
-    color: var(--main);
+    color: var(--accent-color);
 }
 
 .react-btn:hover {
@@ -762,11 +781,12 @@
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--bg-light);
+    background-color: var(--secondary-bg);
     padding: 0.8rem;
     border-radius: 1rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px var(--shadow-color);
     z-index: 1000;
+    border: 1px solid var(--border-color);
 }
 
 .reaction-grid {
@@ -794,13 +814,14 @@
     bottom: 100px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--bg-light);
+    background-color: var(--secondary-bg);
     width: 90%;
     max-width: 500px;
     border-radius: 1rem;
     padding: 1rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px var(--shadow-color);
     z-index: 1000;
+    border: 1px solid var(--border-color);
 }
 
 .sticker-categories {
@@ -822,7 +843,7 @@
 }
 
 .sticker-categories button.active {
-    background: var(--main);
+    background: var(--accent-color);
     color: white;
 }
 
@@ -878,7 +899,7 @@
 }
 
 .save-edit {
-    background: var(--main);
+    background: var(--accent-color);
     color: white;
 }
 
@@ -890,12 +911,12 @@
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
     .chat-input-container {
-        background: var(--bg-dark);
+        background-color: var(--secondary-bg-dark);
         border-color: var(--border-color-dark);
     }
 
     .message-input-wrapper {
-        background: var(--input-bg-dark);
+        background-color: var(--input-bg-dark);
     }
 
     .message-input {
@@ -907,16 +928,16 @@
     .gif-btn,
     .sticker-btn,
     .send-btn {
-        color: var(--icon-color-dark);
+        color: var(--accent-color-dark);
     }
 
     .message-actions {
-        background: var(--bg-dark);
+        background-color: var(--secondary-bg-dark);
     }
 
     .reaction-picker,
     .sticker-picker {
-        background: var(--bg-dark);
+        background-color: var(--secondary-bg-dark);
     }
 
     .sticker-categories {
@@ -928,7 +949,7 @@
     }
 
     .edit-input {
-        background: var(--input-bg-dark);
+        background-color: var(--input-bg-dark);
         border-color: var(--border-color-dark);
         color: var(--text-color-dark);
     }
@@ -950,7 +971,7 @@
         bottom: 100%;
         left: 0;
         right: 0;
-        background: var(--bg-light);
+        background: var(--secondary-bg);
         padding: 0.5rem;
         border-top: 1px solid var(--border-color);
     }
