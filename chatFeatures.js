@@ -5,7 +5,7 @@ import {
     storage, 
     realtimeDb,
     currentUser,
-    sendMessage,
+    sendMessage as firebaseSendMessage,
     updateMessage,
     deleteMessage,
     uploadFile,
@@ -137,7 +137,7 @@ export async function sendMessage(content, chatId) {
             status: 'sent'
         };
 
-        await messagesRef.add(message);
+        await firebaseSendMessage(chatId, message);
         await chatRef.update({
             lastMessage: content,
             lastMessageTime: new Date()
