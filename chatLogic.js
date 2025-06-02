@@ -97,6 +97,18 @@ function setupChat() {
     });
     scrollToBottom();
   });
+
+  // Listen for typing status
+  const typingRef = ref(db, `typing/${chatId}`);
+  onValue(typingRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data && data[otherUserId] && data[otherUserId].isTyping) {
+      typingIndicator.textContent = `${otherUserName.textContent} is typing...`;
+      typingIndicator.classList.add('active');
+    } else {
+      typingIndicator.classList.remove('active');
+    }
+  });
 }
 
 // --- Event Listeners ---
@@ -112,12 +124,19 @@ messageInput.addEventListener('input', () => {
   // Clear existing timeout
   if (typingTimeout) clearTimeout(typingTimeout);
   
-  // Show typing indicator
-  typingIndicator.classList.add('active');
+  // Update typing status
+  const typingRef = ref(db, `typing/${chatId}/${auth.currentUser.uid}`);
+  set(typingRef, {
+    isTyping: true,
+    timestamp: serverTimestamp()
+  });
   
   // Set timeout to hide typing indicator
   typingTimeout = setTimeout(() => {
-    typingIndicator.classList.remove('active');
+    set(typingRef, {
+      isTyping: false,
+      timestamp: serverTimestamp()
+    });
   }, 1000);
 });
 
@@ -133,6 +152,13 @@ function sendMessage() {
     name: auth.currentUser.displayName || 'Anonymous',
     photoURL: auth.currentUser.photoURL,
     uid: auth.currentUser.uid,
+    timestamp: serverTimestamp()
+  });
+
+  // Clear typing status
+  const typingRef = ref(db, `typing/${chatId}/${auth.currentUser.uid}`);
+  set(typingRef, {
+    isTyping: false,
     timestamp: serverTimestamp()
   });
 
