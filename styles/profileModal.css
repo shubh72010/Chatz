@@ -244,4 +244,179 @@
     padding: 0.7rem;
     font-size: 0.95rem;
   }
+}
+
+/* Profile Tooltip Styles */
+.profile-tooltip {
+  position: absolute;
+  background: var(--settings-bg);
+  border-radius: var(--border-radius-md);
+  padding: 1rem;
+  width: 280px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.profile-tooltip.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.profile-tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.profile-tooltip-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--main);
+  box-shadow: 0 2px 8px rgba(114, 109, 255, 0.15);
+}
+
+.profile-tooltip-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-tooltip-info {
+  flex: 1;
+}
+
+.profile-tooltip-name {
+  font-weight: 600;
+  color: var(--main);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.profile-tooltip-status {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.2rem 0 0;
+}
+
+.profile-tooltip-bio {
+  font-size: 0.9rem;
+  color: var(--text);
+  margin: 0.5rem 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.profile-tooltip-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.profile-tooltip-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+.profile-tooltip-btn i {
+  font-size: 0.9rem;
+}
+
+.profile-tooltip-btn.dm {
+  background: var(--main);
+  color: white;
+}
+
+.profile-tooltip-btn.dm:hover {
+  background: var(--main-dark);
+}
+
+.profile-tooltip-btn.friend {
+  background: rgba(114, 109, 255, 0.1);
+  color: var(--main);
+}
+
+.profile-tooltip-btn.friend:hover {
+  background: rgba(114, 109, 255, 0.2);
+}
+
+.profile-tooltip-btn.friend.is-friend {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4CAF50;
+}
+
+.profile-tooltip-btn.friend.is-friend:hover {
+  background: rgba(76, 175, 80, 0.2);
+}
+
+/* Theme-specific styles for tooltip */
+.theme-light .profile-tooltip {
+  background: var(--bg-light);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.theme-dark .profile-tooltip {
+  background: var(--bg-light);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Update message avatar styles */
+.message-avatar, .user-avatar {
+  position: relative;
+  cursor: pointer;
+}
+
+.message-avatar img, .user-avatar img {
+  transition: transform 0.2s ease;
+}
+
+.message-avatar:hover img, .user-avatar:hover img {
+  transform: scale(1.1);
+}
+
+/* Responsive styles for tooltip */
+@media (max-width: 480px) {
+  .profile-tooltip {
+    width: 240px;
+  }
+
+  .profile-tooltip-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .profile-tooltip-name {
+    font-size: 0.9rem;
+  }
+
+  .profile-tooltip-bio {
+    font-size: 0.8rem;
+  }
+
+  .profile-tooltip-btn {
+    padding: 0.4rem;
+    font-size: 0.8rem;
+  }
 } 

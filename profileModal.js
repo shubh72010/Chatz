@@ -20,10 +20,12 @@ const db = getDatabase(app);
 class ProfileModal {
   constructor() {
     this.modal = null;
+    this.tooltip = null;
     this.currentUser = null;
     this.targetUser = null;
     this.isFriend = false;
     this.isBlocked = false;
+    this.tooltipTimeout = null;
     this.init();
   }
 
@@ -70,24 +72,156 @@ class ProfileModal {
       </div>
     `;
 
-    // Add modal to body
-    document.body.appendChild(this.modal);
+    // Create tooltip HTML
+    this.tooltip = document.createElement('div');
+    this.tooltip.className = 'profile-tooltip';
+    this.tooltip.innerHTML = `
+      <div class="profile-tooltip-header">
+        <div class="profile-tooltip-avatar">
+          <img src="" alt="Profile" id="tooltip-profile-pic" />
+        </div>
+        <div class="profile-tooltip-info">
+          <h3 class="profile-tooltip-name" id="tooltip-profile-name"></h3>
+          <p class="profile-tooltip-status" id="tooltip-profile-status"></p>
+        </div>
+      </div>
+      <div class="profile-tooltip-bio" id="tooltip-profile-bio"></div>
+      <div class="profile-tooltip-actions">
+        <button class="profile-tooltip-btn dm" id="tooltip-dm-btn">
+          <i class="fas fa-comment"></i> Message
+        </button>
+        <button class="profile-tooltip-btn friend" id="tooltip-friend-btn">
+          <i class="fas fa-user-plus"></i> Add
+        </button>
+      </div>
+    `;
 
-    // Add event listeners
+    // Add modal and tooltip to body
+    document.body.appendChild(this.modal);
+    document.body.appendChild(this.tooltip);
+
+    // Add event listeners for modal
     this.modal.querySelector('.profile-modal-close').onclick = () => this.hide();
     this.modal.querySelector('#modal-dm-btn').onclick = () => this.handleDM();
     this.modal.querySelector('#modal-friend-btn').onclick = () => this.handleFriend();
     this.modal.querySelector('#modal-block-btn').onclick = () => this.handleBlock();
+
+    // Add event listeners for tooltip
+    this.tooltip.querySelector('#tooltip-dm-btn').onclick = (e) => {
+      e.stopPropagation();
+      this.handleDM();
+    };
+    this.tooltip.querySelector('#tooltip-friend-btn').onclick = (e) => {
+      e.stopPropagation();
+      this.handleFriend();
+    };
 
     // Close modal when clicking outside
     this.modal.onclick = (e) => {
       if (e.target === this.modal) this.hide();
     };
 
+    // Handle tooltip hover
+    document.addEventListener('mouseover', (e) => {
+      const avatar = e.target.closest('.message-avatar, .user-avatar');
+      if (avatar && avatar.dataset.uid) {
+        this.showTooltip(avatar.dataset.uid, avatar);
+      }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+      const avatar = e.target.closest('.message-avatar, .user-avatar');
+      if (avatar && avatar.dataset.uid) {
+        this.hideTooltip();
+      }
+    });
+
+    // Handle tooltip click
+    this.tooltip.addEventListener('click', (e) => {
+      if (this.targetUser) {
+        this.show(this.targetUser.id);
+      }
+    });
+
     // Listen for auth state changes
     onAuthStateChanged(auth, (user) => {
       this.currentUser = user;
     });
+  }
+
+  async showTooltip(userId, anchorElement) {
+    if (!this.currentUser || this.tooltipTimeout) return;
+
+    try {
+      // Get user data
+      const userRef = ref(db, `users/${userId}`);
+      const snapshot = await get(userRef);
+      
+      if (!snapshot.exists()) return;
+
+      this.targetUser = { id: userId, ...snapshot.val() };
+
+      // Update tooltip content
+      const profilePic = this.tooltip.querySelector('#tooltip-profile-pic');
+      const profileName = this.tooltip.querySelector('#tooltip-profile-name');
+      const profileStatus = this.tooltip.querySelector('#tooltip-profile-status');
+      const profileBio = this.tooltip.querySelector('#tooltip-profile-bio');
+      const friendBtn = this.tooltip.querySelector('#tooltip-friend-btn');
+
+      // Set profile picture with fallback
+      profilePic.src = this.targetUser.photoURL || 
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(this.targetUser.nickname || this.targetUser.displayName || 'U')}&background=726dff&color=fff`;
+      
+      profileName.textContent = this.targetUser.nickname || this.targetUser.displayName || 'Anonymous';
+      profileStatus.textContent = this.targetUser.online ? 'Online' : 'Offline';
+      profileBio.textContent = this.targetUser.bio || 'No bio yet';
+
+      // Check friendship status
+      const friendshipRef = ref(db, `friends/${this.currentUser.uid}/${userId}`);
+      const friendshipSnapshot = await get(friendshipRef);
+      this.isFriend = friendshipSnapshot.exists();
+      
+      // Update friend button
+      friendBtn.innerHTML = this.isFriend ? 
+        '<i class="fas fa-user-check"></i> Friends' : 
+        '<i class="fas fa-user-plus"></i> Add';
+      friendBtn.className = `profile-tooltip-btn friend ${this.isFriend ? 'is-friend' : ''}`;
+
+      // Position tooltip
+      const rect = anchorElement.getBoundingClientRect();
+      const tooltipRect = this.tooltip.getBoundingClientRect();
+      
+      let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+      let top = rect.bottom + 10;
+
+      // Adjust if tooltip would go off screen
+      if (left < 10) left = 10;
+      if (left + tooltipRect.width > window.innerWidth - 10) {
+        left = window.innerWidth - tooltipRect.width - 10;
+      }
+      if (top + tooltipRect.height > window.innerHeight - 10) {
+        top = rect.top - tooltipRect.height - 10;
+      }
+
+      this.tooltip.style.left = `${left}px`;
+      this.tooltip.style.top = `${top}px`;
+
+      // Show tooltip with delay
+      this.tooltipTimeout = setTimeout(() => {
+        this.tooltip.classList.add('active');
+      }, 300);
+
+    } catch (error) {
+      console.error('Error loading profile tooltip:', error);
+    }
+  }
+
+  hideTooltip() {
+    if (this.tooltipTimeout) {
+      clearTimeout(this.tooltipTimeout);
+      this.tooltipTimeout = null;
+    }
+    this.tooltip.classList.remove('active');
   }
 
   async show(userId) {
