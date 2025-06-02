@@ -1,4 +1,5 @@
 // chatLogic.js
+import { app } from './firebaseConfig.js';
 import {
   getAuth,
   GoogleAuthProvider,
@@ -20,8 +21,8 @@ import {
 } from "./firebaseHelpers.js"; // <-- relative path
 
 // --- Firebase Setup ---
-const db = getDatabase();
-const auth = getAuth();
+const db = getDatabase(app);
+const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 // --- DOM ---

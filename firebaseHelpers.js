@@ -1,5 +1,6 @@
 // firebaseHelpers.js
 
+import { app } from './firebaseConfig.js';
 import {
   getDatabase,
   ref,
@@ -10,6 +11,8 @@ import {
   onChildAdded,
   off
 } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+const db = getDatabase(app);
 
 // Push data to a list (auto-generates key)
 export function pushData(dbRef, data) {
