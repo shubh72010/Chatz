@@ -1,5 +1,5 @@
 // Profile Modal Component
-import { app } from '../firebaseConfig.js';
+import { app } from './firebaseConfig.js';
 import { friendSystem } from './friendSystem.js';
 import {
   getAuth,
