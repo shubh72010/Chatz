@@ -130,6 +130,16 @@ class ProfileModal {
       }
     });
 
+    // Handle DM button click
+    this.modal.querySelector('#modal-dm-btn').onclick = () => {
+      window.location.href = `/Chatz/chat.html?uid=${this.currentUserId}`;
+    };
+
+    // Handle DM button click in tooltip
+    this.tooltip.querySelector('#tooltip-dm-btn').onclick = () => {
+      window.location.href = `/Chatz/chat.html?uid=${this.currentUserId}`;
+    };
+
     // Listen for auth state changes
     onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -303,7 +313,7 @@ class ProfileModal {
 
   async handleDM() {
     if (!this.currentUserId) return;
-    window.location.href = `/Chatz/pages/chat.html?uid=${this.currentUserId}`;
+    window.location.href = `/Chatz/chat.html?uid=${this.currentUserId}`;
   }
 
   async handleFriendRequest() {
