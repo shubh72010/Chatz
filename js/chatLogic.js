@@ -67,7 +67,7 @@ function getAvatarUrl(name) {
 // --- Chat Functions ---
 function setupChat() {
   if (!auth.currentUser || !otherUserId) {
-    window.location.href = 'index.html';
+    window.location.href = '/Chatz/index.html';
     return;
   }
 
@@ -292,6 +292,6 @@ onAuthStateChanged(auth, (user) => {
     setupChat();
     setupEventListeners();
   } else {
-    window.location.href = 'index.html';
+    window.location.href = '/Chatz/index.html';
   }
 });

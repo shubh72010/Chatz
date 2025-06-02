@@ -520,7 +520,7 @@
 </head>
 <body>
   <header>
-    <button class="back-btn" onclick="window.location.href='../index.html'">&larr; Back</button>
+    <button class="back-btn" onclick="window.location.href='/Chatz/index.html'">&larr; Back</button>
     <span>Global Chat</span>
     <div style="width: 100px;"></div>
   </header>
@@ -586,7 +586,7 @@
     onAuthStateChanged(auth, (user) => {
       if (!user) {
         // User is not signed in, redirect to signin page
-        window.location.href = 'signin.html';
+        window.location.href = '/Chatz/signin.html';
       }
     });
 
@@ -816,7 +816,7 @@
           });
         });
       } else {
-        window.location.href = 'index.html';
+        window.location.href = '/Chatz/index.html';
       }
     });
 

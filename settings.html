@@ -539,7 +539,7 @@
 </head>
 <body>
   <header>
-    <button class="back-btn" onclick="window.location.href='../index.html'">&larr; Back</button>
+    <button class="back-btn" onclick="window.location.href='/Chatz/index.html'">&larr; Back</button>
     <span>Settings</span>
     <div style="width: 100px;"></div>
   </header>
@@ -685,7 +685,7 @@
     signoutBtn.addEventListener('click', async () => {
         try {
             await authHandler.signOut();
-            window.location.href = 'signin.html';
+            window.location.href = '/Chatz/signin.html';
         } catch (error) {
             console.error('Sign out error:', error);
             alert('Failed to sign out: ' + error.message);
@@ -733,7 +733,7 @@
                 console.error("Error loading user data:", error);
             }
         } else {
-            window.location.href = "signin.html";
+            window.location.href = "/Chatz/signin.html";
         }
     });
 

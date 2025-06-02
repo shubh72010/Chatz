@@ -368,15 +368,15 @@
   </div>
 
   <div class="nav-menu">
-    <a href="global.html" class="nav-item">
+    <a href="/Chatz/global.html" class="nav-item">
       <i class="fas fa-globe"></i>
       <span>Global Chat</span>
     </a>
-    <a href="friends.html" class="nav-item">
+    <a href="/Chatz/friends.html" class="nav-item">
       <i class="fas fa-user-friends"></i>
       <span>Friends</span>
     </a>
-    <a href="pages/settings.html" class="nav-item">
+    <a href="/Chatz/pages/settings.html" class="nav-item">
       <i class="fas fa-cog"></i>
       <span>Settings</span>
     </a>
@@ -525,13 +525,13 @@
             <div class="user-name">${user.nickname || user.displayName || "Anonymous"}</div>
             <div class="user-status">${user.online ? "Online" : "Offline"}</div>
           </div>
-          <button class="dm-btn" onclick="event.stopPropagation(); window.location.href='chat.html?uid=${user.uid}'">
+          <button class="dm-btn" onclick="event.stopPropagation(); window.location.href='/Chatz/chat.html?uid=${user.uid}'">
             <i class="fas fa-comment"></i> DM
           </button>
         `;
         
         userCard.onclick = () => {
-          window.location.href = 'chat.html?uid=' + user.uid;
+          window.location.href = '/Chatz/chat.html?uid=' + user.uid;
         };
         
         usersGrid.appendChild(userCard);
@@ -557,14 +557,14 @@
         loadChats();
       } else {
         // User is not signed in, redirect to signin page
-        window.location.href = 'signin.html';
+        window.location.href = '/Chatz/signin.html';
       }
     });
 
     // Add error handling to navigation
     document.getElementById("global-chat-btn").onclick = () => {
       try {
-        window.location.href = "global.html";
+        window.location.href = "/Chatz/global.html";
       } catch (error) {
         console.error('Navigation Error:', error);
       }
@@ -572,7 +572,7 @@
 
     document.getElementById("settings-btn").onclick = () => {
       try {
-        window.location.href = "pages/settings.html";
+        window.location.href = "/Chatz/pages/settings.html";
       } catch (error) {
         console.error('Navigation Error:', error);
       }

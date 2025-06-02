@@ -303,7 +303,7 @@ class ProfileModal {
 
   async handleDM() {
     if (!this.currentUserId) return;
-    window.location.href = `../pages/chat.html?uid=${this.currentUserId}`;
+    window.location.href = `/Chatz/pages/chat.html?uid=${this.currentUserId}`;
   }
 
   async handleFriendRequest() {
