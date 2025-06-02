@@ -382,6 +382,41 @@
     }
   </style>
   <script>
+    // Theme sync and auto theme functionality
+    function getTimeBasedTheme() {
+      const hour = new Date().getHours();
+      // Use dark theme from 8 PM to 6 AM
+      return (hour >= 20 || hour < 6) ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+      if (theme === 'auto') {
+        theme = getTimeBasedTheme();
+      }
+      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
+    }
+
+    // Apply theme on page load
+    (function() {
+      const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
+      applyTheme(savedTheme);
+
+      // If auto theme is selected, update every minute
+      if (savedTheme === 'auto') {
+        setInterval(() => {
+          applyTheme('auto');
+        }, 60000); // Check every minute
+      }
+    })();
+
+    // Listen for theme changes in other tabs
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'chatzTheme') {
+        const theme = e.newValue || 'auto';
+        applyTheme(theme);
+      }
+    });
+
     // Apply theme from localStorage on page load
     (function() {
       const theme = localStorage.getItem('chatzTheme') || 'default';

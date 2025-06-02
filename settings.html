@@ -399,16 +399,48 @@
     }
   </style>
   <script>
-    // Theme sync
+    // Theme sync and auto theme functionality
+    function getTimeBasedTheme() {
+      const hour = new Date().getHours();
+      // Use dark theme from 8 PM to 6 AM
+      return (hour >= 20 || hour < 6) ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+      if (theme === 'auto') {
+        theme = getTimeBasedTheme();
+      }
+      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
+      localStorage.setItem('chatzTheme', theme);
+    }
+
+    // Apply theme on page load
     (function() {
-      const theme = localStorage.getItem('chatzTheme') || 'default';
-      document.documentElement.className = 'theme-' + theme;
+      const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
+      themeSelect.value = savedTheme;
+      applyTheme(savedTheme);
+
+      // If auto theme is selected, update every minute
+      if (savedTheme === 'auto') {
+        setInterval(() => {
+          applyTheme('auto');
+        }, 60000); // Check every minute
+      }
     })();
+
+    // Listen for theme changes in other tabs
     window.addEventListener('storage', function(e) {
       if (e.key === 'chatzTheme') {
-        const theme = e.newValue || 'default';
-        document.documentElement.className = 'theme-' + theme;
+        const theme = e.newValue || 'auto';
+        themeSelect.value = theme;
+        applyTheme(theme);
       }
+    });
+
+    // Handle theme selection change
+    themeSelect.addEventListener('change', (event) => {
+      const theme = event.target.value;
+      applyTheme(theme);
     });
   </script>
 </head>
@@ -446,6 +478,7 @@
       <div class="section">
         <label for="theme-select">Theme</label>
         <select id="theme-select">
+          <option value="auto">Automatic (Based on Time)</option>
           <option value="default">Purple</option>
           <option value="dark">Dark</option>
           <option value="light">Light</option>
@@ -556,7 +589,7 @@
 
     // Load theme from localStorage
     document.addEventListener('DOMContentLoaded', () => {
-      const savedTheme = localStorage.getItem('chatzTheme') || 'default';
+      const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
       themeSelect.value = savedTheme;
       
       const savedColor = localStorage.getItem('chatzAccentColor') || '#726dff';
