@@ -48,8 +48,18 @@ function escapeHtml(text) {
              .replace(/'/g, "&#039;");
 }
 
-function scrollToBottom() {
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+function scrollToBottom(smooth = true) {
+  const scrollOptions = smooth ? { behavior: 'smooth' } : {};
+  chatMessages.scrollTo({
+    top: chatMessages.scrollHeight,
+    ...scrollOptions
+  });
+}
+
+// Check if user is near bottom before scrolling
+function shouldAutoScroll() {
+  const threshold = 100; // pixels from bottom
+  return chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < threshold;
 }
 
 function formatTime(timestamp) {
@@ -98,6 +108,7 @@ function setupChat() {
   // Load messages
   const messagesRef = ref(db, `dms/${chatId}`);
   onValue(messagesRef, (snapshot) => {
+    const wasNearBottom = shouldAutoScroll();
     chatMessages.innerHTML = '';
     snapshot.forEach((childSnapshot) => {
       const data = childSnapshot.val();
@@ -119,7 +130,11 @@ function setupChat() {
       
       chatMessages.appendChild(messageDiv);
     });
-    scrollToBottom();
+    
+    // Only auto-scroll if user was near bottom or if it's a new message from current user
+    if (wasNearBottom || (snapshot.val() && Object.values(snapshot.val()).pop()?.uid === auth.currentUser.uid)) {
+      scrollToBottom(true);
+    }
   });
 
   // Listen for typing status
@@ -196,6 +211,7 @@ function sendMessage() {
 
   messageInput.value = '';
   messageInput.focus();
+  scrollToBottom(true);
 }
 
 // Initialize chat when auth state changes
