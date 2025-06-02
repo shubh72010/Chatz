@@ -10,7 +10,7 @@ import {
   onValue,
   onChildAdded,
   off
-} from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 const db = getDatabase(app);
 
