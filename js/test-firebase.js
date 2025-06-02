@@ -1,5 +1,5 @@
 import { app } from '../firebaseConfig.js';
-import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 // Test Firebase connection
 async function testFirebaseConnection() {

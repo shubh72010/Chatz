@@ -3,7 +3,7 @@ import { app } from '../firebaseConfig.js';
 import {
   getAuth,
   onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getDatabase,
   ref,
@@ -14,7 +14,7 @@ import {
   remove,
   onValue,
   serverTimestamp
-} from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 const auth = getAuth(app);
 const db = getDatabase(app);

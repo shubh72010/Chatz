@@ -5,7 +5,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getDatabase,
   ref,
@@ -19,7 +19,7 @@ import {
   get,
   endBefore,
   limitToLast
-} from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 // --- Firebase Setup ---
 const db = getDatabase(app);

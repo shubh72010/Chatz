@@ -4,7 +4,7 @@ import { friendSystem } from './friendSystem.js';
 import {
   getAuth,
   onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getDatabase,
   ref,
@@ -15,7 +15,7 @@ import {
   serverTimestamp,
   remove,
   onValue
-} from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 import { authHandler } from './auth.js';
 
 const auth = getAuth(app);
