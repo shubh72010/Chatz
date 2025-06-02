@@ -404,7 +404,7 @@
     });
   </script>
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { app } from './firebaseConfig.js';
     import {
       getAuth,
       onAuthStateChanged
@@ -420,161 +420,145 @@
       onDisconnect
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
-      authDomain: "chatz-45df4.firebaseapp.com",
-      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
-      projectId: "chatz-45df4",
-      storageBucket: "chatz-45df4.appspot.com",
-      messagingSenderId: "463847844545",
-      appId: "1:463847844545:web:5006247d061c3e0dc28240"
-    };
+    const auth = getAuth(app);
+    const db = getDatabase(app);
 
-    // Wrap Firebase initialization in error handling
-    try {
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getDatabase(app);
+    const usersGrid = document.getElementById("users-grid");
+    const noUsersContainer = document.getElementById("no-users-container");
 
-      const usersGrid = document.getElementById("users-grid");
-      const noUsersContainer = document.getElementById("no-users-container");
+    let currentUser = null;
 
-      let currentUser = null;
+    // Update user's online status
+    function updateUserStatus(online) {
+      if (!currentUser) return;
+      
+      const userRef = ref(db, `users/${currentUser.uid}`);
+      const updates = {
+        online: online,
+        lastActive: serverTimestamp()
+      };
+      
+      update(userRef, updates);
+      
+      // Set up disconnect handler
+      const userStatusRef = ref(db, `users/${currentUser.uid}/online`);
+      onDisconnect(userStatusRef).set(false);
+    }
 
-      // Update user's online status
-      function updateUserStatus(online) {
-        if (!currentUser) return;
+    // Load users and their chat status
+    function loadUsers() {
+      if (!currentUser) return;
+      
+      // Listen for user status changes
+      const usersRef = ref(db, "users");
+      onValue(usersRef, (snapshot) => {
+        const users = [];
+        snapshot.forEach((childSnapshot) => {
+          const data = childSnapshot.val();
+          if (childSnapshot.key !== currentUser.uid) {
+            users.push({
+              uid: childSnapshot.key,
+              displayName: data.displayName || "Anonymous",
+              nickname: data.nickname || "",
+              photoURL: data.photoURL,
+              online: data.online,
+              lastActive: data.lastActive
+            });
+          }
+        });
+        renderUsers(users);
+      });
+    }
+
+    // Load user's chats
+    function loadChats() {
+      if (!currentUser) return;
+      
+      // Listen for chat updates
+      const chatsRef = ref(db, `dms`);
+      onValue(chatsRef, (snapshot) => {
+        snapshot.forEach((chatSnapshot) => {
+          const chatId = chatSnapshot.key;
+          if (chatId.includes(currentUser.uid)) {
+            // Update chat status if needed
+            const lastMessage = chatSnapshot.val().lastMessage;
+            if (lastMessage) {
+              // Update UI to show unread status, etc.
+              // This can be expanded based on requirements
+            }
+          }
+        });
+      });
+    }
+
+    function renderUsers(users) {
+      const usersGrid = document.getElementById('users-grid');
+      usersGrid.innerHTML = '';
+      
+      users.forEach(user => {
+        if (user.uid === auth.currentUser?.uid) return;
         
-        const userRef = ref(db, `users/${currentUser.uid}`);
-        const updates = {
-          online: online,
-          lastActive: serverTimestamp()
+        const userCard = document.createElement('div');
+        userCard.className = 'user-card';
+        userCard.innerHTML = `
+          <img src="${user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nickname || user.displayName || 'U')}&background=726dff&color=fff`}" alt="Profile" />
+          <div class="user-info">
+            <div class="user-name">${user.nickname || user.displayName || "Anonymous"}</div>
+            <div class="user-status">${user.online ? "Online" : "Offline"}</div>
+          </div>
+          <button class="dm-btn" onclick="event.stopPropagation(); window.location.href='chat.html?uid=${user.uid}'">
+            <i class="fas fa-comment"></i> DM
+          </button>
+        `;
+        
+        userCard.onclick = () => {
+          window.location.href = 'chat.html?uid=' + user.uid;
         };
         
-        update(userRef, updates);
-        
-        // Set up disconnect handler
-        const userStatusRef = ref(db, `users/${currentUser.uid}/online`);
-        onDisconnect(userStatusRef).set(false);
-      }
-
-      // Load users and their chat status
-      function loadUsers() {
-        if (!currentUser) return;
-        
-        // Listen for user status changes
-        const usersRef = ref(db, "users");
-        onValue(usersRef, (snapshot) => {
-          const users = [];
-          snapshot.forEach((childSnapshot) => {
-            const data = childSnapshot.val();
-            if (childSnapshot.key !== currentUser.uid) {
-              users.push({
-                uid: childSnapshot.key,
-                displayName: data.displayName || "Anonymous",
-                nickname: data.nickname || "",
-                photoURL: data.photoURL,
-                online: data.online,
-                lastActive: data.lastActive
-              });
-            }
-          });
-          renderUsers(users);
-        });
-      }
-
-      // Load user's chats
-      function loadChats() {
-        if (!currentUser) return;
-        
-        // Listen for chat updates
-        const chatsRef = ref(db, `dms`);
-        onValue(chatsRef, (snapshot) => {
-          snapshot.forEach((chatSnapshot) => {
-            const chatId = chatSnapshot.key;
-            if (chatId.includes(currentUser.uid)) {
-              // Update chat status if needed
-              const lastMessage = chatSnapshot.val().lastMessage;
-              if (lastMessage) {
-                // Update UI to show unread status, etc.
-                // This can be expanded based on requirements
-              }
-            }
-          });
-        });
-      }
-
-      function renderUsers(users) {
-        const usersGrid = document.getElementById('users-grid');
-        usersGrid.innerHTML = '';
-        
-        users.forEach(user => {
-          if (user.uid === auth.currentUser?.uid) return;
-          
-          const userCard = document.createElement('div');
-          userCard.className = 'user-card';
-          userCard.innerHTML = `
-            <img src="${user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nickname || user.displayName || 'U')}&background=726dff&color=fff`}" alt="Profile" />
-            <div class="user-info">
-              <div class="user-name">${user.nickname || user.displayName || "Anonymous"}</div>
-              <div class="user-status">${user.online ? "Online" : "Offline"}</div>
-            </div>
-            <button class="dm-btn" onclick="event.stopPropagation(); window.location.href='chat.html?uid=${user.uid}'">
-              <i class="fas fa-comment"></i> DM
-            </button>
-          `;
-          
-          userCard.onclick = () => {
-            window.location.href = 'chat.html?uid=' + user.uid;
-          };
-          
-          usersGrid.appendChild(userCard);
-        });
-
-        // Show/hide no users message
-        if (users.length <= 1) { // Only current user or no users
-          noUsersContainer.style.display = 'flex';
-          usersGrid.style.display = 'none';
-        } else {
-          noUsersContainer.style.display = 'none';
-          usersGrid.style.display = 'grid';
-        }
-      }
-
-      // Check authentication state
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          // User is signed in
-          currentUser = user;
-          updateUserStatus(true);
-          loadUsers();
-          loadChats();
-        } else {
-          // User is not signed in, redirect to signin page
-          window.location.href = 'signin.html';
-        }
+        usersGrid.appendChild(userCard);
       });
 
-      // Add error handling to navigation
-      document.getElementById("global-chat-btn").onclick = () => {
-        try {
-          window.location.href = "global.html";
-        } catch (error) {
-          console.error('Navigation Error:', error);
-        }
-      };
-
-      document.getElementById("settings-btn").onclick = () => {
-        try {
-          window.location.href = "settings.html";
-        } catch (error) {
-          console.error('Navigation Error:', error);
-        }
-      };
-
-    } catch (error) {
-      console.error('Firebase Initialization Error:', error);
+      // Show/hide no users message
+      if (users.length <= 1) { // Only current user or no users
+        noUsersContainer.style.display = 'flex';
+        usersGrid.style.display = 'none';
+      } else {
+        noUsersContainer.style.display = 'none';
+        usersGrid.style.display = 'grid';
+      }
     }
+
+    // Check authentication state
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in
+        currentUser = user;
+        updateUserStatus(true);
+        loadUsers();
+        loadChats();
+      } else {
+        // User is not signed in, redirect to signin page
+        window.location.href = 'signin.html';
+      }
+    });
+
+    // Add error handling to navigation
+    document.getElementById("global-chat-btn").onclick = () => {
+      try {
+        window.location.href = "global.html";
+      } catch (error) {
+        console.error('Navigation Error:', error);
+      }
+    };
+
+    document.getElementById("settings-btn").onclick = () => {
+      try {
+        window.location.href = "settings.html";
+      } catch (error) {
+        console.error('Navigation Error:', error);
+      }
+    };
+
   </script>
 </body>
 </html>
