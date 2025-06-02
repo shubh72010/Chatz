@@ -714,8 +714,42 @@
       });
     }
 
-    // Update renderMessage to include profile click handling
-    function renderMessage(message, messageId) {
+    // Function to truncate text
+    function truncate(text, length) {
+      if (text.length <= length) return text;
+      return text.substring(0, length) + '...';
+    }
+
+    // Function to set reply
+    function setReply(message, messageId) {
+      replyTo = {
+        messageId: messageId,
+        senderId: message.senderId,
+        text: message.text,
+        senderName: userDataCache[message.senderId]?.nickname || userDataCache[message.senderId]?.displayName || "Anonymous"
+      };
+      
+      // Show reply preview
+      const replyPreview = document.getElementById('reply-preview');
+      const replySender = document.getElementById('reply-sender');
+      const replyText = document.getElementById('reply-text');
+      
+      replySender.textContent = replyTo.senderName;
+      replyText.textContent = truncate(replyTo.text, 40);
+      replyPreview.style.display = 'block';
+      
+      // Focus input
+      messageInput.focus();
+    }
+
+    // Function to cancel reply
+    function cancelReply() {
+      replyTo = null;
+      document.getElementById('reply-preview').style.display = 'none';
+    }
+
+    // Function to create message element
+    function createMessageElement(message, messageId) {
       const isOwn = message.senderId === currentUser?.uid;
       const messageDiv = document.createElement('div');
       messageDiv.className = `message ${isOwn ? 'own' : ''}`;
@@ -754,7 +788,7 @@
         }
       };
 
-      chatMessages.appendChild(messageDiv);
+      return messageDiv;
     }
 
     // Initialize chat with profile functionality
@@ -880,37 +914,8 @@
       }, 2000);
     };
 
-    // Handle reply preview
-    const replyPreview = document.getElementById('reply-preview');
-    const replySender = document.getElementById('reply-sender');
-    const replyText = document.getElementById('reply-text');
-    const cancelReplyBtn = document.getElementById('cancel-reply');
-
-    function setReply(message, messageId) {
-      replyTo = {
-        messageId,
-        senderId: message.senderId,
-        text: message.text,
-        senderName: userDataCache[message.senderId]?.nickname || 
-                   userDataCache[message.senderId]?.displayName || 
-                   "Anonymous"
-      };
-      
-      replyText.textContent = `${replyTo.senderName}: ${truncate(replyTo.text, 50)}`;
-      replyPreview.style.display = "flex";
-      messageInput.focus();
-    }
-
-    function truncate(str, n) {
-      return str.length > n ? str.substr(0, n - 1) + "…" : str;
-    }
-
-    function cancelReply() {
-      replyTo = null;
-      replyPreview.style.display = "none";
-    }
-
-    cancelReplyBtn.onclick = cancelReply;
+    // Add cancel reply handler
+    document.getElementById('cancel-reply').onclick = cancelReply;
   </script>
 </body>
 </html>
