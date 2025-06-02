@@ -561,6 +561,13 @@
     <div class="settings-group">
       <h3>Profile Settings</h3>
       <div class="section">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="Choose a unique username" maxlength="24" pattern="[a-zA-Z0-9_]+" />
+        <small style="color: var(--text); opacity: 0.7; font-size: 0.8rem; margin-top: 0.5rem; display: block;">
+          This will be your unique identifier (letters, numbers, and underscores only)
+        </small>
+      </div>
+      <div class="section">
         <label for="nickname">Nickname</label>
         <input type="text" id="nickname" placeholder="Enter your nickname" maxlength="24" />
         <small style="color: var(--text); opacity: 0.7; font-size: 0.8rem; margin-top: 0.5rem; display: block;">
@@ -661,7 +668,8 @@
       ref,
       set,
       get,
-      update
+      update,
+      remove
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
     import {
       ref as storageRef,
@@ -675,6 +683,7 @@
     const profilePicEdit = document.getElementById('profile-pic-edit');
     const profileName = document.getElementById('profile-name');
     const profileEmail = document.getElementById('profile-email');
+    const usernameInput = document.getElementById('username');
     const nicknameInput = document.getElementById('nickname');
     const bioInput = document.getElementById('bio');
     const profilePrivacy = document.getElementById('profile-privacy');
@@ -707,6 +716,7 @@
                 
                 if (snapshot.exists()) {
                     const data = snapshot.val();
+                    usernameInput.value = data.username || "";
                     nicknameInput.value = data.nickname || "";
                     bioInput.value = data.bio || "";
                     profilePrivacy.value = data.profilePrivacy || "public";
@@ -718,6 +728,7 @@
                 } else {
                     // Initialize user data if it doesn't exist
                     await set(userRef, {
+                        username: "",
                         nickname: "",
                         bio: "",
                         profilePrivacy: "public",
@@ -800,8 +811,42 @@
             const user = authHandler.getCurrentUser();
             if (!user) throw new Error('No user signed in');
 
+            // Validate username format
+            const username = usernameInput.value.trim();
+            if (username && !/^[a-zA-Z0-9_]+$/.test(username)) {
+                alert("Username can only contain letters, numbers, and underscores");
+                return;
+            }
+
+            // Check if username is already taken (if changed)
+            if (username) {
+                const usernameRef = ref(db, `usernames/${username}`);
+                const usernameSnapshot = await get(usernameRef);
+                if (usernameSnapshot.exists() && usernameSnapshot.val() !== user.uid) {
+                    alert("This username is already taken");
+                    return;
+                }
+            }
+
             const userRef = ref(db, "users/" + user.uid);
+            const userSnapshot = await get(userRef);
+            const currentData = userSnapshot.val() || {};
+            const currentUsername = currentData.username;
+
+            // If username changed, update username mapping
+            if (username !== currentUsername) {
+                if (currentUsername) {
+                    // Remove old username mapping
+                    await remove(ref(db, `usernames/${currentUsername}`));
+                }
+                if (username) {
+                    // Add new username mapping
+                    await set(ref(db, `usernames/${username}`), user.uid);
+                }
+            }
+
             await update(userRef, {
+                username: username,
                 nickname: nicknameInput.value,
                 bio: bioInput.value,
                 profilePrivacy: profilePrivacy.value,

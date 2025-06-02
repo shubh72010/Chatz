@@ -337,6 +337,72 @@
     ::-webkit-scrollbar-thumb:hover {
       background: var(--main);
     }
+
+    .search-container {
+      position: relative;
+      max-width: 600px;
+      margin: 0 auto 2rem auto;
+      width: 100%;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 1rem 3rem 1rem 1.5rem;
+      border: 2px solid var(--input-border);
+      border-radius: var(--border-radius-md);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--main);
+      box-shadow: 0 0 0 3px var(--main-light);
+    }
+
+    .search-icon {
+      position: absolute;
+      right: 1.2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .search-results {
+      margin-top: 1rem;
+    }
+
+    .search-result-card {
+      background: var(--bg-light);
+      border-radius: var(--border-radius-md);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: transform 0.2s;
+    }
+
+    .search-result-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .search-result-info {
+      flex: 1;
+    }
+
+    .search-result-name {
+      font-weight: 600;
+      color: var(--main);
+    }
+
+    .search-result-username {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
   </style>
 </head>
 <body>
@@ -347,6 +413,10 @@
   <div class="main-container">
     <div class="right-container">
       <div class="right-header">Friends</div>
+      <div class="search-container">
+        <input type="text" id="user-search" placeholder="Search users by username..." class="search-input" />
+        <i class="fas fa-search search-icon"></i>
+      </div>
       <div class="users-grid" id="users-grid">
         <!-- Friends will be populated here -->
       </div>
@@ -425,6 +495,9 @@
 
     const usersGrid = document.getElementById("users-grid");
     const noUsersContainer = document.getElementById("no-users-container");
+    const userSearch = document.getElementById("user-search");
+    let searchTimeout = null;
+    let isSearching = false;
 
     let currentUser = null;
 
@@ -445,9 +518,71 @@
       onDisconnect(userStatusRef).set(false);
     }
 
+    // Handle user search
+    userSearch.addEventListener('input', (e) => {
+      const query = e.target.value.trim();
+      
+      // Clear previous timeout
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+
+      // If query is empty, show friends list
+      if (!query) {
+        isSearching = false;
+        loadUsers();
+        return;
+      }
+
+      // Debounce search
+      searchTimeout = setTimeout(async () => {
+        isSearching = true;
+        try {
+          // Search for username
+          const usernameRef = ref(db, `usernames/${query}`);
+          const usernameSnapshot = await get(usernameRef);
+          
+          if (usernameSnapshot.exists()) {
+            const userId = usernameSnapshot.val();
+            // Get user details
+            const userRef = ref(db, `users/${userId}`);
+            const userSnapshot = await get(userRef);
+            
+            if (userSnapshot.exists()) {
+              const userData = userSnapshot.val();
+              // Show search results
+              usersGrid.innerHTML = `
+                <div class="search-result-card">
+                  <img src="${userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.nickname || userData.displayName || 'U')}&background=726dff&color=fff`}" alt="Profile" style="width: 48px; height: 48px; border-radius: 50%;" />
+                  <div class="search-result-info">
+                    <div class="search-result-name">${userData.nickname || userData.displayName || "Anonymous"}</div>
+                    <div class="search-result-username">@${userData.username}</div>
+                  </div>
+                  <button class="dm-btn" onclick="event.stopPropagation(); window.location.href='/Chatz/chat.html?uid=${userId}'">
+                    <i class="fas fa-comment"></i> DM
+                  </button>
+                </div>
+              `;
+              noUsersContainer.style.display = 'none';
+              usersGrid.style.display = 'block';
+            }
+          } else {
+            // No user found
+            usersGrid.innerHTML = '';
+            noUsersContainer.querySelector('.no-users-text').textContent = 'No User Found';
+            noUsersContainer.querySelector('.no-users-subtext').textContent = 'Try searching with a different username';
+            noUsersContainer.style.display = 'flex';
+            usersGrid.style.display = 'none';
+          }
+        } catch (error) {
+          console.error('Search error:', error);
+        }
+      }, 300); // 300ms debounce
+    });
+
     // Load users and their chat status
     function loadUsers() {
-      if (!currentUser) return;
+      if (!currentUser || isSearching) return;
       
       // Listen for user status changes
       const usersRef = ref(db, "users");
