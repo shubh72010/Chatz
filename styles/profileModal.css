@@ -1,0 +1,247 @@
+/* Profile Modal Styles */
+.profile-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.profile-modal.active {
+  display: flex;
+  opacity: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-modal-content {
+  background: var(--settings-bg);
+  border-radius: var(--border-radius-lg);
+  width: 90%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(20px);
+  transition: transform 0.3s ease;
+}
+
+.profile-modal.active .profile-modal-content {
+  transform: translateY(0);
+}
+
+.profile-modal-header {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.profile-modal-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--main);
+  box-shadow: 0 2px 8px rgba(114, 109, 255, 0.15);
+}
+
+.profile-modal-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-modal-info {
+  flex: 1;
+}
+
+.profile-modal-info h2 {
+  margin: 0;
+  color: var(--main);
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.profile-modal-info p {
+  margin: 0.3rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.profile-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.profile-modal-close:hover {
+  color: var(--text);
+}
+
+.profile-modal-body {
+  padding: 1.5rem;
+}
+
+.profile-modal-bio {
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius-sm);
+}
+
+.profile-modal-stats {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--main);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.profile-modal-actions {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-btn {
+  padding: 0.8rem;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.action-btn i {
+  font-size: 1.1rem;
+}
+
+.dm-btn {
+  background: var(--main);
+  color: white;
+}
+
+.dm-btn:hover {
+  background: var(--main-dark);
+  transform: translateY(-1px);
+}
+
+.friend-btn {
+  background: rgba(114, 109, 255, 0.1);
+  color: var(--main);
+}
+
+.friend-btn:hover {
+  background: rgba(114, 109, 255, 0.2);
+}
+
+.friend-btn.is-friend {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4CAF50;
+}
+
+.friend-btn.is-friend:hover {
+  background: rgba(76, 175, 80, 0.2);
+}
+
+.block-btn {
+  background: rgba(255, 82, 82, 0.1);
+  color: var(--danger);
+}
+
+.block-btn:hover {
+  background: rgba(255, 82, 82, 0.2);
+}
+
+.block-btn.is-blocked {
+  background: rgba(255, 82, 82, 0.2);
+}
+
+/* Theme-specific styles */
+.theme-light .profile-modal-content {
+  background: var(--bg-light);
+}
+
+.theme-light .profile-modal-bio {
+  background: rgba(114, 109, 255, 0.05);
+}
+
+.theme-dark .profile-modal-content {
+  background: var(--bg-light);
+}
+
+/* Responsive styles */
+@media (max-width: 480px) {
+  .profile-modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
+
+  .profile-modal-header {
+    padding: 1rem;
+  }
+
+  .profile-modal-avatar {
+    width: 60px;
+    height: 60px;
+  }
+
+  .profile-modal-info h2 {
+    font-size: 1.2rem;
+  }
+
+  .profile-modal-body {
+    padding: 1rem;
+  }
+
+  .profile-modal-actions {
+    padding: 1rem;
+  }
+
+  .action-btn {
+    padding: 0.7rem;
+    font-size: 0.95rem;
+  }
+} 
