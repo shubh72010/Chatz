@@ -342,7 +342,7 @@
 <body>
   <header>
     <span>Chatz</span>
-    <button class="sign-in-btn" id="sign-in">Sign In</button>
+    <div style="width: 100px;"></div> <!-- Spacer for balance -->
   </header>
   <div class="main-container">
     <div class="right-container">
@@ -407,8 +407,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
       getAuth,
-      GoogleAuthProvider,
-      signInWithPopup,
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
     import {
@@ -438,37 +436,8 @@
       const auth = getAuth(app);
       const db = getDatabase(app);
 
-      const signInBtn = document.getElementById("sign-in");
       const usersGrid = document.getElementById("users-grid");
       const noUsersContainer = document.getElementById("no-users-container");
-
-      function renderUsers(users) {
-        const usersGrid = document.getElementById('users-grid');
-        usersGrid.innerHTML = '';
-        
-        users.forEach(user => {
-          if (user.uid === auth.currentUser?.uid) return;
-          
-          const userCard = document.createElement('div');
-          userCard.className = 'user-card';
-          userCard.innerHTML = `
-            <img src="${user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nickname || user.displayName || 'U')}&background=726dff&color=fff`}" alt="Profile" />
-            <div class="user-info">
-              <div class="user-name">${user.nickname || user.displayName || "Anonymous"}</div>
-              <div class="user-status">${user.online ? "Online" : "Offline"}</div>
-            </div>
-            <button class="dm-btn" onclick="event.stopPropagation(); window.location.href='chat.html?uid=${user.uid}'">
-              <i class="fas fa-comment"></i> DM
-            </button>
-          `;
-          
-          userCard.onclick = () => {
-            window.location.href = 'chat.html?uid=' + user.uid;
-          };
-          
-          usersGrid.appendChild(userCard);
-        });
-      }
 
       // Check authentication state
       onAuthStateChanged(auth, (user) => {
