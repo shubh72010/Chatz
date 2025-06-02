@@ -707,65 +707,53 @@
       isLoading = false;
     }
 
-    // Initialize chat
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        
-        // Load initial messages
-        const messagesRef = ref(db, 'global_messages');
-        const messagesQuery = query(messagesRef, 
-          orderByChild('timestamp'),
-          limitToLast(20)
-        );
-        
-        onValue(messagesQuery, (snapshot) => {
-          const wasNearBottom = isNearBottom();
-          chatMessages.innerHTML = '';
-          
-          snapshot.forEach((childSnapshot) => {
-            const message = childSnapshot.val();
-            renderMessage(message, childSnapshot.key);
-            lastLoadedTimestamp = message.timestamp;
-          });
-          
-          if (wasNearBottom) {
-            scrollToBottom(false);
-          }
-        });
+    // Render message
+    function renderMessage(message, messageId) {
+      const isOwn = message.senderId === currentUser?.uid;
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isOwn ? 'own' : ''}`;
+      
+      const userData = userDataCache[message.senderId] || {};
+      const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : 'Sending...';
+      const displayName = userData.nickname || userData.displayName || "Anonymous";
+      const photoURL = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=726dff&color=fff`;
 
-        // Listen for typing status
-        onValue(ref(db, 'global_typing'), (snapshot) => {
-          const typingUsers = [];
-          snapshot.forEach((childSnapshot) => {
-            if (childSnapshot.key !== currentUser.uid && childSnapshot.val()) {
-              const userData = userDataCache[childSnapshot.key];
-              if (userData) {
-                typingUsers.push(userData.nickname || userData.displayName || "Anonymous");
-              }
-            }
-          });
-
-          if (typingUsers.length > 0) {
-            typingIndicator.classList.add('active');
-            typingText.textContent = typingUsers.length === 1 
-              ? `${typingUsers[0]} is typing...`
-              : `${typingUsers.length} people are typing...`;
-          } else {
-            typingIndicator.classList.remove('active');
-          }
-        });
-
-        // Cache user data
-        onValue(ref(db, 'users'), (snapshot) => {
-          snapshot.forEach((childSnapshot) => {
-            userDataCache[childSnapshot.key] = childSnapshot.val();
-          });
-        });
-      } else {
-        window.location.href = 'index.html';
+      let replyHTML = '';
+      if (message.replyTo) {
+        const replyUserData = userDataCache[message.replyTo.senderId] || {};
+        const replyDisplayName = replyUserData.nickname || replyUserData.displayName || "Anonymous";
+        replyHTML = `
+          <div class="reply-to">
+            Reply to ${escapeHtml(replyDisplayName)}: ${escapeHtml(truncate(message.replyTo.text, 40))}
+          </div>
+        `;
       }
-    });
+
+      messageDiv.innerHTML = `
+        <img src="${photoURL}" alt="Profile" onclick="window.location.href='chat.html?uid=${message.senderId}'" />
+        <div class="message-content" onclick="event.stopPropagation();">
+          ${!isOwn ? `<div class="message-sender">${escapeHtml(displayName)}</div>` : ''}
+          ${replyHTML}
+          ${escapeHtml(message.text)}
+          <div class="message-time">${timestamp}</div>
+        </div>
+      `;
+
+      // Add click handler for reply
+      const messageContent = messageDiv.querySelector('.message-content');
+      messageContent.onclick = () => {
+        if (!isOwn) {
+          setReply(message, messageId);
+        }
+      };
+
+      return messageDiv;
+    }
+
+    // Function to create message element (for preloading)
+    function createMessageElement(message, messageId) {
+      return renderMessage(message, messageId);
+    }
 
     // Send message
     sendBtn.onclick = async () => {
@@ -793,7 +781,11 @@
 
         messageInput.value = '';
         cancelReply();
-        scrollToBottom();
+        
+        // Only scroll if we're near bottom
+        if (isNearBottom()) {
+          scrollToBottom(true);
+        }
       } catch (error) {
         console.error("Error sending message:", error);
         alert("Failed to send message. Please try again.");
@@ -859,48 +851,99 @@
 
     cancelReplyBtn.onclick = cancelReply;
 
-    // Render message
-    function renderMessage(message, messageId) {
-      const isOwn = message.senderId === currentUser?.uid;
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${isOwn ? 'own' : ''}`;
-      
-      const userData = userDataCache[message.senderId] || {};
-      const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : 'Sending...';
-      const displayName = userData.nickname || userData.displayName || "Anonymous";
-      const photoURL = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=726dff&color=fff`;
+    // Initialize chat
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        
+        // Load initial messages
+        const messagesRef = ref(db, 'global_messages');
+        const messagesQuery = query(messagesRef, 
+          orderByChild('timestamp'),
+          limitToLast(20)
+        );
+        
+        onValue(messagesQuery, (snapshot) => {
+          const wasNearBottom = isNearBottom();
+          const messages = [];
+          
+          snapshot.forEach((childSnapshot) => {
+            const message = childSnapshot.val();
+            messages.push(message);
+            lastLoadedTimestamp = message.timestamp;
+          });
 
-      let replyHTML = '';
-      if (message.replyTo) {
-        const replyUserData = userDataCache[message.replyTo.senderId] || {};
-        const replyDisplayName = replyUserData.nickname || replyUserData.displayName || "Anonymous";
-        replyHTML = `
-          <div class="reply-to">
-            Reply to ${escapeHtml(replyDisplayName)}: ${escapeHtml(truncate(message.replyTo.text, 40))}
-          </div>
-        `;
+          // Clear chat only if it's the initial load
+          if (!chatMessages.firstChild) {
+            chatMessages.innerHTML = '';
+          }
+
+          // Append new messages
+          messages.forEach(message => {
+            const messageDiv = renderMessage(message, childSnapshot.key);
+            chatMessages.appendChild(messageDiv);
+          });
+          
+          if (wasNearBottom) {
+            scrollToBottom(false);
+          }
+        });
+
+        // Listen for new messages
+        const newMessagesQuery = query(messagesRef, 
+          orderByChild('timestamp'),
+          limitToLast(1)
+        );
+
+        onValue(newMessagesQuery, (snapshot) => {
+          snapshot.forEach((childSnapshot) => {
+            const message = childSnapshot.val();
+            // Only handle new messages that aren't from the current user
+            if (message.senderId !== currentUser.uid && message.timestamp > lastLoadedTimestamp) {
+              const messageDiv = renderMessage(message, childSnapshot.key);
+              chatMessages.appendChild(messageDiv);
+              lastLoadedTimestamp = message.timestamp;
+              
+              // Only auto-scroll if we're near bottom
+              if (isNearBottom()) {
+                scrollToBottom(true);
+              }
+            }
+          });
+        });
+
+        // Listen for typing status
+        onValue(ref(db, 'global_typing'), (snapshot) => {
+          const typingUsers = [];
+          snapshot.forEach((childSnapshot) => {
+            if (childSnapshot.key !== currentUser.uid && childSnapshot.val()) {
+              const userData = userDataCache[childSnapshot.key];
+              if (userData) {
+                typingUsers.push(userData.nickname || userData.displayName || "Anonymous");
+              }
+            }
+          });
+
+          if (typingUsers.length > 0) {
+            typingIndicator.classList.add('active');
+            typingText.textContent = typingUsers.length === 1 
+              ? `${typingUsers[0]} is typing...`
+              : `${typingUsers.length} people are typing...`;
+          } else {
+            typingIndicator.classList.remove('active');
+          }
+        });
+
+        // Cache user data
+        onValue(ref(db, 'users'), (snapshot) => {
+          snapshot.forEach((childSnapshot) => {
+            userDataCache[childSnapshot.key] = childSnapshot.val();
+          });
+        });
+      } else {
+        window.location.href = 'index.html';
       }
-
-      messageDiv.innerHTML = `
-        <img src="${photoURL}" alt="Profile" onclick="window.location.href='chat.html?uid=${message.senderId}'" />
-        <div class="message-content" onclick="event.stopPropagation();">
-          ${!isOwn ? `<div class="message-sender">${escapeHtml(displayName)}</div>` : ''}
-          ${replyHTML}
-          ${escapeHtml(message.text)}
-          <div class="message-time">${timestamp}</div>
-        </div>
-      `;
-
-      // Add click handler for reply
-      const messageContent = messageDiv.querySelector('.message-content');
-      messageContent.onclick = () => {
-        if (!isOwn) {
-          setReply(message, messageId);
-        }
-      };
-
-      chatMessages.appendChild(messageDiv);
-    }
+    });
   </script>
 </body>
 </html>
