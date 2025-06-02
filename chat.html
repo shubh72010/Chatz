@@ -460,29 +460,31 @@
     // Check authentication state immediately
     onAuthStateChanged(auth, (user) => {
       if (!user) {
-        // User is not signed in, redirect to signin page
         window.location.href = 'signin.html';
       }
     });
 
-    // Auto-scroll and preloading functionality
+    // DOM Elements
     const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.querySelector('.message-input');
+    const sendBtn = document.querySelector('.send-btn');
     const loadingMessages = document.getElementById('loading-messages');
+    const typingIndicator = document.querySelector('.typing-indicator');
+
+    // Chat state
     let isLoading = false;
     let lastScrollTop = 0;
-    let scrollThreshold = 100; // pixels from top to trigger loading more messages
+    let scrollThreshold = 100;
 
-    // Function to check if we're near the top of the chat
+    // Scroll handling
     function isNearTop() {
       return chatMessages.scrollTop < scrollThreshold;
     }
 
-    // Function to check if we're near the bottom of the chat
     function isNearBottom() {
       return chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 100;
     }
 
-    // Function to scroll to bottom smoothly
     function scrollToBottom(smooth = true) {
       if (smooth) {
         chatMessages.scrollTo({
@@ -494,44 +496,57 @@
       }
     }
 
-    // Handle scroll events
+    // Message loading
     chatMessages.addEventListener('scroll', () => {
-      // Store current scroll position
       const currentScrollTop = chatMessages.scrollTop;
-      
-      // If scrolling up and near top, trigger loading more messages
       if (currentScrollTop < lastScrollTop && isNearTop() && !isLoading) {
         loadingMessages.classList.add('active');
         isLoading = true;
-        
-        // Dispatch custom event for chatLogic.js to handle
         const loadMoreEvent = new CustomEvent('loadMoreMessages', {
           detail: { timestamp: Date.now() }
         });
         chatMessages.dispatchEvent(loadMoreEvent);
       }
-      
-      // Update last scroll position
       lastScrollTop = currentScrollTop;
     });
 
-    // Function to stop loading indicator
     function stopLoading() {
       loadingMessages.classList.remove('active');
       isLoading = false;
     }
 
-    // Expose functions to chatLogic.js
+    // Expose UI functions to chatLogic.js
     window.chatUI = {
       scrollToBottom,
       stopLoading,
       isNearBottom
     };
 
-    // Theme sync and auto theme functionality
+    // Message sending
+    sendBtn.onclick = () => {
+      const message = messageInput.value.trim();
+      if (!message || !auth.currentUser) return;
+
+      const event = new CustomEvent('sendMessage', {
+        detail: { message }
+      });
+      chatMessages.dispatchEvent(event);
+
+      messageInput.value = '';
+      messageInput.focus();
+    };
+
+    // Handle enter key
+    messageInput.onkeypress = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    };
+
+    // Theme handling
     function getTimeBasedTheme() {
       const hour = new Date().getHours();
-      // Use dark theme from 8 PM to 6 AM
       return (hour >= 20 || hour < 6) ? 'dark' : 'light';
     }
 
@@ -542,26 +557,21 @@
       document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
     }
 
-    // Apply theme on page load
-    (function() {
-      const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
-      applyTheme(savedTheme);
+    // Apply theme on load
+    const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
+    applyTheme(savedTheme);
 
-      // If auto theme is selected, update every minute
-      if (savedTheme === 'auto') {
-        setInterval(() => {
-          applyTheme('auto');
-        }, 60000); // Check every minute
-      }
-    })();
+    // Theme sync
+    if (savedTheme === 'auto') {
+      setInterval(() => applyTheme('auto'), 60000);
+    }
 
-    // Listen for theme changes in other tabs
-    window.addEventListener('storage', function(e) {
+    window.addEventListener('storage', (e) => {
       if (e.key === 'chatzTheme') {
-        const theme = e.newValue || 'auto';
-        applyTheme(theme);
+        applyTheme(e.newValue || 'auto');
       }
     });
   </script>
+  <script type="module" src="chatLogic.js"></script>
 </body>
 </html> 
