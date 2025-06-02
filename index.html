@@ -346,14 +346,14 @@
   </header>
   <div class="main-container">
     <div class="right-container">
-      <div class="right-header">Active Users</div>
+      <div class="right-header">Friends</div>
       <div class="users-grid" id="users-grid">
-        <!-- Users will be populated here -->
+        <!-- Friends will be populated here -->
       </div>
       <div class="no-users-container" id="no-users-container" style="display: none;">
-        <i class="fa fa-users no-users-icon"></i>
-        <div class="no-users-text">No Active Users</div>
-        <div class="no-users-subtext">Be the first to sign in and start chatting with others!</div>
+        <i class="fa fa-user-friends no-users-icon"></i>
+        <div class="no-users-text">No Friends Yet</div>
+        <div class="no-users-subtext">Add friends to start chatting with them!</div>
       </div>
     </div>
   </div>
@@ -470,22 +470,39 @@
       
       // Listen for user status changes
       const usersRef = ref(db, "users");
-      onValue(usersRef, (snapshot) => {
-        const users = [];
-        snapshot.forEach((childSnapshot) => {
-          const data = childSnapshot.val();
-          if (childSnapshot.key !== currentUser.uid) {
-            users.push({
-              uid: childSnapshot.key,
-              displayName: data.displayName || "Anonymous",
-              nickname: data.nickname || "",
-              photoURL: data.photoURL,
-              online: data.online,
-              lastActive: data.lastActive
-            });
-          }
+      const friendsRef = ref(db, `friends/${currentUser.uid}`);
+      
+      // First get friends list
+      onValue(friendsRef, (friendsSnapshot) => {
+        const friends = friendsSnapshot.val() || {};
+        const friendIds = Object.keys(friends);
+        
+        if (friendIds.length === 0) {
+          // No friends, show empty state
+          noUsersContainer.style.display = 'flex';
+          usersGrid.style.display = 'none';
+          return;
+        }
+        
+        // Then get friend details
+        onValue(usersRef, (usersSnapshot) => {
+          const users = [];
+          usersSnapshot.forEach((childSnapshot) => {
+            const data = childSnapshot.val();
+            // Only include if they are a friend
+            if (friendIds.includes(childSnapshot.key)) {
+              users.push({
+                uid: childSnapshot.key,
+                displayName: data.displayName || "Anonymous",
+                nickname: data.nickname || "",
+                photoURL: data.photoURL,
+                online: data.online,
+                lastActive: data.lastActive
+              });
+            }
+          });
+          renderUsers(users);
         });
-        renderUsers(users);
       });
     }
 
@@ -538,7 +555,7 @@
       });
 
       // Show/hide no users message
-      if (users.length <= 1) { // Only current user or no users
+      if (users.length === 0) {
         noUsersContainer.style.display = 'flex';
         usersGrid.style.display = 'none';
       } else {
