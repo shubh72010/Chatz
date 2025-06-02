@@ -396,10 +396,10 @@
   <div class="main-container">
   <div class="chat-container">
     <div class="chat-header">
-        <img id="other-user-pic" src="https://ui-avatars.com/api/?name=U&background=726dff&color=fff" alt="Profile" />
+      <button class="back-btn" onclick="window.location.href='/Chatz/index.html'">&larr; Back</button>
       <div class="chat-header-info">
-          <div id="other-user-name" class="chat-header-name">Loading...</div>
-        <div id="other-user-status" class="chat-header-status">Offline</div>
+        <div class="chat-header-title" id="chat-title">Loading...</div>
+        <div class="chat-header-subtitle" id="chat-status">Offline</div>
       </div>
     </div>
 
@@ -408,22 +408,37 @@
       Loading messages...
     </div>
 
-    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-messages" id="chat-messages">
+      <!-- Messages will be populated here -->
+    </div>
 
-    <div class="typing-indicator"></div>
+    <div class="typing-indicator" id="typing-indicator">
+      <span id="typing-text"></span>
+    </div>
 
-    <div class="chat-input-container">
-      <textarea class="message-input" placeholder="Type a message..." rows="1"></textarea>
-      <button class="send-btn">
-        <i class="fas fa-paper-plane"></i>
-      </button>
+    <div class="reply-preview" id="reply-preview">
+      <div class="reply-preview-content">
+        <div class="reply-preview-text">
+          <span class="reply-preview-sender" id="reply-sender"></span>
+          <span id="reply-text"></span>
+        </div>
+        <button class="reply-preview-cancel" id="cancel-reply">&times;</button>
+      </div>
+    </div>
+
+    <div class="chat-input">
+      <input type="text" id="message-input" placeholder="Type a message..." />
+      <button id="send-btn">Send</button>
     </div>
   </div>
   </div>
 
   <script type="module">
-    import { authHandler } from './js/auth.js';
-    import { db } from './firebaseConfig.js';
+    import { app, auth, db } from './js/firebaseConfig.js';
+    import { profileModal } from './js/profileModal.js';
+    import {
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
       ref,
       push,
@@ -433,123 +448,270 @@
       query,
       orderByChild,
       get,
-      endBefore,
-      limitToLast
+      update,
+      remove
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-    // Check authentication state immediately
-    authHandler.onAuthStateChanged((user) => {
-        if (!user) {
-            window.location.href = '/Chatz/signin.html';
-        }
-    });
+    // Get DOM elements
+    const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const chatTitle = document.getElementById('chat-title');
+    const chatStatus = document.getElementById('chat-status');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const typingText = document.getElementById('typing-text');
+    const loadingMessages = document.getElementById('loading-messages');
+    const replyPreview = document.getElementById('reply-preview');
+    const replySender = document.getElementById('reply-sender');
+    const replyText = document.getElementById('reply-text');
+    const cancelReplyBtn = document.getElementById('cancel-reply');
 
-    // Chat state
-    let isLoading = false;
-    let lastScrollTop = 0;
-    let scrollThreshold = 100;
     let currentUser = null;
+    let otherUser = null;
     let chatId = null;
-    let otherUserId = null;
+    let typingTimeout = null;
+    let replyTo = null;
 
-    // Get other user's ID from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    otherUserId = urlParams.get('uid');
+    // Function to initialize chat
+    async function initializeChat(otherUserId) {
+      if (!currentUser || !otherUserId) return;
 
-    // Initialize chat when both users are known
-    authHandler.onAuthStateChanged(async (user) => {
-        if (user && otherUserId) {
-            currentUser = user;
-            await initializeChat(user.uid, otherUserId);
-        }
-    });
-
-    async function initializeChat(userId1, userId2) {
-        // Create or get chat ID
-        const chatRef = ref(db, 'chats');
-        const chatQuery = query(chatRef, orderByChild('participants'));
-        
-        const snapshot = await get(chatQuery);
-        let foundChat = null;
-        
-        snapshot.forEach((childSnapshot) => {
-            const chat = childSnapshot.val();
-            if (chat.participants && 
-                chat.participants[userId1] && 
-                chat.participants[userId2]) {
-                foundChat = childSnapshot.key;
-            }
-        });
-
-        if (foundChat) {
-            chatId = foundChat;
-        } else {
-            // Create new chat
-            const newChatRef = push(chatRef);
-            chatId = newChatRef.key;
-            await set(newChatRef, {
-                participants: {
-                    [userId1]: true,
-                    [userId2]: true
-                },
-                createdAt: serverTimestamp(),
-                lastMessage: null
-            });
+      try {
+        // Get other user's data
+        const otherUserRef = ref(db, `users/${otherUserId}`);
+        const otherUserSnapshot = await get(otherUserRef);
+        if (!otherUserSnapshot.exists()) {
+          alert('User not found');
+          window.location.href = '/Chatz/index.html';
+          return;
         }
 
-        // Load chat messages
-        loadMessages();
-        
-        // Load other user's info
-        loadOtherUserInfo();
-    }
+        otherUser = otherUserSnapshot.val();
+        chatTitle.textContent = otherUser.nickname || otherUser.displayName || 'Anonymous';
+        chatStatus.textContent = otherUser.online ? 'Online' : 'Offline';
 
-    // Scroll handling
-    function isNearTop() {
-      return chatMessages.scrollTop < scrollThreshold;
-    }
+        // Generate chat ID (sorted to ensure consistency)
+        const participants = [currentUser.uid, otherUserId].sort();
+        chatId = participants.join('_');
 
-    function isNearBottom() {
-      return chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 100;
-    }
-
-    function scrollToBottom(smooth = true) {
-      if (smooth) {
-        chatMessages.scrollTo({
-          top: chatMessages.scrollHeight,
-          behavior: 'smooth'
+        // Create or update chat participants
+        const chatRef = ref(db, `dms/${chatId}`);
+        await update(chatRef, {
+          participants: {
+            [currentUser.uid]: true,
+            [otherUserId]: true
+          }
         });
-      } else {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        // Listen for messages
+        const messagesRef = ref(db, `dms/${chatId}/messages`);
+        const messagesQuery = query(messagesRef, orderByChild('timestamp'));
+
+        onValue(messagesQuery, (snapshot) => {
+          chatMessages.innerHTML = '';
+          snapshot.forEach((childSnapshot) => {
+            const message = childSnapshot.val();
+            renderMessage(message, childSnapshot.key);
+          });
+          scrollToBottom();
+        });
+
+        // Listen for typing status
+        const typingRef = ref(db, `dms/${chatId}/typing/${otherUserId}`);
+        onValue(typingRef, (snapshot) => {
+          if (snapshot.val()) {
+            typingIndicator.classList.add('active');
+            typingText.textContent = `${otherUser.nickname || otherUser.displayName || 'Anonymous'} is typing...`;
+          } else {
+            typingIndicator.classList.remove('active');
+          }
+        });
+
+        // Listen for online status
+        onValue(otherUserRef, (snapshot) => {
+          const userData = snapshot.val();
+          chatStatus.textContent = userData.online ? 'Online' : 'Offline';
+        });
+
+      } catch (error) {
+        console.error('Error initializing chat:', error);
+        alert('Failed to load chat. Please try again.');
       }
     }
 
-    // Message loading
-    chatMessages.addEventListener('scroll', () => {
-      const currentScrollTop = chatMessages.scrollTop;
-      if (currentScrollTop < lastScrollTop && isNearTop() && !isLoading) {
-        loadingMessages.classList.add('active');
-        isLoading = true;
-        const loadMoreEvent = new CustomEvent('loadMoreMessages', {
-          detail: { timestamp: Date.now() }
-        });
-        chatMessages.dispatchEvent(loadMoreEvent);
-      }
-      lastScrollTop = currentScrollTop;
-    });
+    // Function to render a message
+    function renderMessage(message, messageId) {
+      const isOwn = message.senderId === currentUser?.uid;
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isOwn ? 'own' : ''}`;
+      
+      const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : 'Sending...';
 
-    function stopLoading() {
-      loadingMessages.classList.remove('active');
-      isLoading = false;
+      let replyHTML = '';
+      if (message.replyTo) {
+        const replyUserData = isOwn ? otherUser : currentUser;
+        const replyDisplayName = replyUserData.nickname || replyUserData.displayName || "Anonymous";
+        replyHTML = `
+          <div class="reply-to">
+            Reply to ${escapeHtml(replyDisplayName)}: ${escapeHtml(truncate(message.replyTo.text, 40))}
+          </div>
+        `;
+      }
+
+      messageDiv.innerHTML = `
+        <img src="${isOwn ? (currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || 'U')}&background=726dff&color=fff`) : (otherUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.displayName || 'U')}&background=726dff&color=fff`)}" 
+             alt="Profile" 
+             class="message-avatar"
+             data-uid="${message.senderId}" />
+        <div class="message-content">
+          ${replyHTML}
+          ${escapeHtml(message.text)}
+          <div class="message-time">${timestamp}</div>
+        </div>
+      `;
+
+      // Add click handler for reply
+      const messageContent = messageDiv.querySelector('.message-content');
+      messageContent.onclick = (e) => {
+        if (!isOwn && !e.target.closest('img[data-uid]')) {
+          setReply(message, messageId);
+        }
+      };
+
+      chatMessages.appendChild(messageDiv);
     }
 
-    // Expose UI functions to chatLogic.js
-    window.chatUI = {
-      scrollToBottom,
-      stopLoading,
-      isNearBottom
+    // Function to send message
+    async function sendMessage() {
+      const message = messageInput.value.trim();
+      if (!message || !currentUser || !chatId) return;
+
+      try {
+        const messageRef = push(ref(db, `dms/${chatId}/messages`));
+        const messageData = {
+          text: message,
+          senderId: currentUser.uid,
+          timestamp: serverTimestamp()
+        };
+
+        if (replyTo) {
+          messageData.replyTo = {
+            messageId: replyTo.messageId,
+            senderId: replyTo.senderId,
+            text: replyTo.text
+          };
+        }
+
+        await set(messageRef, messageData);
+
+        // Update last message
+        await update(ref(db, `dms/${chatId}`), {
+          lastMessage: {
+            text: message,
+            timestamp: serverTimestamp(),
+            senderId: currentUser.uid
+          }
+        });
+
+        messageInput.value = '';
+        cancelReply();
+        scrollToBottom();
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+      }
+    }
+
+    // Helper functions
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function truncate(text, length) {
+      if (text.length <= length) return text;
+      return text.substring(0, length) + '...';
+    }
+
+    function scrollToBottom() {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function setReply(message, messageId) {
+      replyTo = {
+        messageId: messageId,
+        senderId: message.senderId,
+        text: message.text
+      };
+      
+      replySender.textContent = isOwn ? 'You' : (otherUser.nickname || otherUser.displayName || 'Anonymous');
+      replyText.textContent = truncate(replyTo.text, 40);
+      replyPreview.style.display = 'block';
+      
+      messageInput.focus();
+    }
+
+    function cancelReply() {
+      replyTo = null;
+      replyPreview.style.display = 'none';
+    }
+
+    // Event listeners
+    sendBtn.onclick = sendMessage;
+
+    messageInput.onkeypress = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
     };
+
+    messageInput.oninput = () => {
+      if (!currentUser || !chatId) return;
+
+      // Set typing status
+      const typingRef = ref(db, `dms/${chatId}/typing/${currentUser.uid}`);
+      set(typingRef, true);
+
+      // Clear previous timeout
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
+
+      // Set timeout to clear typing status
+      typingTimeout = setTimeout(() => {
+        set(typingRef, false);
+      }, 2000);
+    };
+
+    cancelReplyBtn.onclick = cancelReply;
+
+    // Initialize chat when user is authenticated
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        const urlParams = new URLSearchParams(window.location.search);
+        const otherUserId = urlParams.get('uid');
+        if (otherUserId) {
+          initializeChat(otherUserId);
+        } else {
+          window.location.href = '/Chatz/index.html';
+        }
+      } else {
+        window.location.href = '/Chatz/signin.html';
+      }
+    });
+
+    // Setup profile clicks
+    document.addEventListener('click', (e) => {
+      const avatar = e.target.closest('img[data-uid]');
+      if (avatar && avatar.dataset.uid) {
+        e.preventDefault();
+        e.stopPropagation();
+        profileModal.show(avatar.dataset.uid);
+      }
+    });
   </script>
-  <script type="module" src="../js/chatLogic.js"></script>
 </body>
 </html> 
