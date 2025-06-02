@@ -16,6 +16,7 @@ import {
   remove,
   onValue
 } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+import { authHandler } from './auth.js';
 
 const auth = getAuth(app);
 const db = getDatabase(app);
