@@ -396,6 +396,7 @@
   <div class="main-container">
     <div class="chat-container">
       <div class="chat-header">
+        <img id="other-user-pic" src="https://ui-avatars.com/api/?name=U&background=726dff&color=fff" alt="Profile" />
         <div class="chat-header-info">
           <div class="chat-header-title" id="chat-title">Loading...</div>
           <div class="chat-header-subtitle" id="chat-status">Offline</div>
@@ -459,6 +460,7 @@
     const sendBtn = document.getElementById('send-btn');
     const chatTitle = document.getElementById('chat-title');
     const chatStatus = document.getElementById('chat-status');
+    const otherUserPic = document.getElementById('other-user-pic');
     const typingIndicator = document.getElementById('typing-indicator');
     const typingText = document.getElementById('typing-text');
     const loadingMessages = document.getElementById('loading-messages');
@@ -490,6 +492,7 @@
         otherUser = otherUserSnapshot.val();
         chatTitle.textContent = otherUser.nickname || otherUser.displayName || 'Anonymous';
         chatStatus.textContent = otherUser.online ? 'Online' : 'Offline';
+        otherUserPic.src = otherUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.displayName || 'U')}&background=726dff&color=fff`;
 
         // Generate chat ID (sorted to ensure consistency)
         const participants = [currentUser.uid, otherUserId].sort();
