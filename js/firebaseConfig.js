@@ -5,7 +5,8 @@ import {
   getAuth, 
   connectAuthEmulator,
   setPersistence,
-  browserLocalPersistence
+  browserLocalPersistence,
+  initializeAuth
 } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 import { getDatabase, connectDatabaseEmulator } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 import { getStorage, connectStorageEmulator } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
@@ -25,15 +26,14 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
-const auth = getAuth(app);
+
+// Initialize Auth with persistence
+const auth = initializeAuth(app, {
+  persistence: browserLocalPersistence
+});
+
 const db = getDatabase(app);
 const storage = getStorage(app);
-
-// Configure auth persistence asynchronously
-setPersistence(auth, browserLocalPersistence)
-  .catch((error) => {
-    console.error("Auth persistence error:", error);
-  });
 
 // Configure database rules with indexes
 const dbRules = {
