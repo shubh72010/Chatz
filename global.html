@@ -564,6 +564,7 @@
 
   <script type="module">
     import { app } from './firebaseConfig.js';
+    import { profileModal } from './profileModal.js';
     import {
       getAuth,
       onAuthStateChanged
@@ -705,10 +706,68 @@
       isLoading = false;
     }
 
-    // Initialize chat
+    // Add profile click handler
+    function setupProfileClicks() {
+      document.addEventListener('click', (e) => {
+        const avatar = e.target.closest('img[data-uid]');
+        if (avatar && avatar.dataset.uid) {
+          e.preventDefault();
+          e.stopPropagation();
+          profileModal.show(avatar.dataset.uid);
+        }
+      });
+    }
+
+    // Update renderMessage to include profile click handling
+    function renderMessage(message, messageId) {
+      const isOwn = message.senderId === currentUser?.uid;
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isOwn ? 'own' : ''}`;
+      
+      const userData = userDataCache[message.senderId] || {};
+      const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : 'Sending...';
+      const displayName = userData.nickname || userData.displayName || "Anonymous";
+      const photoURL = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=726dff&color=fff`;
+
+      let replyHTML = '';
+      if (message.replyTo) {
+        const replyUserData = userDataCache[message.replyTo.senderId] || {};
+        const replyDisplayName = replyUserData.nickname || replyUserData.displayName || "Anonymous";
+        replyHTML = `
+          <div class="reply-to">
+            Reply to ${escapeHtml(replyDisplayName)}: ${escapeHtml(truncate(message.replyTo.text, 40))}
+          </div>
+        `;
+      }
+
+      messageDiv.innerHTML = `
+        <img src="${photoURL}" alt="Profile" data-uid="${message.senderId}" class="profile-avatar" />
+        <div class="message-content">
+          ${!isOwn ? `<div class="message-sender">${escapeHtml(displayName)}</div>` : ''}
+          ${replyHTML}
+          ${escapeHtml(message.text)}
+          <div class="message-time">${timestamp}</div>
+        </div>
+      `;
+
+      // Add click handler for reply
+      const messageContent = messageDiv.querySelector('.message-content');
+      messageContent.onclick = (e) => {
+        if (!isOwn && !e.target.closest('img[data-uid]')) {
+          setReply(message, messageId);
+        }
+      };
+
+      chatMessages.appendChild(messageDiv);
+    }
+
+    // Initialize chat with profile functionality
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
+        
+        // Setup profile clicks
+        setupProfileClicks();
         
         // Load initial messages
         const messagesRef = ref(db, 'global_messages');
@@ -856,49 +915,6 @@
     }
 
     cancelReplyBtn.onclick = cancelReply;
-
-    // Render message
-    function renderMessage(message, messageId) {
-      const isOwn = message.senderId === currentUser?.uid;
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${isOwn ? 'own' : ''}`;
-      
-      const userData = userDataCache[message.senderId] || {};
-      const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : 'Sending...';
-      const displayName = userData.nickname || userData.displayName || "Anonymous";
-      const photoURL = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=726dff&color=fff`;
-
-      let replyHTML = '';
-      if (message.replyTo) {
-        const replyUserData = userDataCache[message.replyTo.senderId] || {};
-        const replyDisplayName = replyUserData.nickname || replyUserData.displayName || "Anonymous";
-        replyHTML = `
-          <div class="reply-to">
-            Reply to ${escapeHtml(replyDisplayName)}: ${escapeHtml(truncate(message.replyTo.text, 40))}
-          </div>
-        `;
-      }
-
-      messageDiv.innerHTML = `
-        <img src="${photoURL}" alt="Profile" data-uid="${message.senderId}" />
-        <div class="message-content">
-          ${!isOwn ? `<div class="message-sender">${escapeHtml(displayName)}</div>` : ''}
-          ${replyHTML}
-          ${escapeHtml(message.text)}
-          <div class="message-time">${timestamp}</div>
-        </div>
-      `;
-
-      // Add click handler for reply
-      const messageContent = messageDiv.querySelector('.message-content');
-      messageContent.onclick = () => {
-        if (!isOwn) {
-          setReply(message, messageId);
-        }
-      };
-
-      chatMessages.appendChild(messageDiv);
-    }
   </script>
 </body>
 </html>
