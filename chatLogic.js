@@ -13,7 +13,12 @@ import {
   set,
   onValue,
   serverTimestamp,
-  update
+  update,
+  query,
+  orderByChild,
+  get,
+  endBefore,
+  limitToLast
 } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
 // --- Firebase Setup ---
@@ -37,6 +42,8 @@ let chatId = null;
 let typingTimeout = null;
 let otherUserData = null;
 let currentUserData = null;
+let lastLoadedTimestamp = null;
+let isLoading = false;
 
 // --- Utility Functions ---
 function escapeHtml(text) {
@@ -105,11 +112,17 @@ function setupChat() {
     }
   });
 
-  // Load messages
+  // Load initial messages
   const messagesRef = ref(db, `dms/${chatId}`);
-  onValue(messagesRef, (snapshot) => {
-    const wasNearBottom = shouldAutoScroll();
+  const messagesQuery = query(messagesRef, 
+    orderByChild('timestamp'),
+    limitToLast(20)
+  );
+
+  onValue(messagesQuery, (snapshot) => {
+    const wasNearBottom = window.chatUI?.isNearBottom() ?? true;
     chatMessages.innerHTML = '';
+    
     snapshot.forEach((childSnapshot) => {
       const data = childSnapshot.val();
       const messageDiv = document.createElement('div');
@@ -129,11 +142,74 @@ function setupChat() {
       `;
       
       chatMessages.appendChild(messageDiv);
+      lastLoadedTimestamp = data.timestamp;
     });
     
-    // Only auto-scroll if user was near bottom or if it's a new message from current user
-    if (wasNearBottom || (snapshot.val() && Object.values(snapshot.val()).pop()?.uid === auth.currentUser.uid)) {
-      scrollToBottom(true);
+    if (wasNearBottom) {
+      window.chatUI?.scrollToBottom(false);
+    }
+  });
+
+  // Listen for load more messages event
+  chatMessages.addEventListener('loadMoreMessages', async (event) => {
+    if (isLoading) return;
+    
+    try {
+      isLoading = true;
+      const messagesRef = ref(db, `dms/${chatId}`);
+      let messagesQuery = query(messagesRef, orderByChild('timestamp'));
+      
+      if (lastLoadedTimestamp) {
+        messagesQuery = query(messagesRef, 
+          orderByChild('timestamp'),
+          endBefore(lastLoadedTimestamp),
+          limitToLast(20)
+        );
+      }
+
+      const snapshot = await get(messagesQuery);
+      const messages = [];
+      
+      snapshot.forEach((childSnapshot) => {
+        const message = childSnapshot.val();
+        messages.unshift(message); // Add to beginning of array
+        lastLoadedTimestamp = message.timestamp;
+      });
+
+      // Prepend messages to chat
+      messages.forEach(message => {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${message.uid === auth.currentUser.uid ? 'own' : ''}`;
+        
+        const isCurrentUser = message.uid === auth.currentUser.uid;
+        const displayName = isCurrentUser ? currentUserData.displayName : (otherUserData?.displayName || 'Anonymous');
+        const photoURL = isCurrentUser ? currentUserData.photoURL : (otherUserData?.photoURL || getAvatarUrl(displayName));
+        
+        messageDiv.innerHTML = `
+          <img src="${photoURL}" alt="Profile" />
+          <div class="message-content">
+            <div class="message-sender">${escapeHtml(displayName)}</div>
+            ${escapeHtml(message.message)}
+            <div class="message-time">${formatTime(message.timestamp)}</div>
+          </div>
+        `;
+        
+        chatMessages.insertBefore(messageDiv, chatMessages.firstChild);
+      });
+
+      // Adjust scroll position to maintain relative position
+      if (messages.length > 0) {
+        const firstMessage = chatMessages.firstChild;
+        const scrollOffset = firstMessage.offsetHeight * messages.length;
+        chatMessages.scrollTop += scrollOffset;
+      }
+
+      window.chatUI?.stopLoading();
+    } catch (error) {
+      console.error("Error loading more messages:", error);
+      window.chatUI?.stopLoading();
+    } finally {
+      isLoading = false;
     }
   });
 

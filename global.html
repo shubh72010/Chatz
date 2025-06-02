@@ -220,6 +220,37 @@
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Loading indicator */
+    .loading-messages {
+      text-align: center;
+      padding: 1rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .loading-messages.active {
+      display: block;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--main-light);
+      border-radius: 50%;
+      border-top-color: var(--main);
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     .message {
@@ -501,6 +532,11 @@
       </div>
     </div>
 
+    <div class="loading-messages" id="loading-messages">
+      <div class="loading-spinner"></div>
+      Loading messages...
+    </div>
+
     <div class="chat-messages" id="chat-messages">
       <!-- Messages will be populated here -->
     </div>
@@ -540,7 +576,9 @@
       serverTimestamp,
       query,
       orderByChild,
-      get
+      get,
+      endBefore,
+      limitToLast
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -562,11 +600,16 @@
     const sendBtn = document.getElementById('send-btn');
     const typingIndicator = document.getElementById('typing-indicator');
     const typingText = document.getElementById('typing-text');
+    const loadingMessages = document.getElementById('loading-messages');
 
     let currentUser = null;
     let typingTimeout = null;
     let userDataCache = {};
     let replyTo = null;
+    let isLoading = false;
+    let lastScrollTop = 0;
+    let scrollThreshold = 100; // pixels from top to trigger loading more messages
+    let lastLoadedTimestamp = null;
 
     // Escape HTML to prevent XSS
     function escapeHtml(text) {
@@ -575,22 +618,120 @@
       return div.innerHTML;
     }
 
+    // Function to check if we're near the top of the chat
+    function isNearTop() {
+      return chatMessages.scrollTop < scrollThreshold;
+    }
+
+    // Function to check if we're near the bottom of the chat
+    function isNearBottom() {
+      return chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 100;
+    }
+
+    // Function to scroll to bottom smoothly
+    function scrollToBottom(smooth = true) {
+      if (smooth) {
+        chatMessages.scrollTo({
+          top: chatMessages.scrollHeight,
+          behavior: 'smooth'
+        });
+      } else {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    }
+
+    // Handle scroll events
+    chatMessages.addEventListener('scroll', () => {
+      // Store current scroll position
+      const currentScrollTop = chatMessages.scrollTop;
+      
+      // If scrolling up and near top, trigger loading more messages
+      if (currentScrollTop < lastScrollTop && isNearTop() && !isLoading) {
+        loadingMessages.classList.add('active');
+        isLoading = true;
+        
+        // Load more messages
+        loadMoreMessages();
+      }
+      
+      // Update last scroll position
+      lastScrollTop = currentScrollTop;
+    });
+
+    // Function to load more messages
+    async function loadMoreMessages() {
+      try {
+        const messagesRef = ref(db, 'global_messages');
+        let messagesQuery = query(messagesRef, orderByChild('timestamp'));
+        
+        if (lastLoadedTimestamp) {
+          messagesQuery = query(messagesRef, 
+            orderByChild('timestamp'),
+            endBefore(lastLoadedTimestamp),
+            limitToLast(20)
+          );
+        }
+
+        const snapshot = await get(messagesQuery);
+        const messages = [];
+        
+        snapshot.forEach((childSnapshot) => {
+          const message = childSnapshot.val();
+          messages.unshift(message); // Add to beginning of array
+          lastLoadedTimestamp = message.timestamp;
+        });
+
+        // Prepend messages to chat
+        messages.forEach(message => {
+          const messageDiv = createMessageElement(message, childSnapshot.key);
+          chatMessages.insertBefore(messageDiv, chatMessages.firstChild);
+        });
+
+        // Adjust scroll position to maintain relative position
+        if (messages.length > 0) {
+          const firstMessage = chatMessages.firstChild;
+          const scrollOffset = firstMessage.offsetHeight * messages.length;
+          chatMessages.scrollTop += scrollOffset;
+        }
+
+        stopLoading();
+      } catch (error) {
+        console.error("Error loading more messages:", error);
+        stopLoading();
+      }
+    }
+
+    // Function to stop loading indicator
+    function stopLoading() {
+      loadingMessages.classList.remove('active');
+      isLoading = false;
+    }
+
     // Initialize chat
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
         
-        // Load messages
+        // Load initial messages
         const messagesRef = ref(db, 'global_messages');
-        const messagesQuery = query(messagesRef, orderByChild('timestamp'));
+        const messagesQuery = query(messagesRef, 
+          orderByChild('timestamp'),
+          limitToLast(20)
+        );
         
         onValue(messagesQuery, (snapshot) => {
+          const wasNearBottom = isNearBottom();
           chatMessages.innerHTML = '';
+          
           snapshot.forEach((childSnapshot) => {
             const message = childSnapshot.val();
             renderMessage(message, childSnapshot.key);
+            lastLoadedTimestamp = message.timestamp;
           });
-          scrollToBottom();
+          
+          if (wasNearBottom) {
+            scrollToBottom(false);
+          }
         });
 
         // Listen for typing status
@@ -759,11 +900,6 @@
       };
 
       chatMessages.appendChild(messageDiv);
-    }
-
-    // Scroll to bottom
-    function scrollToBottom() {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
     }
   </script>
 </body>
