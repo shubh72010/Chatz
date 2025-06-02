@@ -83,9 +83,14 @@ class ProfileModal {
           <p id="tooltip-profile-status"></p>
           <p id="tooltip-profile-bio"></p>
         </div>
-        <button id="tooltip-friend-btn" class="profile-tooltip-btn friend">
-          <i class="fas fa-user-plus"></i> Add
-        </button>
+        <div class="profile-tooltip-actions">
+          <button id="tooltip-friend-btn" class="profile-tooltip-btn friend">
+            <i class="fas fa-user-plus"></i> Add
+          </button>
+          <button id="tooltip-dm-btn" class="profile-tooltip-btn dm">
+            <i class="fas fa-comment"></i> DM
+          </button>
+        </div>
       </div>
     `;
 
@@ -102,6 +107,15 @@ class ProfileModal {
       e.stopPropagation();
       this.handleFriendRequest();
     });
+
+    // Add DM button click handlers
+    const tooltipDmBtn = this.tooltip.querySelector('#tooltip-dm-btn');
+    if (tooltipDmBtn) {
+      tooltipDmBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.handleDM();
+      });
+    }
 
     // Close modal when clicking outside
     this.modal.onclick = (e) => {
@@ -129,16 +143,6 @@ class ProfileModal {
         this.show(this.currentUserId);
       }
     });
-
-    // Handle DM button click
-    this.modal.querySelector('#modal-dm-btn').onclick = () => {
-      window.location.href = `/Chatz/chat.html?uid=${this.currentUserId}`;
-    };
-
-    // Handle DM button click in tooltip
-    this.tooltip.querySelector('#tooltip-dm-btn').onclick = () => {
-      window.location.href = `/Chatz/chat.html?uid=${this.currentUserId}`;
-    };
 
     // Listen for auth state changes
     onAuthStateChanged(auth, (user) => {
