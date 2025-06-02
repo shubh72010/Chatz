@@ -1,7 +1,12 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-analytics.js";
-import { getAuth, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+import { 
+  getAuth, 
+  connectAuthEmulator,
+  setPersistence,
+  browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 import { getDatabase, connectDatabaseEmulator } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 import { getStorage, connectStorageEmulator } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
 
@@ -24,8 +29,11 @@ const auth = getAuth(app);
 const db = getDatabase(app);
 const storage = getStorage(app);
 
-// Configure auth persistence
-auth.setPersistence('local');
+// Configure auth persistence asynchronously
+setPersistence(auth, browserLocalPersistence)
+  .catch((error) => {
+    console.error("Auth persistence error:", error);
+  });
 
 // Configure database rules with indexes
 const dbRules = {
