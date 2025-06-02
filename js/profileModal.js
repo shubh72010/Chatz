@@ -37,19 +37,17 @@ class ProfileModal {
     this.modal.className = 'profile-modal';
     this.modal.innerHTML = `
       <div class="profile-modal-content">
-        <div class="profile-modal-header">
-          <div class="profile-modal-avatar">
-            <img src="" alt="Profile" id="modal-profile-pic" />
-          </div>
-          <div class="profile-modal-info">
+        <button class="close-btn">&times;</button>
+        <div class="profile-header">
+          <img id="modal-profile-pic" src="" alt="Profile" class="profile-pic" />
+          <div class="profile-info">
             <h2 id="modal-profile-name"></h2>
             <p id="modal-profile-status"></p>
           </div>
-          <button class="profile-modal-close">&times;</button>
         </div>
-        <div class="profile-modal-body">
-          <div class="profile-modal-bio" id="modal-profile-bio"></div>
-          <div class="profile-modal-stats">
+        <div class="profile-body">
+          <p id="modal-profile-bio" class="profile-bio"></p>
+          <div class="profile-stats">
             <div class="stat">
               <span class="stat-value" id="modal-friends-count">0</span>
               <span class="stat-label">Friends</span>
@@ -60,15 +58,15 @@ class ProfileModal {
             </div>
           </div>
         </div>
-        <div class="profile-modal-actions">
-          <button class="action-btn dm-btn" id="modal-dm-btn">
-            <i class="fas fa-comment"></i> Message
-          </button>
-          <button class="action-btn friend-btn" id="modal-friend-btn">
+        <div class="profile-actions">
+          <button id="modal-friend-btn" class="action-btn friend-btn">
             <i class="fas fa-user-plus"></i> Add Friend
           </button>
-          <button class="action-btn block-btn" id="modal-block-btn">
+          <button id="modal-block-btn" class="action-btn block-btn">
             <i class="fas fa-ban"></i> Block
+          </button>
+          <button id="modal-dm-btn" class="action-btn dm-btn">
+            <i class="fas fa-comment"></i> Message
           </button>
         </div>
       </div>
@@ -78,45 +76,32 @@ class ProfileModal {
     this.tooltip = document.createElement('div');
     this.tooltip.className = 'profile-tooltip';
     this.tooltip.innerHTML = `
-      <div class="profile-tooltip-header">
-        <div class="profile-tooltip-avatar">
-          <img src="" alt="Profile" id="tooltip-profile-pic" />
+      <div class="profile-tooltip-content">
+        <img id="tooltip-profile-pic" src="" alt="Profile" class="profile-pic" />
+        <div class="profile-info">
+          <h3 id="tooltip-profile-name"></h3>
+          <p id="tooltip-profile-status"></p>
+          <p id="tooltip-profile-bio"></p>
         </div>
-        <div class="profile-tooltip-info">
-          <h3 class="profile-tooltip-name" id="tooltip-profile-name"></h3>
-          <p class="profile-tooltip-status" id="tooltip-profile-status"></p>
-        </div>
-      </div>
-      <div class="profile-tooltip-bio" id="tooltip-profile-bio"></div>
-      <div class="profile-tooltip-actions">
-        <button class="profile-tooltip-btn dm" id="tooltip-dm-btn">
-          <i class="fas fa-comment"></i> Message
-        </button>
-        <button class="profile-tooltip-btn friend" id="tooltip-friend-btn">
+        <button id="tooltip-friend-btn" class="profile-tooltip-btn friend">
           <i class="fas fa-user-plus"></i> Add
         </button>
       </div>
     `;
 
-    // Add modal and tooltip to body
+    // Add to document
     document.body.appendChild(this.modal);
     document.body.appendChild(this.tooltip);
 
-    // Add event listeners for modal
-    this.modal.querySelector('.profile-modal-close').onclick = () => this.hide();
-    this.modal.querySelector('#modal-dm-btn').onclick = () => this.handleDM();
-    this.modal.querySelector('#modal-friend-btn').onclick = () => this.handleFriendRequest();
-    this.modal.querySelector('#modal-block-btn').onclick = () => this.handleBlock();
-
-    // Add event listeners for tooltip
-    this.tooltip.querySelector('#tooltip-dm-btn').onclick = (e) => {
-      e.stopPropagation();
-      this.handleDM();
-    };
-    this.tooltip.querySelector('#tooltip-friend-btn').onclick = (e) => {
+    // Add event listeners
+    this.modal.querySelector('.close-btn').addEventListener('click', () => this.hide());
+    this.modal.querySelector('#modal-friend-btn').addEventListener('click', () => this.handleFriendRequest());
+    this.modal.querySelector('#modal-block-btn').addEventListener('click', () => this.handleBlock());
+    this.modal.querySelector('#modal-dm-btn').addEventListener('click', () => this.handleDM());
+    this.tooltip.querySelector('#tooltip-friend-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       this.handleFriendRequest();
-    };
+    });
 
     // Close modal when clicking outside
     this.modal.onclick = (e) => {
@@ -283,7 +268,7 @@ class ProfileModal {
 
       profilePic.src = avatar;
       profileName.textContent = name;
-      profileStatus.textContent = status;
+      profileStatus.textContent = userData.online ? 'Online' : 'Offline';
       profileBio.textContent = bio;
       
       // Update friend button

@@ -9,7 +9,8 @@ import {
   ref,
   set,
   get,
-  serverTimestamp
+  serverTimestamp,
+  update
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 class AuthHandler {
@@ -23,15 +24,30 @@ class AuthHandler {
     onAuthStateChanged(auth, async (user) => {
       this.currentUser = user;
       if (user) {
-        // Update user's online status
+        // Update user's online status and basic info
         const userRef = ref(db, `users/${user.uid}`);
-        await set(userRef, {
+        const snapshot = await get(userRef);
+        const existingData = snapshot.exists() ? snapshot.val() : {};
+        
+        // Only update basic info if it doesn't exist or has changed
+        const updates = {
           online: true,
-          lastActive: serverTimestamp(),
-          displayName: user.displayName,
-          email: user.email,
-          photoURL: user.photoURL
-        }, { merge: true });
+          lastActive: serverTimestamp()
+        };
+
+        // Only update these fields if they don't exist or have changed
+        if (!existingData.displayName || existingData.displayName !== user.displayName) {
+          updates.displayName = user.displayName;
+        }
+        if (!existingData.email || existingData.email !== user.email) {
+          updates.email = user.email;
+        }
+        if (!existingData.photoURL || existingData.photoURL !== user.photoURL) {
+          updates.photoURL = user.photoURL;
+        }
+
+        // Update with only the changed fields
+        await update(userRef, updates);
       }
       
       // Notify all listeners
