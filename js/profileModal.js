@@ -1,5 +1,6 @@
 // Profile Modal Component
-import { app } from './firebaseConfig.js';
+import { app } from '../firebaseConfig.js';
+import { friendSystem } from './friendSystem.js';
 import {
   getAuth,
   onAuthStateChanged
@@ -11,7 +12,9 @@ import {
   get,
   update,
   push,
-  serverTimestamp
+  serverTimestamp,
+  remove,
+  onValue
 } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
 const auth = getAuth(app);
@@ -21,11 +24,9 @@ class ProfileModal {
   constructor() {
     this.modal = null;
     this.tooltip = null;
-    this.currentUser = null;
-    this.targetUser = null;
+    this.currentUserId = null;
     this.isFriend = false;
-    this.isBlocked = false;
-    this.tooltipTimeout = null;
+    this.hasPendingRequest = false;
     this.init();
   }
 
@@ -103,7 +104,7 @@ class ProfileModal {
     // Add event listeners for modal
     this.modal.querySelector('.profile-modal-close').onclick = () => this.hide();
     this.modal.querySelector('#modal-dm-btn').onclick = () => this.handleDM();
-    this.modal.querySelector('#modal-friend-btn').onclick = () => this.handleFriend();
+    this.modal.querySelector('#modal-friend-btn').onclick = () => this.handleFriendRequest();
     this.modal.querySelector('#modal-block-btn').onclick = () => this.handleBlock();
 
     // Add event listeners for tooltip
@@ -113,7 +114,7 @@ class ProfileModal {
     };
     this.tooltip.querySelector('#tooltip-friend-btn').onclick = (e) => {
       e.stopPropagation();
-      this.handleFriend();
+      this.handleFriendRequest();
     };
 
     // Close modal when clicking outside
@@ -138,28 +139,33 @@ class ProfileModal {
 
     // Handle tooltip click
     this.tooltip.addEventListener('click', (e) => {
-      if (this.targetUser) {
-        this.show(this.targetUser.id);
+      if (this.currentUserId) {
+        this.show(this.currentUserId);
       }
     });
 
     // Listen for auth state changes
     onAuthStateChanged(auth, (user) => {
-      this.currentUser = user;
+      if (user) {
+        this.currentUserId = user.uid;
+      } else {
+        this.currentUserId = null;
+      }
     });
   }
 
   async showTooltip(userId, anchorElement) {
-    if (!this.currentUser || this.tooltipTimeout) return;
+    if (!userId || !anchorElement) return;
+    this.currentUserId = userId;
 
     try {
       // Get user data
-      const userRef = ref(db, `users/${userId}`);
-      const snapshot = await get(userRef);
-      
-      if (!snapshot.exists()) return;
+      const targetUserRef = ref(db, `users/${userId}`);
+      const targetUserSnapshot = await get(targetUserRef);
+      if (!targetUserSnapshot.exists()) return;
 
-      this.targetUser = { id: userId, ...snapshot.val() };
+      const userData = targetUserSnapshot.val();
+      const currentUser = auth.currentUser;
 
       // Update tooltip content
       const profilePic = this.tooltip.querySelector('#tooltip-profile-pic');
@@ -169,17 +175,16 @@ class ProfileModal {
       const friendBtn = this.tooltip.querySelector('#tooltip-friend-btn');
 
       // Set profile picture with fallback
-      profilePic.src = this.targetUser.photoURL || 
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(this.targetUser.nickname || this.targetUser.displayName || 'U')}&background=726dff&color=fff`;
+      profilePic.src = userData.photoURL || 
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.displayName || 'User')}&background=726dff&color=fff`;
       
-      profileName.textContent = this.targetUser.nickname || this.targetUser.displayName || 'Anonymous';
-      profileStatus.textContent = this.targetUser.online ? 'Online' : 'Offline';
-      profileBio.textContent = this.targetUser.bio || 'No bio yet';
+      profileName.textContent = userData.nickname || userData.displayName || 'Anonymous';
+      profileStatus.textContent = userData.online ? 'Online' : 'Offline';
+      profileBio.textContent = userData.bio || 'No bio yet';
 
       // Check friendship status
-      const friendshipRef = ref(db, `friends/${this.currentUser.uid}/${userId}`);
-      const friendshipSnapshot = await get(friendshipRef);
-      this.isFriend = friendshipSnapshot.exists();
+      this.isFriend = await friendSystem.checkFriendship(userId);
+      this.hasPendingRequest = await this.checkPendingRequest(userId);
       
       // Update friend button
       friendBtn.innerHTML = this.isFriend ? 
@@ -212,7 +217,7 @@ class ProfileModal {
       }, 300);
 
     } catch (error) {
-      console.error('Error loading profile tooltip:', error);
+      console.error('Error showing tooltip:', error);
     }
   }
 
@@ -225,46 +230,37 @@ class ProfileModal {
   }
 
   async show(userId) {
-    if (!this.currentUser) return;
+    if (!userId) return;
+    this.currentUserId = userId;
 
     try {
       // Get user data
-      const userRef = ref(db, `users/${userId}`);
-      const snapshot = await get(userRef);
-      
-      if (!snapshot.exists()) {
-        console.error('User not found');
-        return;
-      }
+      const targetUserRef = ref(db, `users/${userId}`);
+      const targetUserSnapshot = await get(targetUserRef);
+      if (!targetUserSnapshot.exists()) return;
 
-      this.targetUser = { id: userId, ...snapshot.val() };
+      const userData = targetUserSnapshot.val();
+      const currentUser = auth.currentUser;
+
+      // Check friendship status
+      this.isFriend = await friendSystem.checkFriendship(userId);
+      this.hasPendingRequest = await this.checkPendingRequest(userId);
 
       // Update modal content
-      const profilePic = this.modal.querySelector('#modal-profile-pic');
-      const profileName = this.modal.querySelector('#modal-profile-name');
-      const profileStatus = this.modal.querySelector('#modal-profile-status');
-      const profileBio = this.modal.querySelector('#modal-profile-bio');
-      const friendsCount = this.modal.querySelector('#modal-friends-count');
-      const messagesCount = this.modal.querySelector('#modal-messages-count');
-      const friendBtn = this.modal.querySelector('#modal-friend-btn');
-      const blockBtn = this.modal.querySelector('#modal-block-btn');
+      const avatar = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.displayName || 'User')}&background=726dff&color=fff`;
+      const name = userData.nickname || userData.displayName || 'Anonymous';
+      const status = userData.status || 'Offline';
+      const bio = userData.bio || 'No bio yet';
 
-      // Set profile picture with fallback
-      profilePic.src = this.targetUser.photoURL || 
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(this.targetUser.nickname || this.targetUser.displayName || 'U')}&background=726dff&color=fff`;
-      
-      profileName.textContent = this.targetUser.nickname || this.targetUser.displayName || 'Anonymous';
-      profileStatus.textContent = this.targetUser.online ? 'Online' : 'Offline';
-      profileBio.textContent = this.targetUser.bio || 'No bio yet';
-      
       // Get friends count
       const friendsRef = ref(db, `friends/${userId}`);
       const friendsSnapshot = await get(friendsRef);
       const friends = friendsSnapshot.val() || {};
+      const friendsCount = this.modal.querySelector('#modal-friends-count');
       friendsCount.textContent = Object.keys(friends).length;
 
       // Get messages count
-      const messagesRef = ref(db, `dms`);
+      const messagesRef = ref(db, `global_messages`);
       const messagesSnapshot = await get(messagesRef);
       let messageCount = 0;
       messagesSnapshot.forEach((chatSnapshot) => {
@@ -273,12 +269,21 @@ class ProfileModal {
           messageCount += Object.keys(messages).length;
         }
       });
+      const messagesCount = this.modal.querySelector('#modal-messages-count');
       messagesCount.textContent = messageCount;
 
-      // Check friendship status
-      const friendshipRef = ref(db, `friends/${this.currentUser.uid}/${userId}`);
-      const friendshipSnapshot = await get(friendshipRef);
-      this.isFriend = friendshipSnapshot.exists();
+      // Update modal content
+      const profilePic = this.modal.querySelector('#modal-profile-pic');
+      const profileName = this.modal.querySelector('#modal-profile-name');
+      const profileStatus = this.modal.querySelector('#modal-profile-status');
+      const profileBio = this.modal.querySelector('#modal-profile-bio');
+      const friendBtn = this.modal.querySelector('#modal-friend-btn');
+      const blockBtn = this.modal.querySelector('#modal-block-btn');
+
+      profilePic.src = avatar;
+      profileName.textContent = name;
+      profileStatus.textContent = status;
+      profileBio.textContent = bio;
       
       // Update friend button
       friendBtn.innerHTML = this.isFriend ? 
@@ -287,99 +292,128 @@ class ProfileModal {
       friendBtn.className = `action-btn friend-btn ${this.isFriend ? 'is-friend' : ''}`;
 
       // Check block status
-      const blockRef = ref(db, `blocks/${this.currentUser.uid}/${userId}`);
-      const blockSnapshot = await get(blockRef);
-      this.isBlocked = blockSnapshot.exists();
+      const userRef = ref(db, `users/${currentUser.uid}`);
+      const userSnapshot = await get(userRef);
+      const blockedUsers = userSnapshot.val().blockedUsers || [];
+      const isBlocked = blockedUsers.includes(userId);
       
       // Update block button
-      blockBtn.innerHTML = this.isBlocked ? 
+      blockBtn.innerHTML = isBlocked ? 
         '<i class="fas fa-user-slash"></i> Unblock' : 
         '<i class="fas fa-ban"></i> Block';
-      blockBtn.className = `action-btn block-btn ${this.isBlocked ? 'is-blocked' : ''}`;
+      blockBtn.className = `action-btn block-btn ${isBlocked ? 'is-blocked' : ''}`;
 
       // Show modal
       this.modal.classList.add('active');
     } catch (error) {
-      console.error('Error loading profile:', error);
+      console.error('Error showing profile:', error);
     }
   }
 
   hide() {
     this.modal.classList.remove('active');
-    this.targetUser = null;
+    this.currentUserId = null;
   }
 
   async handleDM() {
-    if (!this.targetUser) return;
-    window.location.href = `chat.html?uid=${this.targetUser.id}`;
+    if (!this.currentUserId) return;
+    window.location.href = `chat.html?uid=${this.currentUserId}`;
   }
 
-  async handleFriend() {
-    if (!this.currentUser || !this.targetUser) return;
+  async handleFriendRequest() {
+    if (!this.currentUserId || !auth.currentUser) return;
 
     try {
-      const friendshipRef = ref(db, `friends/${this.currentUser.uid}/${this.targetUser.id}`);
-      
       if (this.isFriend) {
         // Remove friend
-        await set(friendshipRef, null);
-        this.isFriend = false;
+        if (confirm('Are you sure you want to remove this friend?')) {
+          await friendSystem.removeFriend(this.currentUserId);
+          this.isFriend = false;
+          this.updateFriendButton();
+        }
+      } else if (this.hasPendingRequest) {
+        // Cancel request
+        const requestRef = ref(db, `friend_requests/${this.currentUserId}/${auth.currentUser.uid}`);
+        await remove(requestRef);
+        this.hasPendingRequest = false;
+        this.updateFriendButton();
       } else {
-        // Add friend
-        await set(friendshipRef, {
-          timestamp: serverTimestamp(),
-          status: 'accepted'
-        });
-        this.isFriend = true;
+        // Send friend request
+        const success = await friendSystem.sendFriendRequest(this.currentUserId);
+        if (success) {
+          this.hasPendingRequest = true;
+          this.updateFriendButton();
+        }
       }
-
-      // Update UI
-      const friendBtn = this.modal.querySelector('#modal-friend-btn');
-      friendBtn.innerHTML = this.isFriend ? 
-        '<i class="fas fa-user-check"></i> Friends' : 
-        '<i class="fas fa-user-plus"></i> Add Friend';
-      friendBtn.className = `action-btn friend-btn ${this.isFriend ? 'is-friend' : ''}`;
-
-      // Update friends count
-      const friendsRef = ref(db, `friends/${this.targetUser.id}`);
-      const friendsSnapshot = await get(friendsRef);
-      const friends = friendsSnapshot.val() || {};
-      this.modal.querySelector('#modal-friends-count').textContent = Object.keys(friends).length;
-
     } catch (error) {
       console.error('Error handling friend request:', error);
     }
   }
 
   async handleBlock() {
-    if (!this.currentUser || !this.targetUser) return;
+    if (!this.currentUserId || !auth.currentUser) return;
 
     try {
-      const blockRef = ref(db, `blocks/${this.currentUser.uid}/${this.targetUser.id}`);
-      
-      if (this.isBlocked) {
+      const currentUserRef = ref(db, `users/${auth.currentUser.uid}`);
+      const currentUserSnapshot = await get(currentUserRef);
+      const userData = currentUserSnapshot.val() || {};
+      const blockedUsers = userData.blockedUsers || [];
+
+      const isBlocked = blockedUsers.includes(this.currentUserId);
+      let newBlockedUsers;
+
+      if (isBlocked) {
         // Unblock user
-        await set(blockRef, null);
-        this.isBlocked = false;
+        newBlockedUsers = blockedUsers.filter(uid => uid !== this.currentUserId);
       } else {
         // Block user
-        await set(blockRef, {
-          timestamp: serverTimestamp(),
-          reason: 'User blocked'
-        });
-        this.isBlocked = true;
+        newBlockedUsers = [...blockedUsers, this.currentUserId];
+        // Remove from friends if they are friends
+        if (this.isFriend) {
+          await friendSystem.removeFriend(this.currentUserId);
+          this.isFriend = false;
+          this.updateFriendButton();
+        }
       }
 
-      // Update UI
+      await set(currentUserRef, {
+        ...userData,
+        blockedUsers: newBlockedUsers
+      });
+
+      // Update block button
       const blockBtn = this.modal.querySelector('#modal-block-btn');
-      blockBtn.innerHTML = this.isBlocked ? 
+      blockBtn.innerHTML = isBlocked ? 
         '<i class="fas fa-user-slash"></i> Unblock' : 
         '<i class="fas fa-ban"></i> Block';
-      blockBtn.className = `action-btn block-btn ${this.isBlocked ? 'is-blocked' : ''}`;
+      blockBtn.className = `action-btn block-btn ${isBlocked ? 'is-blocked' : ''}`;
 
     } catch (error) {
       console.error('Error handling block:', error);
     }
+  }
+
+  updateFriendButton() {
+    const friendBtn = this.modal.querySelector('#modal-friend-btn');
+    if (this.isFriend) {
+      friendBtn.textContent = 'Remove Friend';
+      friendBtn.classList.add('remove');
+      friendBtn.classList.remove('pending');
+    } else if (this.hasPendingRequest) {
+      friendBtn.textContent = 'Cancel Request';
+      friendBtn.classList.add('pending');
+      friendBtn.classList.remove('remove');
+    } else {
+      friendBtn.textContent = 'Add Friend';
+      friendBtn.classList.remove('remove', 'pending');
+    }
+  }
+
+  async checkPendingRequest(userId) {
+    if (!userId || !auth.currentUser) return false;
+    const requestRef = ref(db, `friend_requests/${userId}/${auth.currentUser.uid}`);
+    const snapshot = await get(requestRef);
+    return snapshot.exists();
   }
 }
 

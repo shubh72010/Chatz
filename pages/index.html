@@ -320,6 +320,44 @@
       transform: rotate(30deg);
     }
 
+    /* Friends Container Styles */
+    .friends-container {
+      background: var(--bg-light);
+      border-radius: var(--border-radius-md);
+      padding: 1.5rem;
+      margin: 2rem auto;
+      max-width: 1200px;
+      width: 100%;
+    }
+
+    .friends-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .friends-header-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--main);
+      margin-bottom: 0.5rem;
+    }
+
+    .friends-header-subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .friends-content {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+      .friends-content {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
@@ -372,10 +410,6 @@
       <i class="fas fa-globe"></i>
       <span>Global Chat</span>
     </a>
-    <a href="friends.html" class="nav-item">
-      <i class="fas fa-user-friends"></i>
-      <span>Friends</span>
-    </a>
     <a href="settings.html" class="nav-item">
       <i class="fas fa-cog"></i>
       <span>Settings</span>
@@ -423,7 +457,9 @@
     });
   </script>
   <script type="module">
-    import { app } from './firebaseConfig.js';
+    import { app } from '../firebaseConfig.js';
+    import { friendUI } from '../js/friendUI.js';
+    import { profileModal } from '../js/profileModal.js';
     import {
       getAuth,
       onAuthStateChanged
@@ -444,6 +480,23 @@
 
     const usersGrid = document.getElementById("users-grid");
     const noUsersContainer = document.getElementById("no-users-container");
+    const friendsContainer = document.createElement('div');
+    friendsContainer.className = 'friends-container';
+    friendsContainer.innerHTML = `
+      <div class="friends-header">
+        <div class="friends-header-info">
+          <div class="friends-header-title">Friends</div>
+          <div class="friends-header-subtitle">Manage your friends and friend requests</div>
+        </div>
+      </div>
+      <div class="friends-content">
+        <div id="friend-requests"></div>
+        <div id="friend-list"></div>
+      </div>
+    `;
+
+    // Insert friends container after users grid
+    usersGrid.parentNode.insertBefore(friendsContainer, usersGrid.nextSibling);
 
     let currentUser = null;
 
@@ -555,6 +608,10 @@
         updateUserStatus(true);
         loadUsers();
         loadChats();
+        
+        // Mount friend UI components
+        friendUI.mountRequestList(document.getElementById('friend-requests'));
+        friendUI.mountFriendList(document.getElementById('friend-list'));
       } else {
         // User is not signed in, redirect to signin page
         window.location.href = 'signin.html';
