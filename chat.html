@@ -283,11 +283,37 @@
     ::-webkit-scrollbar-thumb:hover {
       background: var(--main);
     }
+
+    .back-btn {
+      background: var(--main);
+      color: #fff;
+      border: none;
+      border-radius: 1.2rem;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .back-btn:hover {
+      background: var(--main-dark);
+    }
+
+    .back-btn i {
+      font-size: 1.1rem;
+    }
   </style>
 </head>
 <body>
   <header>
+    <button class="back-btn" onclick="window.location.href='index.html'">
+      <i class="fas fa-arrow-left"></i>
+    </button>
     <div class="logo">Chatz</div>
+    <div style="width: 40px;"></div> <!-- Spacer for balance -->
   </header>
 
   <div class="main-container">
