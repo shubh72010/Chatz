@@ -791,6 +791,13 @@
       return messageDiv;
     }
 
+    // Function to render a single message
+    function renderMessage(message, messageId) {
+      const messageElement = createMessageElement(message, messageId);
+      chatMessages.appendChild(messageElement);
+      return messageElement;
+    }
+
     // Initialize chat with profile functionality
     onAuthStateChanged(auth, async (user) => {
       if (user) {
