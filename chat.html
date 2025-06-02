@@ -522,28 +522,6 @@
       isNearBottom
     };
 
-    // Message sending
-    sendBtn.onclick = () => {
-      const message = messageInput.value.trim();
-      if (!message || !auth.currentUser) return;
-
-      const event = new CustomEvent('sendMessage', {
-        detail: { message }
-      });
-      chatMessages.dispatchEvent(event);
-
-      messageInput.value = '';
-      messageInput.focus();
-    };
-
-    // Handle enter key
-    messageInput.onkeypress = (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendBtn.click();
-      }
-    };
-
     // Theme handling
     function getTimeBasedTheme() {
       const hour = new Date().getHours();

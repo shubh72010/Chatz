@@ -235,37 +235,47 @@ function setupChat() {
 }
 
 // --- Event Listeners ---
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-});
-
-messageInput.addEventListener('input', () => {
-  // Clear existing timeout
-  if (typingTimeout) clearTimeout(typingTimeout);
-  
-  // Update typing status
-  const typingRef = ref(db, `typing/${chatId}/${auth.currentUser.uid}`);
-  set(typingRef, {
-    isTyping: true,
-    timestamp: serverTimestamp()
+function setupEventListeners() {
+  sendBtn.addEventListener('click', () => {
+    const message = messageInput.value.trim();
+    if (!message || !auth.currentUser) return;
+    sendMessage(message);
   });
-  
-  // Set timeout to hide typing indicator
-  typingTimeout = setTimeout(() => {
+
+  messageInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const message = messageInput.value.trim();
+      if (!message || !auth.currentUser) return;
+      sendMessage(message);
+    }
+  });
+
+  messageInput.addEventListener('input', () => {
+    if (!auth.currentUser || !chatId) return;
+    
+    // Clear existing timeout
+    if (typingTimeout) clearTimeout(typingTimeout);
+    
+    // Update typing status
+    const typingRef = ref(db, `typing/${chatId}/${auth.currentUser.uid}`);
     set(typingRef, {
-      isTyping: false,
+      isTyping: true,
       timestamp: serverTimestamp()
     });
-  }, 1000);
-});
+    
+    // Set timeout to hide typing indicator
+    typingTimeout = setTimeout(() => {
+      set(typingRef, {
+        isTyping: false,
+        timestamp: serverTimestamp()
+      });
+    }, 1000);
+  });
+}
 
-function sendMessage() {
-  const message = messageInput.value.trim();
-  if (!message || !auth.currentUser) return;
+function sendMessage(message) {
+  if (!message || !auth.currentUser || !chatId) return;
 
   const messagesRef = ref(db, `dms/${chatId}`);
   const newMessageRef = push(messagesRef);
@@ -287,13 +297,14 @@ function sendMessage() {
 
   messageInput.value = '';
   messageInput.focus();
-  scrollToBottom(true);
+  window.chatUI?.scrollToBottom(true);
 }
 
 // Initialize chat when auth state changes
 onAuthStateChanged(auth, (user) => {
   if (user) {
     setupChat();
+    setupEventListeners();
   } else {
     window.location.href = 'index.html';
   }
