@@ -564,7 +564,6 @@
 
   <script type="module">
     import { app } from './firebaseConfig.js';
-    import { profileModal } from './profileModal.js';
     import {
       getAuth,
       onAuthStateChanged
@@ -761,8 +760,6 @@
             userDataCache[childSnapshot.key] = childSnapshot.val();
           });
         });
-
-        setupProfileClicks();
       } else {
         window.location.href = 'index.html';
       }
@@ -883,8 +880,8 @@
       }
 
       messageDiv.innerHTML = `
-        <img src="${photoURL}" alt="Profile" data-uid="${message.senderId}" onclick="event.stopPropagation();" />
-        <div class="message-content" onclick="event.stopPropagation();">
+        <img src="${photoURL}" alt="Profile" data-uid="${message.senderId}" />
+        <div class="message-content">
           ${!isOwn ? `<div class="message-sender">${escapeHtml(displayName)}</div>` : ''}
           ${replyHTML}
           ${escapeHtml(message.text)}
@@ -901,61 +898,6 @@
       };
 
       chatMessages.appendChild(messageDiv);
-    }
-
-    // Add click handler for user avatars
-    function setupProfileClicks() {
-      document.addEventListener('click', (e) => {
-        const avatar = e.target.closest('.user-avatar, .message-avatar');
-        if (avatar && avatar.dataset.uid) {
-          e.preventDefault();
-          e.stopPropagation();
-          profileModal.show(avatar.dataset.uid);
-        }
-      });
-    }
-
-    // Update user list rendering to include data-uid attribute
-    function renderUserList(users) {
-      const userList = document.getElementById('user-list');
-      userList.innerHTML = '';
-      
-      Object.entries(users).forEach(([uid, user]) => {
-        if (uid === auth.currentUser.uid) return; // Skip current user
-        
-        const userElement = document.createElement('div');
-        userElement.className = `user-item ${user.online ? 'online' : ''}`;
-        userElement.innerHTML = `
-          <div class="user-avatar" data-uid="${uid}">
-            <img src="${user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nickname || user.displayName || 'U')}&background=726dff&color=fff`}" alt="${user.nickname || user.displayName || 'User'}" />
-            <span class="status-indicator"></span>
-          </div>
-          <div class="user-info">
-            <div class="user-name">${user.nickname || user.displayName || 'Anonymous'}</div>
-            <div class="user-status">${user.online ? 'Online' : 'Offline'}</div>
-          </div>
-        `;
-        userList.appendChild(userElement);
-      });
-    }
-
-    // Update message rendering to include data-uid attribute
-    function renderMessage(message, user) {
-      const messageElement = document.createElement('div');
-      messageElement.className = `message ${message.senderId === auth.currentUser.uid ? 'own' : 'other'}`;
-      messageElement.innerHTML = `
-        <div class="message-avatar" data-uid="${message.senderId}">
-          <img src="${user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nickname || user.displayName || 'U')}&background=726dff&color=fff`}" alt="${user.nickname || user.displayName || 'User'}" />
-        </div>
-        <div class="message-content">
-          <div class="message-header">
-            <span class="message-sender">${user.nickname || user.displayName || 'Anonymous'}</span>
-            <span class="message-time">${formatTime(message.timestamp)}</span>
-          </div>
-          <div class="message-text">${escapeHtml(message.text)}</div>
-        </div>
-      `;
-      return messageElement;
     }
   </script>
 </body>
