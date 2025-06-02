@@ -403,6 +403,143 @@
       font-size: 0.9rem;
       color: var(--text-muted);
     }
+
+    /* Friend Requests Column */
+    .friend-requests-column {
+      position: fixed;
+      right: 0;
+      top: 4rem;
+      bottom: 0;
+      width: 300px;
+      background: var(--bg-light);
+      border-left: 1px solid var(--input-border);
+      padding: 1rem;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .friend-requests-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--input-border);
+    }
+
+    .friend-requests-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .friend-requests-count {
+      background: var(--main);
+      color: white;
+      padding: 0.2rem 0.6rem;
+      border-radius: 1rem;
+      font-size: 0.8rem;
+    }
+
+    .friend-request-card {
+      background: var(--bg);
+      border-radius: var(--border-radius-md);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: transform 0.2s;
+    }
+
+    .friend-request-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .friend-request-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--main);
+    }
+
+    .friend-request-info {
+      flex: 1;
+    }
+
+    .friend-request-name {
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.2rem;
+    }
+
+    .friend-request-status {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .friend-request-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .friend-request-btn {
+      padding: 0.5rem;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+    }
+
+    .accept-btn {
+      background: var(--main);
+      color: white;
+    }
+
+    .accept-btn:hover {
+      background: var(--main-dark);
+    }
+
+    .decline-btn {
+      background: var(--danger);
+      color: white;
+    }
+
+    .decline-btn:hover {
+      background: #ff3333;
+    }
+
+    .no-requests {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 2rem 0;
+    }
+
+    .no-requests i {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    /* Adjust main content to account for friend requests column */
+    .users-grid {
+      margin-right: 320px;
+    }
+
+    @media (max-width: 1200px) {
+      .friend-requests-column {
+        display: none;
+      }
+      .users-grid {
+        margin-right: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -435,6 +572,16 @@
     <button class="action-button settings" id="settings-btn" title="Settings">
       <i class="fa fa-gear"></i>
     </button>
+  </div>
+
+  <div class="friend-requests-column">
+    <div class="friend-requests-header">
+      <div class="friend-requests-title">Friend Requests</div>
+      <div class="friend-requests-count" id="friend-requests-count">0</div>
+    </div>
+    <div id="friend-requests-list">
+      <!-- Friend requests will be populated here -->
+    </div>
   </div>
 
   <script>
@@ -487,7 +634,8 @@
       serverTimestamp,
       update,
       get,
-      onDisconnect
+      onDisconnect,
+      remove
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
     const auth = getAuth(app);
@@ -688,6 +836,7 @@
         updateUserStatus(true);
         loadUsers();
         loadChats();
+        loadFriendRequests();
       } else {
         // User is not signed in, redirect to signin page
         window.location.href = '/Chatz/signin.html';
@@ -708,6 +857,108 @@
         window.location.href = "/Chatz/settings.html";
       } catch (error) {
         console.error('Navigation Error:', error);
+      }
+    };
+
+    // Function to load friend requests
+    async function loadFriendRequests() {
+      if (!currentUser) return;
+
+      const requestsRef = ref(db, `friend_requests/${currentUser.uid}`);
+      const requestsList = document.getElementById('friend-requests-list');
+      const requestsCount = document.getElementById('friend-requests-count');
+
+      onValue(requestsRef, async (snapshot) => {
+        const requests = [];
+        snapshot.forEach((childSnapshot) => {
+          requests.push({
+            uid: childSnapshot.key,
+            timestamp: childSnapshot.val().timestamp
+          });
+        });
+
+        // Update count
+        requestsCount.textContent = requests.length;
+
+        if (requests.length === 0) {
+          requestsList.innerHTML = `
+            <div class="no-requests">
+              <i class="fas fa-user-friends"></i>
+              <p>No pending requests</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Get user data for each request
+        const requestsHTML = await Promise.all(requests.map(async (request) => {
+          const userRef = ref(db, `users/${request.uid}`);
+          const userSnapshot = await get(userRef);
+          const userData = userSnapshot.val() || {};
+
+          return `
+            <div class="friend-request-card" data-uid="${request.uid}">
+              <img src="${userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.displayName || 'User')}&background=726dff&color=fff`}" 
+                   alt="Profile" 
+                   class="friend-request-avatar"
+                   data-uid="${request.uid}" />
+              <div class="friend-request-info">
+                <div class="friend-request-name">${userData.nickname || userData.displayName || 'Anonymous'}</div>
+                <div class="friend-request-status">Wants to be your friend</div>
+              </div>
+              <div class="friend-request-actions">
+                <button class="friend-request-btn accept-btn" onclick="acceptFriendRequest('${request.uid}')" title="Accept">
+                  <i class="fas fa-check"></i>
+                </button>
+                <button class="friend-request-btn decline-btn" onclick="declineFriendRequest('${request.uid}')" title="Decline">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        }));
+
+        requestsList.innerHTML = requestsHTML.join('');
+      });
+    }
+
+    // Function to accept friend request
+    window.acceptFriendRequest = async (uid) => {
+      if (!currentUser) return;
+
+      try {
+        // Add to friends list for both users
+        const currentUserFriendsRef = ref(db, `friends/${currentUser.uid}/${uid}`);
+        const otherUserFriendsRef = ref(db, `friends/${uid}/${currentUser.uid}`);
+        
+        await update(currentUserFriendsRef, {
+          timestamp: serverTimestamp()
+        });
+        
+        await update(otherUserFriendsRef, {
+          timestamp: serverTimestamp()
+        });
+
+        // Remove the friend request
+        const requestRef = ref(db, `friend_requests/${currentUser.uid}/${uid}`);
+        await remove(requestRef);
+
+      } catch (error) {
+        console.error('Error accepting friend request:', error);
+        alert('Failed to accept friend request. Please try again.');
+      }
+    };
+
+    // Function to decline friend request
+    window.declineFriendRequest = async (uid) => {
+      if (!currentUser) return;
+
+      try {
+        const requestRef = ref(db, `friend_requests/${currentUser.uid}/${uid}`);
+        await remove(requestRef);
+      } catch (error) {
+        console.error('Error declining friend request:', error);
+        alert('Failed to decline friend request. Please try again.');
       }
     };
 
