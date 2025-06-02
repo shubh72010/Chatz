@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chatz | Direct Message</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <title>Chatz | Chat</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <style>
     :root {
@@ -27,6 +26,44 @@
       --scrollbar-track: #23272f;
     }
 
+    /* DARK THEME */
+    .theme-dark {
+      --main: #23272f;
+      --main-dark: #181b20;
+      --main-light: #44415e;
+      --bg: #181b20;
+      --bg-light: #23272f;
+      --bg-gradient: linear-gradient(135deg, #181b20 0%, #23272f 100%);
+      --bubble-own: #44415e;
+      --bubble-other: #23272f;
+      --bubble-own-text: #fff;
+      --bubble-other-text: #e6e6fa;
+      --header-bg: #181b20;
+      --input-bg: #23232f;
+      --input-border: #44415e;
+      --scrollbar-thumb: #44415e;
+      --scrollbar-track: #181b20;
+    }
+
+    /* LIGHT THEME */
+    .theme-light {
+      --main: #7b5cff;
+      --main-dark: #5a3ec8;
+      --main-light: #b3aaff;
+      --bg: #f4f6fb;
+      --bg-light: #fff;
+      --bg-gradient: linear-gradient(135deg, #e9e6ff 0%, #f4f6fb 100%);
+      --bubble-own: #7b5cff;
+      --bubble-other: #e9e6ff;
+      --bubble-own-text: #fff;
+      --bubble-other-text: #23272f;
+      --header-bg: #fff;
+      --input-bg: #f4f6fb;
+      --input-border: #b3aaff;
+      --scrollbar-thumb: #b3aaff;
+      --scrollbar-track: #f4f6fb;
+    }
+
     * { 
       box-sizing: border-box; 
       margin: 0; 
@@ -35,7 +72,7 @@
 
     body {
       margin: 0;
-      font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
       background: var(--bg);
       color: #f5f5f5;
       min-height: 100vh;
@@ -60,33 +97,22 @@
       z-index: 1000;
     }
 
-    .back-btn {
-      background: var(--main);
-      color: #fff;
-      border: none;
-      border-radius: 1.5rem;
-      padding: 0.6rem 1.3rem;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 2px 8px #726dff33;
-      transition: background 0.2s;
-    }
-
-    .back-btn:hover {
-      background: var(--main-dark);
+    .main-container {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+      margin-top: 4rem;
+      height: calc(100vh - 4rem);
     }
 
     .chat-container {
       flex: 1;
       display: flex;
       flex-direction: column;
-      margin-top: 4rem;
-      height: calc(100vh - 4rem);
-      padding: 1rem;
-      max-width: 1200px;
-      margin-left: auto;
-      margin-right: auto;
+      background: var(--bg);
+      padding: 2rem;
+      overflow-y: auto;
       width: 100%;
     }
 
@@ -143,37 +169,42 @@
     }
 
     .message img {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       object-fit: cover;
       border: 2px solid var(--main);
-      flex-shrink: 0;
     }
 
     .message-content {
       background: var(--bubble-other);
       color: var(--bubble-other-text);
-      padding: 0.8rem 1.2rem;
-      border-radius: 1.2rem;
-      position: relative;
-      word-break: break-word;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 0.8rem 1rem;
+      border-radius: 1rem;
+      font-size: 0.95rem;
+      line-height: 1.4;
     }
 
     .message.own .message-content {
-      background: linear-gradient(135deg, var(--bubble-own) 0%, var(--main-dark) 100%);
+      background: var(--bubble-own);
       color: var(--bubble-own-text);
     }
 
+    .message-sender {
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+
     .message-time {
-      font-size: 0.7rem;
-      color: rgba(255,255,255,0.5);
+      font-size: 0.75rem;
+      opacity: 0.7;
       margin-top: 0.3rem;
       text-align: right;
     }
 
-    .chat-input {
+    .chat-input-container {
       display: flex;
       gap: 1rem;
       padding: 1rem;
@@ -182,81 +213,57 @@
       margin-top: 1rem;
     }
 
-    .message-input-wrapper {
-      flex: 1;
-      display: flex;
-      align-items: flex-end;
-      gap: 0.8rem;
-      background: var(--input-bg);
-      border-radius: 1.2rem;
-      padding: 0.5rem 1rem;
-    }
-
     .message-input {
       flex: 1;
-      background: none;
-      border: none;
-      outline: none;
-      color: var(--bubble-other-text);
-      font-size: 1rem;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 1.2rem;
+      padding: 0.8rem 1.2rem;
+      color: #fff;
+      font-size: 0.95rem;
       resize: none;
+      min-height: 44px;
       max-height: 120px;
-      min-height: 24px;
-      padding: 0.5rem 0;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .message-input:focus {
+      border-color: var(--main);
     }
 
     .send-btn {
       background: var(--main);
       color: #fff;
       border: none;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
+      border-radius: 1.2rem;
+      padding: 0 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
       display: flex;
       align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      gap: 0.5rem;
     }
 
     .send-btn:hover {
       background: var(--main-dark);
     }
 
+    .send-btn i {
+      font-size: 1.1rem;
+    }
+
     .typing-indicator {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      display: none;
       padding: 0.5rem 1rem;
       color: var(--main-light);
       font-size: 0.9rem;
-      opacity: 0;
-      transition: opacity 0.3s ease;
+      font-style: italic;
     }
 
     .typing-indicator.active {
-      opacity: 1;
-    }
-
-    .typing-dots {
-      display: flex;
-      gap: 0.2rem;
-    }
-
-    .typing-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--main);
-      border-radius: 50%;
-      animation: typingAnimation 1.4s infinite;
-    }
-
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes typingAnimation {
-      0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-4px); }
+      display: block;
     }
 
     /* Custom Scrollbar */
@@ -276,65 +283,36 @@
     ::-webkit-scrollbar-thumb:hover {
       background: var(--main);
     }
-
-    @media (max-width: 768px) {
-      .chat-container {
-        padding: 0.5rem;
-      }
-      .message {
-        max-width: 90%;
-      }
-    }
   </style>
 </head>
 <body>
   <header>
-    <button class="back-btn" onclick="window.location.href='index.html'">&larr; Back</button>
-    <span>Direct Message</span>
-    <div style="width: 100px;"></div>
+    <div class="logo">Chatz</div>
   </header>
 
-  <div class="chat-container">
-    <div class="chat-header">
-      <img id="other-user-pic" src="" alt="Profile" />
-      <div class="chat-header-info">
-        <div id="other-user-name" class="chat-header-name"></div>
-        <div id="other-user-status" class="chat-header-status"></div>
+  <div class="main-container">
+    <div class="chat-container">
+      <div class="chat-header">
+        <img id="other-user-pic" src="https://ui-avatars.com/api/?name=U&background=726dff&color=fff" alt="Profile" />
+        <div class="chat-header-info">
+          <div id="other-user-name" class="chat-header-name">Loading...</div>
+          <div id="other-user-status" class="chat-header-status">Offline</div>
+        </div>
       </div>
-    </div>
 
-    <div class="chat-messages">
-      <!-- Messages will be dynamically inserted here -->
-    </div>
+      <div class="chat-messages"></div>
 
-    <div class="typing-indicator">
-      <span>Someone is typing</span>
-      <div class="typing-dots">
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-      </div>
-    </div>
+      <div class="typing-indicator">Someone is typing...</div>
 
-    <div class="chat-input">
-      <div class="message-input-wrapper">
+      <div class="chat-input-container">
         <textarea class="message-input" placeholder="Type a message..." rows="1"></textarea>
-        <button class="send-btn" title="Send Message">
+        <button class="send-btn">
           <i class="fas fa-paper-plane"></i>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Firebase App (the core Firebase SDK) -->
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-  <!-- Firebase Auth -->
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
-  <!-- Firebase Realtime Database -->
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"></script>
-  
-  <!-- Custom Scripts -->
-  <script type="module" src="./firebaseConfig.js"></script>
-  <script type="module" src="./chatLogic.js"></script>
+  <script type="module" src="chatLogic.js"></script>
 </body>
 </html> 

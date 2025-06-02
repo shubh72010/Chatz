@@ -4,51 +4,38 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
-  signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 import {
   getDatabase,
-  ref
+  ref,
+  push,
+  set,
+  onValue,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-import {
-  pushData,
-  setData,
-  getData,
-  listenValue,
-  listenChildAdded,
-  removeListener
-} from "./firebaseHelpers.js"; // <-- relative path
 
 // --- Firebase Setup ---
 const db = getDatabase(app);
 const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
 
-// --- DOM ---
-const chat = document.getElementById("chat");
-const form = document.getElementById("chat-form");
-const usernameInput = document.getElementById("username");
-const messageInput = document.getElementById("message");
-const sendBtn = document.getElementById("send-btn");
-const replyPreview = document.getElementById("reply-preview");
-const replyText = document.getElementById("reply-text");
-const cancelReplyBtn = document.getElementById("cancel-reply");
-const signInBtn = document.getElementById("sign-in");
-const signOutBtn = document.getElementById("sign-out");
-const friendsList = document.getElementById("friends-list");
-const usersList = document.getElementById("users-list");
-const groupsList = document.getElementById("groups-list");
-const myGroupsList = document.getElementById("my-groups-list");
-const createGroupBtn = document.getElementById("create-group-btn");
-const publicChatBtn = document.getElementById("public-chat");
+// --- DOM Elements ---
+const chatMessages = document.querySelector('.chat-messages');
+const messageInput = document.querySelector('.message-input');
+const sendBtn = document.querySelector('.send-btn');
+const otherUserName = document.getElementById('other-user-name');
+const otherUserPic = document.getElementById('other-user-pic');
+const otherUserStatus = document.getElementById('other-user-status');
+const typingIndicator = document.querySelector('.typing-indicator');
 
-let replyTo = null;
-let chatContext = { type: "public" };
-let chatListener = null;
-let chatListenerRef = null;
+// Get other user's ID from URL
+const urlParams = new URLSearchParams(window.location.search);
+const otherUserId = urlParams.get('uid');
 
-// --- Utility ---
+let chatId = null;
+let typingTimeout = null;
+
+// --- Utility Functions ---
 function escapeHtml(text) {
   return text.replace(/&/g, "&amp;")
              .replace(/</g, "&lt;")
@@ -56,77 +43,108 @@ function escapeHtml(text) {
              .replace(/"/g, "&quot;")
              .replace(/'/g, "&#039;");
 }
-function truncate(str, n) {
-  return str.length > n ? str.substr(0, n - 1) + "…" : str;
-}
+
 function scrollToBottom() {
-  chat.scrollTop = chat.scrollHeight;
-}
-function clearChat() {
-  chat.innerHTML = "";
-}
-function setSidebarSelected(type, id) {
-  document.querySelectorAll('.sidebar-list li').forEach(li => li.classList.remove('selected'));
-  if (type === "public") publicChatBtn.classList.add('selected');
-  else if (type === "dm") {
-    const li = document.querySelector(`li[data-uid="${id}"]`);
-    if (li) li.classList.add('selected');
-  } else if (type === "group") {
-    const li = document.querySelector(`li[data-groupid="${id}"]`);
-    if (li) li.classList.add('selected');
-  }
-}
-function getChatRef() {
-  if (chatContext.type === "public") {
-    return ref(db, "messages");
-  } else if (chatContext.type === "dm") {
-    const uid1 = auth.currentUser.uid;
-    const uid2 = chatContext.uid;
-    const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
-    return ref(db, `dms/${chatId}`);
-  } else if (chatContext.type === "group") {
-    return ref(db, `groups/${chatContext.groupId}/messages`);
-  }
-}
-function setChatContext(ctx) {
-  chatContext = ctx;
-  clearChat();
-  if (chatListenerRef && chatListener) {
-    removeListener(chatListenerRef, "child_added", chatListener);
-  }
-  loadMessages();
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// --- Chat History ---
-function loadMessages() {
-  clearChat();
-  const chatRef = getChatRef();
-  chatListenerRef = chatRef;
-  chatListener = listenChildAdded(chatRef, (snapshot) => {
+function formatTime(timestamp) {
+  return new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
+// --- Chat Functions ---
+function setupChat() {
+  if (!auth.currentUser || !otherUserId) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  // Set up chat ID (sort UIDs to ensure consistent chat ID)
+  const uid1 = auth.currentUser.uid;
+  const uid2 = otherUserId;
+  chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+
+  // Load other user's info
+  const otherUserRef = ref(db, `users/${otherUserId}`);
+  onValue(otherUserRef, (snapshot) => {
     const data = snapshot.val();
-    const msgDiv = document.createElement("div");
-    msgDiv.className = "message";
-    if (auth.currentUser && data.uid === auth.currentUser.uid) msgDiv.classList.add("own");
-    let replyHTML = "";
-    if (data.replyTo) {
-      replyHTML = `<div style="font-size:0.75rem; opacity:0.7; margin-bottom:4px; border-left: 3px solid var(--main); padding-left: 6px; color:#fff;">
-        Reply to: <strong>${escapeHtml(data.replyTo.name)}</strong>: ${escapeHtml(truncate(data.replyTo.message, 40))}
-      </div>`;
+    if (data) {
+      otherUserName.textContent = data.displayName || 'Anonymous';
+      otherUserPic.src = data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.displayName || 'U')}&background=726dff&color=fff`;
+      otherUserStatus.textContent = data.online ? 'Online' : 'Offline';
     }
-    msgDiv.innerHTML = `
-      ${replyHTML}
-      <strong>${escapeHtml(data.name)}</strong>: ${escapeHtml(data.message)}
-      <div class="meta">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-    `;
-    msgDiv.addEventListener("click", () => {
-      if (!auth.currentUser) return;
-      if (data.uid === auth.currentUser.uid) return;
-      replyTo = { id: snapshot.key, name: data.name, message: data.message };
-      replyText.textContent = `${replyTo.name}: ${truncate(replyTo.message, 50)}`;
-      replyPreview.style.display = "flex";
-      messageInput.focus();
+  });
+
+  // Load messages
+  const messagesRef = ref(db, `dms/${chatId}`);
+  onValue(messagesRef, (snapshot) => {
+    chatMessages.innerHTML = '';
+    snapshot.forEach((childSnapshot) => {
+      const data = childSnapshot.val();
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${data.uid === auth.currentUser.uid ? 'own' : ''}`;
+      
+      messageDiv.innerHTML = `
+        <img src="${data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'U')}&background=726dff&color=fff`}" alt="Profile" />
+        <div class="message-content">
+          <div class="message-sender">${escapeHtml(data.name)}</div>
+          ${escapeHtml(data.message)}
+          <div class="message-time">${formatTime(data.timestamp)}</div>
+        </div>
+      `;
+      
+      chatMessages.appendChild(messageDiv);
     });
-    chat.appendChild(msgDiv);
     scrollToBottom();
   });
 }
+
+// --- Event Listeners ---
+sendBtn.addEventListener('click', sendMessage);
+messageInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+messageInput.addEventListener('input', () => {
+  // Clear existing timeout
+  if (typingTimeout) clearTimeout(typingTimeout);
+  
+  // Show typing indicator
+  typingIndicator.classList.add('active');
+  
+  // Set timeout to hide typing indicator
+  typingTimeout = setTimeout(() => {
+    typingIndicator.classList.remove('active');
+  }, 1000);
+});
+
+function sendMessage() {
+  const message = messageInput.value.trim();
+  if (!message || !auth.currentUser) return;
+
+  const messagesRef = ref(db, `dms/${chatId}`);
+  const newMessageRef = push(messagesRef);
+  
+  set(newMessageRef, {
+    message: message,
+    name: auth.currentUser.displayName || 'Anonymous',
+    photoURL: auth.currentUser.photoURL,
+    uid: auth.currentUser.uid,
+    timestamp: serverTimestamp()
+  });
+
+  messageInput.value = '';
+  messageInput.focus();
+}
+
+// Initialize chat when auth state changes
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    setupChat();
+  } else {
+    window.location.href = 'index.html';
+  }
+});
