@@ -55,20 +55,6 @@ function escapeHtml(text) {
              .replace(/'/g, "&#039;");
 }
 
-function scrollToBottom(smooth = true) {
-  const scrollOptions = smooth ? { behavior: 'smooth' } : {};
-  chatMessages.scrollTo({
-    top: chatMessages.scrollHeight,
-    ...scrollOptions
-  });
-}
-
-// Check if user is near bottom before scrolling
-function shouldAutoScroll() {
-  const threshold = 100; // pixels from bottom
-  return chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < threshold;
-}
-
 function formatTime(timestamp) {
   if (!timestamp) return '';
   return new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});

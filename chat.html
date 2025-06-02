@@ -453,13 +453,6 @@
       }
     });
 
-    // DOM Elements
-    const chatMessages = document.getElementById('chat-messages');
-    const messageInput = document.querySelector('.message-input');
-    const sendBtn = document.querySelector('.send-btn');
-    const loadingMessages = document.getElementById('loading-messages');
-    const typingIndicator = document.querySelector('.typing-indicator');
-
     // Chat state
     let isLoading = false;
     let lastScrollTop = 0;
@@ -510,34 +503,6 @@
       stopLoading,
       isNearBottom
     };
-
-    // Theme handling
-    function getTimeBasedTheme() {
-      const hour = new Date().getHours();
-      return (hour >= 20 || hour < 6) ? 'dark' : 'light';
-    }
-
-    function applyTheme(theme) {
-      if (theme === 'auto') {
-        theme = getTimeBasedTheme();
-      }
-      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
-    }
-
-    // Apply theme on load
-    const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
-    applyTheme(savedTheme);
-
-    // Theme sync
-    if (savedTheme === 'auto') {
-      setInterval(() => applyTheme('auto'), 60000);
-    }
-
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'chatzTheme') {
-        applyTheme(e.newValue || 'auto');
-      }
-    });
   </script>
   <script type="module" src="chatLogic.js"></script>
 </body>
