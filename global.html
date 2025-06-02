@@ -595,6 +595,14 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
+    // Check authentication state immediately
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // User is not signed in, redirect to signin page
+        window.location.href = 'signin.html';
+      }
+    });
+
     const chatMessages = document.getElementById('chat-messages');
     const messageInput = document.getElementById('message-input');
     const sendBtn = document.getElementById('send-btn');

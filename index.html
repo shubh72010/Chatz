@@ -470,98 +470,36 @@
         });
       }
 
-      // Listen for user data changes
+      // Check authentication state
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          signInBtn.style.display = "none";
-          
-          const userRef = ref(db, "users/" + user.uid);
-          const userStatusRef = ref(db, "users/" + user.uid + "/online");
-          const userStatusDatabaseRef = ref(db, "users/" + user.uid + "/lastActive");
-          
-          // Set up online status
-          set(userStatusRef, true);
-          set(userStatusDatabaseRef, serverTimestamp());
-          
-          // Set up disconnect handlers
-          onDisconnect(userStatusRef).set(false);
-          onDisconnect(userStatusDatabaseRef).set(serverTimestamp());
-          
-          // First check if user data exists
-          get(userRef).then((snapshot) => {
-            if (snapshot.exists()) {
-              // Update user data while preserving online status
-              update(userRef, {
-                displayName: user.displayName,
-                photoURL: user.photoURL,
-                lastActive: serverTimestamp()
-              });
-            } else {
-              // Initialize user data if it doesn't exist
-              set(userRef, {
-                displayName: user.displayName,
-                photoURL: user.photoURL,
-                lastActive: serverTimestamp(),
-                online: true
-              });
-            }
-          }).catch((err) => {
-            console.error("Error loading user data:", err);
-          });
-
-          // Listen for all users
-          onValue(ref(db, "users"), (snapshot) => {
-            const users = [];
-            snapshot.forEach((childSnapshot) => {
-              const data = childSnapshot.val();
-              users.push({
-                uid: childSnapshot.key,
-                displayName: data.displayName || "Anonymous",
-                nickname: data.nickname || "",
-                photoURL: data.photoURL,
-                online: data.online,
-                lastActive: data.lastActive
-              });
-            });
-            renderUsers(users);
-          });
+          // User is signed in
+          currentUser = user;
+          updateUserStatus(true);
+          loadUsers();
+          loadChats();
         } else {
-          signInBtn.style.display = "inline-block";
+          // User is not signed in, redirect to signin page
+          window.location.href = 'signin.html';
         }
       });
 
-      // Add error handling to sign in
-      signInBtn.onclick = () => {
-        const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({
-          prompt: 'select_account'
-        });
-        signInWithPopup(auth, provider)
-          .then(async (result) => {
-            const user = result.user;
-            console.log("Sign in successful:", user);
-            
-            try {
-              const userRef = ref(db, `users/${user.uid}`);
-              const userData = {
-                displayName: user.displayName,
-                email: user.email,
-                photoURL: user.photoURL,
-                lastActive: serverTimestamp(),
-                online: true
-              };
-              
-              console.log("Saving user data:", userData);
-              await set(userRef, userData);
-              console.log("User data saved successfully");
-            } catch (error) {
-              console.error('User Data Save Error:', error);
-            }
-          })
-          .catch((error) => {
-            console.error('Sign In Error:', error);
+      // Listen for all users
+      onValue(ref(db, "users"), (snapshot) => {
+        const users = [];
+        snapshot.forEach((childSnapshot) => {
+          const data = childSnapshot.val();
+          users.push({
+            uid: childSnapshot.key,
+            displayName: data.displayName || "Anonymous",
+            nickname: data.nickname || "",
+            photoURL: data.photoURL,
+            online: data.online,
+            lastActive: data.lastActive
           });
-      };
+        });
+        renderUsers(users);
+      });
 
       // Add error handling to navigation
       document.getElementById("global-chat-btn").onclick = () => {

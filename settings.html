@@ -680,6 +680,14 @@
     const notificationVolume = document.getElementById('notification-volume');
     const notificationPreview = document.getElementById('notification-preview');
 
+    // Check authentication state immediately
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // User is not signed in, redirect to signin page
+        window.location.href = 'signin.html';
+      }
+    });
+
     // Load theme from localStorage
     document.addEventListener('DOMContentLoaded', () => {
       const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
