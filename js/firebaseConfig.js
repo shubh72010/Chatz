@@ -1,9 +1,9 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-analytics.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-import { getDatabase } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
+import { getAuth, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+import { getDatabase, connectDatabaseEmulator } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+import { getStorage, connectStorageEmulator } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -27,7 +27,7 @@ const storage = getStorage(app);
 // Configure auth persistence
 auth.setPersistence('local');
 
-// Configure database rules
+// Configure database rules with indexes
 const dbRules = {
   "rules": {
     "users": {
@@ -47,8 +47,26 @@ const dbRules = {
         ".read": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()",
         ".write": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()"
       }
+    },
+    "global_messages": {
+      ".indexOn": ["timestamp"],
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "friend_requests": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "friends": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
     }
   }
 };
 
+// Export initialized services
 export { app, analytics, auth, db, storage, dbRules }; 

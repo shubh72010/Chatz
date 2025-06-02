@@ -563,14 +563,13 @@
   </div>
 
   <script type="module">
-    import { app } from './js/firebaseConfig.js';
+    // Import Firebase services first
+    import { app, auth, db } from './js/firebaseConfig.js';
     import { profileModal } from './js/profileModal.js';
     import {
-      getAuth,
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
     import {
-      getDatabase,
       ref,
       push,
       set,
@@ -582,9 +581,6 @@
       endBefore,
       limitToLast
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-
-    const auth = getAuth(app);
-    const db = getDatabase(app);
 
     // Check authentication state immediately
     onAuthStateChanged(auth, (user) => {
