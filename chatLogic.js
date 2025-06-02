@@ -34,9 +34,11 @@ const otherUserId = urlParams.get('uid');
 
 let chatId = null;
 let typingTimeout = null;
+let otherUserData = null;
 
 // --- Utility Functions ---
 function escapeHtml(text) {
+  if (!text) return '';
   return text.replace(/&/g, "&amp;")
              .replace(/</g, "&lt;")
              .replace(/>/g, "&gt;")
@@ -49,7 +51,12 @@ function scrollToBottom() {
 }
 
 function formatTime(timestamp) {
+  if (!timestamp) return '';
   return new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
+function getAvatarUrl(name) {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'U')}&background=726dff&color=fff`;
 }
 
 // --- Chat Functions ---
@@ -69,8 +76,9 @@ function setupChat() {
   onValue(otherUserRef, (snapshot) => {
     const data = snapshot.val();
     if (data) {
+      otherUserData = data;
       otherUserName.textContent = data.displayName || 'Anonymous';
-      otherUserPic.src = data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.displayName || 'U')}&background=726dff&color=fff`;
+      otherUserPic.src = data.photoURL || getAvatarUrl(data.displayName);
       otherUserStatus.textContent = data.online ? 'Online' : 'Offline';
     }
   });
@@ -84,10 +92,14 @@ function setupChat() {
       const messageDiv = document.createElement('div');
       messageDiv.className = `message ${data.uid === auth.currentUser.uid ? 'own' : ''}`;
       
+      const isCurrentUser = data.uid === auth.currentUser.uid;
+      const displayName = isCurrentUser ? auth.currentUser.displayName : (otherUserData?.displayName || 'Anonymous');
+      const photoURL = isCurrentUser ? auth.currentUser.photoURL : (otherUserData?.photoURL || getAvatarUrl(displayName));
+      
       messageDiv.innerHTML = `
-        <img src="${data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'U')}&background=726dff&color=fff`}" alt="Profile" />
+        <img src="${photoURL}" alt="Profile" />
         <div class="message-content">
-          <div class="message-sender">${escapeHtml(data.name)}</div>
+          <div class="message-sender">${escapeHtml(displayName)}</div>
           ${escapeHtml(data.message)}
           <div class="message-time">${formatTime(data.timestamp)}</div>
         </div>
@@ -103,7 +115,7 @@ function setupChat() {
   onValue(typingRef, (snapshot) => {
     const data = snapshot.val();
     if (data && data[otherUserId] && data[otherUserId].isTyping) {
-      typingIndicator.textContent = `${otherUserName.textContent} is typing...`;
+      typingIndicator.textContent = `${otherUserData?.displayName || 'Anonymous'} is typing...`;
       typingIndicator.classList.add('active');
     } else {
       typingIndicator.classList.remove('active');
