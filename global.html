@@ -737,7 +737,7 @@
       }
 
       messageDiv.innerHTML = `
-        <img src="${photoURL}" alt="Profile" data-uid="${message.senderId}" class="profile-avatar" />
+        <img src="${photoURL}" alt="Profile" data-uid="${message.senderId}" class="message-avatar" />
         <div class="message-content">
           ${!isOwn ? `<div class="message-sender">${escapeHtml(displayName)}</div>` : ''}
           ${replyHTML}
