@@ -12,7 +12,8 @@ import {
   push,
   set,
   onValue,
-  serverTimestamp
+  serverTimestamp,
+  update
 } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
 // --- Firebase Setup ---
@@ -35,6 +36,7 @@ const otherUserId = urlParams.get('uid');
 let chatId = null;
 let typingTimeout = null;
 let otherUserData = null;
+let currentUserData = null;
 
 // --- Utility Functions ---
 function escapeHtml(text) {
@@ -71,6 +73,16 @@ function setupChat() {
   const uid2 = otherUserId;
   chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
 
+  // Update current user's data in Firebase
+  const currentUserRef = ref(db, `users/${auth.currentUser.uid}`);
+  currentUserData = {
+    displayName: auth.currentUser.displayName || 'Anonymous',
+    photoURL: auth.currentUser.photoURL || getAvatarUrl(auth.currentUser.displayName),
+    online: true,
+    lastSeen: serverTimestamp()
+  };
+  update(currentUserRef, currentUserData);
+
   // Load other user's info
   const otherUserRef = ref(db, `users/${otherUserId}`);
   onValue(otherUserRef, (snapshot) => {
@@ -93,8 +105,8 @@ function setupChat() {
       messageDiv.className = `message ${data.uid === auth.currentUser.uid ? 'own' : ''}`;
       
       const isCurrentUser = data.uid === auth.currentUser.uid;
-      const displayName = isCurrentUser ? auth.currentUser.displayName : (otherUserData?.displayName || 'Anonymous');
-      const photoURL = isCurrentUser ? auth.currentUser.photoURL : (otherUserData?.photoURL || getAvatarUrl(displayName));
+      const displayName = isCurrentUser ? currentUserData.displayName : (otherUserData?.displayName || 'Anonymous');
+      const photoURL = isCurrentUser ? currentUserData.photoURL : (otherUserData?.photoURL || getAvatarUrl(displayName));
       
       messageDiv.innerHTML = `
         <img src="${photoURL}" alt="Profile" />
@@ -120,6 +132,14 @@ function setupChat() {
     } else {
       typingIndicator.classList.remove('active');
     }
+  });
+
+  // Set up online status
+  window.addEventListener('beforeunload', () => {
+    update(currentUserRef, {
+      online: false,
+      lastSeen: serverTimestamp()
+    });
   });
 }
 
@@ -161,8 +181,8 @@ function sendMessage() {
   
   set(newMessageRef, {
     message: message,
-    name: auth.currentUser.displayName || 'Anonymous',
-    photoURL: auth.currentUser.photoURL,
+    name: currentUserData.displayName,
+    photoURL: currentUserData.photoURL,
     uid: auth.currentUser.uid,
     timestamp: serverTimestamp()
   });
