@@ -394,43 +394,44 @@
   </header>
 
   <div class="main-container">
-  <div class="chat-container">
-    <div class="chat-header">
-      <button class="back-btn" onclick="window.location.href='/Chatz/index.html'">&larr; Back</button>
-      <div class="chat-header-info">
-        <div class="chat-header-title" id="chat-title">Loading...</div>
-        <div class="chat-header-subtitle" id="chat-status">Offline</div>
-      </div>
-    </div>
-
-    <div class="loading-messages" id="loading-messages">
-      <div class="loading-spinner"></div>
-      Loading messages...
-    </div>
-
-    <div class="chat-messages" id="chat-messages">
-      <!-- Messages will be populated here -->
-    </div>
-
-    <div class="typing-indicator" id="typing-indicator">
-      <span id="typing-text"></span>
-    </div>
-
-    <div class="reply-preview" id="reply-preview">
-      <div class="reply-preview-content">
-        <div class="reply-preview-text">
-          <span class="reply-preview-sender" id="reply-sender"></span>
-          <span id="reply-text"></span>
+    <div class="chat-container">
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <div class="chat-header-title" id="chat-title">Loading...</div>
+          <div class="chat-header-subtitle" id="chat-status">Offline</div>
         </div>
-        <button class="reply-preview-cancel" id="cancel-reply">&times;</button>
+      </div>
+
+      <div class="loading-messages" id="loading-messages">
+        <div class="loading-spinner"></div>
+        Loading messages...
+      </div>
+
+      <div class="chat-messages" id="chat-messages">
+        <!-- Messages will be populated here -->
+      </div>
+
+      <div class="typing-indicator" id="typing-indicator">
+        <span id="typing-text"></span>
+      </div>
+
+      <div class="reply-preview" id="reply-preview" style="display: none;">
+        <div class="reply-preview-content">
+          <div class="reply-preview-text">
+            <span class="reply-preview-sender" id="reply-sender"></span>
+            <span id="reply-text"></span>
+          </div>
+          <button class="reply-preview-cancel" id="cancel-reply">&times;</button>
+        </div>
+      </div>
+
+      <div class="chat-input-container">
+        <input type="text" id="message-input" placeholder="Type a message..." class="message-input" />
+        <button id="send-btn" class="send-btn">
+          <i class="fas fa-paper-plane"></i>
+        </button>
       </div>
     </div>
-
-    <div class="chat-input">
-      <input type="text" id="message-input" placeholder="Type a message..." />
-      <button id="send-btn">Send</button>
-    </div>
-  </div>
   </div>
 
   <script type="module">
@@ -508,6 +509,7 @@
         const messagesQuery = query(messagesRef, orderByChild('timestamp'));
 
         onValue(messagesQuery, (snapshot) => {
+          if (!chatMessages) return; // Guard against undefined
           chatMessages.innerHTML = '';
           snapshot.forEach((childSnapshot) => {
             const message = childSnapshot.val();
@@ -519,6 +521,7 @@
         // Listen for typing status
         const typingRef = ref(db, `dms/${chatId}/typing/${otherUserId}`);
         onValue(typingRef, (snapshot) => {
+          if (!typingIndicator || !typingText) return; // Guard against undefined
           if (snapshot.val()) {
             typingIndicator.classList.add('active');
             typingText.textContent = `${otherUser.nickname || otherUser.displayName || 'Anonymous'} is typing...`;
@@ -529,6 +532,7 @@
 
         // Listen for online status
         onValue(otherUserRef, (snapshot) => {
+          if (!chatStatus) return; // Guard against undefined
           const userData = snapshot.val();
           chatStatus.textContent = userData.online ? 'Online' : 'Offline';
         });
