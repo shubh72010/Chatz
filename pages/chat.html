@@ -388,7 +388,7 @@
 </head>
 <body>
   <header>
-    <button class="back-btn" onclick="window.location.href='index.html'">
+    <button class="back-btn" onclick="window.location.href='../pages/index.html'">
       <i class="fas fa-arrow-left"></i>
     </button>
     <div class="logo">Chatz</div>
@@ -424,7 +424,7 @@
   </div>
 
   <script type="module">
-    import { app } from './firebaseConfig.js';
+    import { app } from '../firebaseConfig.js';
     import {
       getAuth,
       onAuthStateChanged
@@ -449,7 +449,7 @@
     // Check authentication state immediately
     onAuthStateChanged(auth, (user) => {
       if (!user) {
-        window.location.href = 'signin.html';
+        window.location.href = '../pages/signin.html';
       }
     });
 
@@ -504,6 +504,6 @@
       isNearBottom
     };
   </script>
-  <script type="module" src="chatLogic.js"></script>
+  <script type="module" src="../js/chatLogic.js"></script>
 </body>
 </html> 

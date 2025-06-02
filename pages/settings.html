@@ -652,7 +652,7 @@
     <button class="signout-btn" id="signout-btn">Sign Out</button>
   </div>
   <script type="module">
-    import { app } from './firebaseConfig.js';
+    import { app } from '../firebaseConfig.js';
     import {
       getAuth,
       onAuthStateChanged,
@@ -699,7 +699,7 @@
     onAuthStateChanged(auth, (user) => {
       if (!user) {
         // User is not signed in, redirect to signin page
-        window.location.href = 'signin.html';
+        window.location.href = '../pages/signin.html';
       }
     });
 
@@ -847,7 +847,7 @@
           console.error("Error loading user data:", error);
         }
       } else {
-        window.location.href = "index.html";
+        window.location.href = "../pages/index.html";
       }
     });
 
