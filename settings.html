@@ -652,304 +652,172 @@
     <button class="signout-btn" id="signout-btn">Sign Out</button>
   </div>
   <script type="module">
-    import { app } from '../firebaseConfig.js';
+    import { authHandler } from './js/auth.js';
+    import { db, storage } from '../firebaseConfig.js';
     import {
-      getAuth,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-    import {
-      getDatabase,
       ref,
       set,
       get,
       update
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
     import {
-      getStorage,
       ref as storageRef,
       uploadBytes,
       getDownloadURL
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
 
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-    const storage = getStorage(app);
-
-    const themeSelect = document.getElementById('theme-select');
-    const nicknameInput = document.getElementById('nickname');
-    const saveBtn = document.getElementById('save-btn');
     const signoutBtn = document.getElementById('signout-btn');
+    const saveBtn = document.getElementById('save-btn');
     const profilePic = document.getElementById('profile-pic');
+    const profilePicEdit = document.getElementById('profile-pic-edit');
     const profileName = document.getElementById('profile-name');
     const profileEmail = document.getElementById('profile-email');
-    const accentColor = document.getElementById('accent-color');
-    const colorPreview = document.getElementById('color-preview');
-    const notifications = document.getElementById('notifications');
-    const profilePicEdit = document.getElementById('profile-pic-edit');
-    const profilePicInput = document.getElementById('profile-pic-input');
-    const notificationSound = document.getElementById('notification-sound');
-    const notificationVolume = document.getElementById('notification-volume');
-    const notificationPreview = document.getElementById('notification-preview');
+    const nicknameInput = document.getElementById('nickname');
     const bioInput = document.getElementById('bio');
     const profilePrivacy = document.getElementById('profile-privacy');
     const friendRequests = document.getElementById('friend-requests');
+    const notifications = document.getElementById('notifications');
 
-    // Check authentication state immediately
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        // User is not signed in, redirect to signin page
-        window.location.href = '../pages/signin.html';
-      }
+    // Handle sign out
+    signoutBtn.addEventListener('click', async () => {
+        try {
+            await authHandler.signOut();
+            window.location.href = 'signin.html';
+        } catch (error) {
+            console.error('Sign out error:', error);
+            alert('Failed to sign out: ' + error.message);
+        }
     });
 
-    // Load theme from localStorage
-    document.addEventListener('DOMContentLoaded', () => {
-      const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
-      themeSelect.value = savedTheme;
-      
-      const savedColor = localStorage.getItem('chatzAccentColor') || '#726dff';
-      accentColor.value = savedColor;
-      colorPreview.style.backgroundColor = savedColor;
-      
-      const savedSound = localStorage.getItem('chatzNotificationSound') || 'default';
-      const savedVolume = localStorage.getItem('chatzNotificationVolume') || '50';
-      
-      notificationSound.value = savedSound;
-      notificationVolume.value = savedVolume;
-    });
+    // Load user data if signed in
+    authHandler.onAuthStateChanged(async (user) => {
+        if (user) {
+            // Set profile picture with fallback
+            const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=726dff&color=fff`;
+            profilePic.src = photoURL;
+            profileName.textContent = user.displayName || "Anonymous";
+            profileEmail.textContent = user.email || "";
 
-    themeSelect.addEventListener('change', (event) => {
-      const theme = event.target.value;
-      document.documentElement.className = 'theme-' + theme;
-      localStorage.setItem('chatzTheme', theme);
-    });
-
-    accentColor.addEventListener('input', (event) => {
-      const color = event.target.value;
-      colorPreview.style.backgroundColor = color;
-      localStorage.setItem('chatzAccentColor', color);
+            try {
+                const userRef = ref(db, "users/" + user.uid);
+                const snapshot = await get(userRef);
+                
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    nicknameInput.value = data.nickname || "";
+                    bioInput.value = data.bio || "";
+                    profilePrivacy.value = data.profilePrivacy || "public";
+                    friendRequests.value = data.friendRequests || "everyone";
+                    notifications.value = data.notifications || "all";
+                    if (data.photoURL) {
+                        profilePic.src = data.photoURL;
+                    }
+                } else {
+                    // Initialize user data if it doesn't exist
+                    await set(userRef, {
+                        nickname: "",
+                        bio: "",
+                        profilePrivacy: "public",
+                        friendRequests: "everyone",
+                        displayName: user.displayName,
+                        photoURL: photoURL,
+                        email: user.email,
+                        lastActive: Date.now(),
+                        notifications: "all"
+                    });
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+            }
+        } else {
+            window.location.href = "signin.html";
+        }
     });
 
     // Handle profile picture upload
-    profilePicEdit.onclick = () => {
-      profilePicInput.click();
-    };
+    profilePicEdit.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-    profilePicInput.onchange = async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
+            try {
+                const user = authHandler.getCurrentUser();
+                if (!user) throw new Error('No user signed in');
 
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
-        return;
-      }
+                // Show loading state
+                profilePic.style.opacity = '0.5';
+                profilePicEdit.style.pointerEvents = 'none';
+                
+                // Create a unique filename
+                const timestamp = Date.now();
+                const fileExtension = file.name.split('.').pop();
+                const fileName = `${user.uid}_${timestamp}.${fileExtension}`;
+                
+                // Upload to Firebase Storage
+                const storageReference = storageRef(storage, `profile_pics/${fileName}`);
+                const uploadResult = await uploadBytes(storageReference, file);
+                const downloadURL = await getDownloadURL(uploadResult.ref);
 
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size should be less than 5MB');
-        return;
-      }
+                // Update user profile in database
+                const userRef = ref(db, "users/" + user.uid);
+                await update(userRef, {
+                    photoURL: downloadURL,
+                    lastActive: Date.now()
+                });
 
-      try {
-        const user = auth.currentUser;
-        if (!user) {
-          alert('Please sign in to update profile picture');
-          return;
-        }
+                // Update UI
+                profilePic.src = downloadURL;
+                profilePic.style.opacity = '1';
+                profilePicEdit.style.pointerEvents = 'auto';
 
-        // Show loading state
-        profilePic.style.opacity = '0.5';
-        profilePicEdit.style.pointerEvents = 'none';
-        
-        // Create a unique filename
-        const timestamp = Date.now();
-        const fileExtension = file.name.split('.').pop();
-        const fileName = `${user.uid}_${timestamp}.${fileExtension}`;
-        
-        // Upload to Firebase Storage
-        const storageReference = storageRef(storage, `profile_pics/${fileName}`);
-        const uploadResult = await uploadBytes(storageReference, file);
-        console.log('Upload successful:', uploadResult);
+                // Show success message
+                saveBtn.textContent = "Profile Picture Updated!";
+                saveBtn.style.background = "#4CAF50";
+                setTimeout(() => {
+                    saveBtn.textContent = "Save Changes";
+                    saveBtn.style.background = "";
+                }, 2000);
 
-        // Get download URL
-        const downloadURL = await getDownloadURL(uploadResult.ref);
-        console.log('Download URL:', downloadURL);
-
-        // Update user profile in database
-        const userRef = ref(db, "users/" + user.uid);
-        await update(userRef, {
-          photoURL: downloadURL,
-          lastActive: Date.now()
-        });
-
-        // Update UI
-        profilePic.src = downloadURL;
-        profilePic.style.opacity = '1';
-        profilePicEdit.style.pointerEvents = 'auto';
-
-        // Show success message
-        saveBtn.textContent = "Profile Picture Updated!";
-        saveBtn.style.background = "#4CAF50";
-        setTimeout(() => {
-          saveBtn.textContent = "Save Changes";
-          saveBtn.style.background = "";
-        }, 2000);
-
-      } catch (error) {
-        console.error("Error uploading profile picture:", error);
-        alert("Failed to upload profile picture: " + error.message);
-        profilePic.style.opacity = '1';
-        profilePicEdit.style.pointerEvents = 'auto';
-      }
-    };
-
-    // Load user data if signed in
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // Set profile picture with fallback
-        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=726dff&color=fff`;
-        profilePic.src = photoURL;
-        profileName.textContent = user.displayName || "Anonymous";
-        profileEmail.textContent = user.email || "";
-
-        try {
-          const userRef = ref(db, "users/" + user.uid);
-          const snapshot = await get(userRef);
-          
-          if (snapshot.exists()) {
-            const data = snapshot.val();
-            nicknameInput.value = data.nickname || "";
-            bioInput.value = data.bio || "";
-            profilePrivacy.value = data.profilePrivacy || "public";
-            friendRequests.value = data.friendRequests || "everyone";
-            notifications.value = data.notifications || "all";
-            // Update profile picture if it exists in database
-            if (data.photoURL) {
-              profilePic.src = data.photoURL;
+            } catch (error) {
+                console.error("Error uploading profile picture:", error);
+                alert("Failed to upload profile picture: " + error.message);
+                profilePic.style.opacity = '1';
+                profilePicEdit.style.pointerEvents = 'auto';
             }
-          } else {
-            // Initialize user data if it doesn't exist
-            await set(userRef, {
-              nickname: "",
-              bio: "",
-              profilePrivacy: "public",
-              friendRequests: "everyone",
-              displayName: user.displayName,
-              photoURL: photoURL,
-              email: user.email,
-              lastActive: Date.now(),
-              notifications: "all"
-            });
-          }
-        } catch (error) {
-          console.error("Error loading user data:", error);
-        }
-      } else {
-        window.location.href = "../pages/index.html";
-      }
+        };
+        input.click();
     });
 
-    // Handle notification settings
-    notificationSound.onchange = () => {
-      localStorage.setItem('chatzNotificationSound', notificationSound.value);
-      showNotificationPreview();
-    };
-
-    notificationVolume.oninput = () => {
-      localStorage.setItem('chatzNotificationVolume', notificationVolume.value);
-    };
-
-    function showNotificationPreview() {
-      notificationPreview.classList.add('active');
-      setTimeout(() => {
-        notificationPreview.classList.remove('active');
-      }, 3000);
-    }
-
-    // Update save button handler
-    saveBtn.onclick = async () => {
-      const theme = themeSelect.value;
-      document.documentElement.className = 'theme-' + theme;
-      localStorage.setItem('chatzTheme', theme);
-      localStorage.setItem('chatzAccentColor', accentColor.value);
-
-      const user = auth.currentUser;
-      if (user) {
+    // Handle save changes
+    saveBtn.addEventListener('click', async () => {
         try {
-          const nickname = nicknameInput.value.trim();
-          const bio = bioInput.value.trim();
-          const userRef = ref(db, "users/" + user.uid);
-          
-          const snapshot = await get(userRef);
-          if (snapshot.exists()) {
-            await set(userRef, {
-              ...snapshot.val(),
-              nickname: nickname,
-              bio: bio,
-              profilePrivacy: profilePrivacy.value,
-              friendRequests: friendRequests.value,
-              notifications: notifications.value,
-              notificationSound: notificationSound.value,
-              notificationVolume: notificationVolume.value,
-              lastActive: Date.now()
-            });
-          } else {
-            await set(userRef, {
-              nickname: nickname,
-              bio: bio,
-              profilePrivacy: profilePrivacy.value,
-              friendRequests: friendRequests.value,
-              displayName: user.displayName,
-              photoURL: user.photoURL,
-              email: user.email,
-              lastActive: Date.now(),
-              notifications: notifications.value,
-              notificationSound: notificationSound.value,
-              notificationVolume: notificationVolume.value
-            });
-          }
-          
-          // Show success message
-          saveBtn.textContent = "Saved!";
-          saveBtn.style.background = "#4CAF50";
-          setTimeout(() => {
-            saveBtn.textContent = "Save Changes";
-            saveBtn.style.background = "";
-          }, 2000);
+            const user = authHandler.getCurrentUser();
+            if (!user) throw new Error('No user signed in');
 
-          console.log("Settings saved successfully:", { 
-            nickname, 
-            theme, 
-            accentColor: accentColor.value,
-            notifications: notifications.value,
-            notificationSound: notificationSound.value,
-            notificationVolume: notificationVolume.value
-          });
+            const userRef = ref(db, "users/" + user.uid);
+            await update(userRef, {
+                nickname: nicknameInput.value,
+                bio: bioInput.value,
+                profilePrivacy: profilePrivacy.value,
+                friendRequests: friendRequests.value,
+                notifications: notifications.value,
+                lastActive: Date.now()
+            });
 
-          // Wait for data to be saved before redirecting
-          setTimeout(() => {
-            window.location.href = "global.html";
-          }, 1000);
+            saveBtn.textContent = "Changes Saved!";
+            saveBtn.style.background = "#4CAF50";
+            setTimeout(() => {
+                saveBtn.textContent = "Save Changes";
+                saveBtn.style.background = "";
+            }, 2000);
         } catch (error) {
-          console.error("Error saving settings:", error);
-          alert("Failed to save settings. Please try again.");
+            console.error("Error saving changes:", error);
+            alert("Failed to save changes: " + error.message);
         }
-      } else {
-        alert("Please sign in to save settings.");
-      }
-    };
-
-    signoutBtn.onclick = async () => {
-      try {
-        await signOut(auth);
-        window.location.href = "index.html";
-      } catch (error) {
-        console.error("Error signing out:", error);
-        alert("Failed to sign out. Please try again.");
-      }
-    };
+    });
   </script>
 </body>
 </html>

@@ -282,96 +282,37 @@
   </div>
 
   <script type="module">
-    import { app } from './firebaseConfig.js';
-    import {
-      getAuth,
-      GoogleAuthProvider,
-      signInWithPopup,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-    import {
-      getDatabase,
-      ref,
-      set,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-    const provider = new GoogleAuthProvider();
+    import { authHandler } from './js/auth.js';
 
     const googleSignInBtn = document.getElementById('googleSignIn');
     const errorMessage = document.getElementById('errorMessage');
     const loading = document.getElementById('loading');
 
-    // Theme sync and auto theme functionality
-    function getTimeBasedTheme() {
-      const hour = new Date().getHours();
-      // Use dark theme from 8 PM to 6 AM
-      return (hour >= 20 || hour < 6) ? 'dark' : 'light';
-    }
-
-    function applyTheme(theme) {
-      if (theme === 'auto') {
-        theme = getTimeBasedTheme();
-      }
-      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
-    }
-
-    // Apply theme on page load
-    (function() {
-      const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
-      applyTheme(savedTheme);
-
-      // If auto theme is selected, update every minute
-      if (savedTheme === 'auto') {
-        setInterval(() => {
-          applyTheme('auto');
-        }, 60000); // Check every minute
-      }
-    })();
-
-    // Listen for theme changes in other tabs
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'chatzTheme') {
-        const theme = e.newValue || 'auto';
-        applyTheme(theme);
-      }
-    });
+    // Hide error message initially
+    errorMessage.style.display = 'none';
 
     // Handle Google Sign In
     googleSignInBtn.addEventListener('click', async () => {
-      try {
-        loading.classList.add('active');
-        errorMessage.classList.remove('active');
-        
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        
-        // Update user data in database
-        const userRef = ref(db, `users/${user.uid}`);
-        await set(userRef, {
-          displayName: user.displayName,
-          email: user.email,
-          photoURL: user.photoURL,
-          lastLogin: serverTimestamp(),
-          online: true
-        });
-
-        // Redirect to index page
-        window.location.href = '../pages/index.html';
-      } catch (error) {
-        console.error("Sign in error:", error);
-        errorMessage.classList.add('active');
-        loading.classList.remove('active');
-      }
+        try {
+            loading.style.display = 'flex';
+            errorMessage.style.display = 'none';
+            await authHandler.signInWithGoogle();
+            // Redirect will happen automatically through auth state change
+        } catch (error) {
+            console.error('Sign in error:', error);
+            errorMessage.textContent = error.message;
+            errorMessage.style.display = 'block';
+            loading.style.display = 'none';
+        }
     });
 
     // Check if user is already signed in
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        window.location.href = '../pages/index.html';
-      }
+    authHandler.onAuthStateChanged((user) => {
+        if (user) {
+            window.location.href = 'index.html';
+        } else {
+            loading.style.display = 'none';
+        }
     });
   </script>
 </body>

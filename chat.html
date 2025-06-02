@@ -424,13 +424,9 @@
   </div>
 
   <script type="module">
-    import { app } from '../firebaseConfig.js';
+    import { authHandler } from './js/auth.js';
+    import { db } from '../firebaseConfig.js';
     import {
-      getAuth,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-    import {
-      getDatabase,
       ref,
       push,
       set,
@@ -443,20 +439,72 @@
       limitToLast
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-
     // Check authentication state immediately
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location.href = '../pages/signin.html';
-      }
+    authHandler.onAuthStateChanged((user) => {
+        if (!user) {
+            window.location.href = 'signin.html';
+        }
     });
 
     // Chat state
     let isLoading = false;
     let lastScrollTop = 0;
     let scrollThreshold = 100;
+    let currentUser = null;
+    let chatId = null;
+    let otherUserId = null;
+
+    // Get other user's ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    otherUserId = urlParams.get('uid');
+
+    // Initialize chat when both users are known
+    authHandler.onAuthStateChanged(async (user) => {
+        if (user && otherUserId) {
+            currentUser = user;
+            await initializeChat(user.uid, otherUserId);
+        }
+    });
+
+    async function initializeChat(userId1, userId2) {
+        // Create or get chat ID
+        const chatRef = ref(db, 'chats');
+        const chatQuery = query(chatRef, orderByChild('participants'));
+        
+        const snapshot = await get(chatQuery);
+        let foundChat = null;
+        
+        snapshot.forEach((childSnapshot) => {
+            const chat = childSnapshot.val();
+            if (chat.participants && 
+                chat.participants[userId1] && 
+                chat.participants[userId2]) {
+                foundChat = childSnapshot.key;
+            }
+        });
+
+        if (foundChat) {
+            chatId = foundChat;
+        } else {
+            // Create new chat
+            const newChatRef = push(chatRef);
+            chatId = newChatRef.key;
+            await set(newChatRef, {
+                participants: {
+                    [userId1]: true,
+                    [userId2]: true
+                },
+                createdAt: serverTimestamp(),
+                lastMessage: null
+            });
+        }
+
+        // Load chat messages
+        loadMessages();
+        
+        // Load other user's info
+        loadOtherUserInfo();
+    }
 
     // Scroll handling
     function isNearTop() {

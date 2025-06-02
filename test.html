@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Connection Test</title>
+</head>
+<body>
+    <h1>Firebase Connection Test</h1>
+    <div id="status">Testing connection...</div>
+    
+    <script type="module">
+        import { testFirebaseConnection } from './js/test-firebase.js';
+        
+        const statusDiv = document.getElementById('status');
+        
+        testFirebaseConnection().then(success => {
+            if (success) {
+                statusDiv.textContent = '✅ Firebase connection successful!';
+                statusDiv.style.color = 'green';
+            } else {
+                statusDiv.textContent = '❌ Firebase connection failed. Check console for details.';
+                statusDiv.style.color = 'red';
+            }
+        });
+    </script>
+</body>
+</html> 

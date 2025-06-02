@@ -1,6 +1,9 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-analytics.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -17,5 +20,35 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const storage = getStorage(app);
 
-export { app, analytics }; 
+// Configure auth persistence
+auth.setPersistence('local');
+
+// Configure database rules
+const dbRules = {
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "chats": {
+      "$chatId": {
+        ".read": "auth != null && (data.child('participants').child(auth.uid).exists() || !data.child('participants').exists())",
+        ".write": "auth != null && (data.child('participants').child(auth.uid).exists() || !data.child('participants').exists())"
+      }
+    },
+    "messages": {
+      "$chatId": {
+        ".read": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()",
+        ".write": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()"
+      }
+    }
+  }
+};
+
+export { app, analytics, auth, db, storage, dbRules }; 
