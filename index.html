@@ -517,7 +517,6 @@
   </div>
 
   <script>
-    // Theme sync and auto theme functionality
     function getTimeBasedTheme() {
       const hour = new Date().getHours();
       
@@ -543,15 +542,15 @@
         currentTheme = getTimeBasedTheme();
       }
       
+      // Apply the theme class
       document.documentElement.className = currentTheme === 'default' ? '' : 'theme-' + currentTheme;
-      localStorage.setItem('chatzTheme', currentTheme);
     }
 
-    // Apply theme on page load
+    // Initialize theme
     const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
     applyTheme(savedTheme);
 
-    // Update theme every minute if using auto theme
+    // Update theme every minute only if auto is selected
     setInterval(() => {
       const currentTheme = localStorage.getItem('chatzTheme') || 'auto';
       if (currentTheme === 'auto') {
@@ -562,7 +561,8 @@
     // Listen for theme changes in other tabs
     window.addEventListener('storage', (e) => {
       if (e.key === 'chatzTheme') {
-        applyTheme(e.newValue);
+        const theme = e.newValue || 'auto';
+        applyTheme(theme);
       }
     });
   </script>
