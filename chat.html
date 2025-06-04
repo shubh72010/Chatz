@@ -196,6 +196,57 @@
       color: var(--main-light);
     }
 
+    .chat-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .action-btn {
+      background: var(--input-bg);
+      color: var(--text);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      background: var(--main);
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    .action-btn i {
+      font-size: 1.1rem;
+    }
+
+    .chat-stats {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-left: 1rem;
+      padding-left: 1rem;
+      border-left: 2px solid var(--input-border);
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .stat-item i {
+      font-size: 0.9rem;
+    }
+
     .chat-messages {
       flex: 1;
       overflow-y: auto;
@@ -384,6 +435,12 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    @media (max-width: 768px) {
+      .chat-stats {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -400,6 +457,34 @@
         <div class="chat-header-info">
           <div class="chat-header-title" id="chat-title">Loading...</div>
           <div class="chat-header-subtitle" id="chat-status">Offline</div>
+        </div>
+        <div class="chat-header-actions">
+          <button class="action-btn" id="voice-call-btn" title="Voice Call">
+            <i class="fas fa-phone"></i>
+          </button>
+          <button class="action-btn" id="video-call-btn" title="Video Call">
+            <i class="fas fa-video"></i>
+          </button>
+          <button class="action-btn" id="share-media-btn" title="Share Media">
+            <i class="fas fa-image"></i>
+          </button>
+          <button class="action-btn" id="share-file-btn" title="Share File">
+            <i class="fas fa-file"></i>
+          </button>
+          <div class="chat-stats">
+            <div class="stat-item">
+              <i class="fas fa-message"></i>
+              <span id="message-count">0</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-image"></i>
+              <span id="media-count">0</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-file"></i>
+              <span id="file-count">0</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -474,6 +559,9 @@
     let chatId = null;
     let typingTimeout = null;
     let replyTo = null;
+    let messageCount = 0;
+    let mediaCount = 0;
+    let fileCount = 0;
 
     // Function to initialize chat
     async function initializeChat(otherUserId) {
@@ -519,6 +607,7 @@
             renderMessage(message, childSnapshot.key);
           });
           scrollToBottom();
+          updateStats(messages);
         });
 
         // Listen for typing status
@@ -766,6 +855,62 @@
       if (e.key === 'chatzTheme') {
         applyTheme(e.newValue);
       }
+    });
+
+    // Update stats when messages are loaded
+    function updateStats(messages) {
+      messageCount = 0;
+      mediaCount = 0;
+      fileCount = 0;
+
+      messages.forEach(message => {
+        messageCount++;
+        if (message.type === 'image' || message.type === 'video') {
+          mediaCount++;
+        } else if (message.type === 'file') {
+          fileCount++;
+        }
+      });
+
+      document.getElementById('message-count').textContent = messageCount;
+      document.getElementById('media-count').textContent = mediaCount;
+      document.getElementById('file-count').textContent = fileCount;
+    }
+
+    // Add event listeners for new buttons
+    document.getElementById('voice-call-btn').addEventListener('click', () => {
+      alert('Voice call feature coming soon!');
+    });
+
+    document.getElementById('video-call-btn').addEventListener('click', () => {
+      alert('Video call feature coming soon!');
+    });
+
+    document.getElementById('share-media-btn').addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*,video/*';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          // Handle media upload
+          alert('Media sharing feature coming soon!');
+        }
+      };
+      input.click();
+    });
+
+    document.getElementById('share-file-btn').addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          // Handle file upload
+          alert('File sharing feature coming soon!');
+        }
+      };
+      input.click();
     });
   </script>
 </body>
