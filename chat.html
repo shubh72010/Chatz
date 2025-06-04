@@ -738,24 +738,33 @@
     }
 
     function applyTheme(theme) {
-      // Always use time-based theme now
-      const currentTheme = getTimeBasedTheme();
+      let currentTheme = theme;
+      
+      // If no theme provided or theme is 'auto', use time-based theme
+      if (!currentTheme || currentTheme === 'auto') {
+        currentTheme = getTimeBasedTheme();
+      }
+      
       document.documentElement.className = currentTheme === 'default' ? '' : 'theme-' + currentTheme;
       localStorage.setItem('chatzTheme', currentTheme);
     }
 
     // Apply theme on page load
-    applyTheme();
+    const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
+    applyTheme(savedTheme);
 
-    // Update theme every minute
+    // Update theme every minute if using auto theme
     setInterval(() => {
-      applyTheme();
+      const currentTheme = localStorage.getItem('chatzTheme') || 'auto';
+      if (currentTheme === 'auto') {
+        applyTheme('auto');
+      }
     }, 60000);
 
     // Listen for theme changes in other tabs
     window.addEventListener('storage', (e) => {
       if (e.key === 'chatzTheme') {
-        applyTheme();
+        applyTheme(e.newValue);
       }
     });
   </script>
