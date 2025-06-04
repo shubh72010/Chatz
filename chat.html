@@ -602,8 +602,10 @@
         onValue(messagesQuery, (snapshot) => {
           if (!chatMessages) return; // Guard against undefined
           chatMessages.innerHTML = '';
+          const messages = [];
           snapshot.forEach((childSnapshot) => {
             const message = childSnapshot.val();
+            messages.push(message);
             renderMessage(message, childSnapshot.key);
           });
           scrollToBottom();
@@ -859,22 +861,27 @@
 
     // Update stats when messages are loaded
     function updateStats(messages) {
-      messageCount = 0;
-      mediaCount = 0;
-      fileCount = 0;
+      if (!messages) return;
+      
+      messageCount = messages.length;
+      mediaCount = messages.filter(msg => 
+        msg.type === 'image' || 
+        msg.type === 'video' || 
+        (msg.text && msg.text.match(/\.(jpg|jpeg|png|gif|mp4|webm|ogg)$/i))
+      ).length;
+      fileCount = messages.filter(msg => 
+        msg.type === 'file' || 
+        (msg.text && msg.text.match(/\.(pdf|doc|docx|xls|xlsx|zip|rar)$/i))
+      ).length;
 
-      messages.forEach(message => {
-        messageCount++;
-        if (message.type === 'image' || message.type === 'video') {
-          mediaCount++;
-        } else if (message.type === 'file') {
-          fileCount++;
-        }
-      });
+      // Update the UI
+      const messageCountEl = document.getElementById('message-count');
+      const mediaCountEl = document.getElementById('media-count');
+      const fileCountEl = document.getElementById('file-count');
 
-      document.getElementById('message-count').textContent = messageCount;
-      document.getElementById('media-count').textContent = mediaCount;
-      document.getElementById('file-count').textContent = fileCount;
+      if (messageCountEl) messageCountEl.textContent = messageCount;
+      if (mediaCountEl) mediaCountEl.textContent = mediaCount;
+      if (fileCountEl) fileCountEl.textContent = fileCount;
     }
 
     // Add event listeners for new buttons
