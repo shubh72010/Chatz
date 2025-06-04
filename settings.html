@@ -486,11 +486,6 @@
       
       // Apply the theme class
       document.documentElement.className = currentTheme === 'default' ? '' : 'theme-' + currentTheme;
-      
-      // Store the original theme selection (auto or manual)
-      if (theme !== undefined) {
-        localStorage.setItem('chatzTheme', theme);
-      }
     }
 
     // Initialize theme select and apply theme
@@ -505,6 +500,7 @@
         // Handle theme changes
         themeSelect.addEventListener('change', (event) => {
           const selectedTheme = event.target.value;
+          localStorage.setItem('chatzTheme', selectedTheme);
           applyTheme(selectedTheme);
         });
 
