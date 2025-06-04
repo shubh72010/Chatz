@@ -25,7 +25,7 @@
       --transition-speed: 0.2s;
     }
 
-    /* Default (Purple) Theme */
+    /* PURPLE THEME (Default) */
     :root {
       /* Background Colors */
       --bg: #23272f;
@@ -118,7 +118,7 @@
     body {
       font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
       background: var(--bg-gradient);
-      color: #f5f5f5;
+      color: var(--text);
       margin: 0;
       min-height: 100vh;
       display: flex;
@@ -129,7 +129,7 @@
     header {
       width: 100%;
       background: var(--header-bg);
-      color: #fff;
+      color: var(--text);
       padding: 1rem 2rem;
       font-size: 1.5rem;
       font-weight: 700;
@@ -379,98 +379,65 @@
       transform: scale(1.1);
     }
 
-    /* PURPLE THEME */
-    .theme-default body {
-      background: linear-gradient(135deg, #a259ff 0%, #5f27cd 100%) !important;
-      color: var(--text) !important;
-    }
-    .theme-default .settings-card {
-      background: rgba(44,32,69,0.96)!important;
-      color: #fff!important;
-    }
-    .theme-default header {
-      background: rgba(44,32,69,0.85)!important;
-      color: #fff!important;
-    }
-    .theme-default .profile-info .profile-name,
-    .theme-default .section label { color: var(--main)!important; }
-    .theme-default select,
-    .theme-default input[type="text"] {
-      background: rgba(255,255,255,0.16)!important;
-      color: var(--main)!important;
-      border-color: var(--main)!important;
-    }
-    .theme-default .save-btn, .theme-default .signout-btn {
-      background: var(--main)!important;
-      color: #fff!important;
-    }
-
-    /* DARK THEME */
-    .theme-dark body {
-      background: var(--dark-bg)!important;
-      color: var(--dark-text)!important;
-    }
-    .theme-dark .settings-card {
-      background: var(--dark-card)!important;
-      color: var(--dark-text)!important;
-      box-shadow: 0 8px 32px #0004!important;
-    }
-    .theme-dark header {
-      background: #191938!important;
-      color: var(--dark-text)!important;
-    }
-    .theme-dark .profile-info .profile-name,
-    .theme-dark .section label { color: #a259ff!important; }
-    .theme-dark select,
-    .theme-dark input[type="text"] {
-      background: var(--dark-input)!important;
-      color: #a259ff!important;
-      border-color: #5f27cd!important;
-    }
-    .theme-dark select:focus, .theme-dark input[type="text"]:focus {
-      background: #1c1c38!important;
-      color: #a259ff!important;
-      border-color: var(--main)!important;
-    }
-    .theme-dark .save-btn, .theme-dark .signout-btn {
-      background: #a259ff!important;
-      color: #fff!important;
-    }
-
-    /* LIGHT THEME */
+    /* Remove old theme-specific overrides */
+    .theme-default body,
+    .theme-dark body,
     .theme-light body {
-      background: var(--light-bg)!important;
-      color: var(--light-text)!important;
+      background: var(--bg-gradient);
+      color: var(--text);
     }
-    .theme-light .settings-card {
-      background: var(--light-card)!important;
-      color: var(--light-text)!important;
-      box-shadow: 0 8px 32px #a259ff0d!important;
+
+    .settings-card {
+      background: var(--settings-bg);
+      color: var(--text);
     }
-    .theme-light header {
-      background: #fff!important;
-      color: var(--main)!important;
+
+    header {
+      background: var(--header-bg);
+      color: var(--text);
     }
-    .theme-light .profile-info .profile-name,
-    .theme-light .section label { color: var(--accent)!important; }
-    .theme-light select,
-    .theme-light input[type="text"] {
-      background: #f2edfd!important;
-      color: var(--accent)!important;
-      border-color: var(--main)!important;
+
+    .profile-info .profile-name,
+    .section label {
+      color: var(--main);
     }
-    .theme-light select:focus, .theme-light input[type="text"]:focus {
-      background: #fff!important;
-      color: var(--main)!important;
-      border-color: var(--accent)!important;
+
+    select,
+    input[type="text"],
+    textarea {
+      background: var(--input-bg);
+      color: var(--text);
+      border-color: var(--input-border);
     }
-    .theme-light .save-btn, .theme-light .signout-btn {
-      background: var(--accent)!important;
-      color: #fff!important;
+
+    select:focus,
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: var(--main);
     }
-    .theme-light .save-btn:hover, .theme-light .signout-btn:hover {
-      background: var(--main)!important;
+
+    .save-btn {
+      background: var(--main);
+      color: #fff;
     }
+
+    .save-btn:hover {
+      background: var(--main-dark);
+    }
+
+    .signout-btn {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .settings-group {
+      background: rgba(255,255,255,0.05);
+    }
+
+    .settings-group h3 {
+      color: var(--main);
+    }
+
     @media (max-width: 600px) {
       .settings-card {
         padding: 1.2rem 0.7rem 1rem 0.7rem;
@@ -492,7 +459,6 @@
     }
   </style>
   <script>
-    // Theme sync and auto theme functionality
     function getTimeBasedTheme() {
       const hour = new Date().getHours();
       
@@ -518,47 +484,52 @@
         currentTheme = getTimeBasedTheme();
       }
       
+      // Apply the theme class
       document.documentElement.className = currentTheme === 'default' ? '' : 'theme-' + currentTheme;
-      localStorage.setItem('chatzTheme', theme || 'auto'); // Store the original theme selection
+      
+      // Store the original theme selection (auto or manual)
+      if (theme !== undefined) {
+        localStorage.setItem('chatzTheme', theme);
+      }
     }
 
-    // Apply theme on page load
-    const themeSelect = document.getElementById('theme-select');
-
-    // Initialize theme
-    (function() {
-      const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
+    // Initialize theme select and apply theme
+    document.addEventListener('DOMContentLoaded', () => {
+      const themeSelect = document.getElementById('theme-select');
       if (themeSelect) {
+        // Set initial value from localStorage
+        const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
         themeSelect.value = savedTheme;
-      }
-      applyTheme(savedTheme);
+        applyTheme(savedTheme);
 
-      // If auto theme is selected, update every minute
-      if (savedTheme === 'auto') {
-        setInterval(() => {
-          applyTheme('auto');
-        }, 60000);
+        // Handle theme changes
+        themeSelect.addEventListener('change', (event) => {
+          const selectedTheme = event.target.value;
+          applyTheme(selectedTheme);
+        });
+
+        // If auto theme is selected, update every minute
+        if (savedTheme === 'auto') {
+          setInterval(() => {
+            if (localStorage.getItem('chatzTheme') === 'auto') {
+              applyTheme('auto');
+            }
+          }, 60000);
+        }
       }
-    })();
+    });
 
     // Listen for theme changes in other tabs
     window.addEventListener('storage', (e) => {
       if (e.key === 'chatzTheme') {
         const theme = e.newValue || 'auto';
+        const themeSelect = document.getElementById('theme-select');
         if (themeSelect) {
           themeSelect.value = theme;
         }
         applyTheme(theme);
       }
     });
-
-    // Handle theme selection change
-    if (themeSelect) {
-      themeSelect.addEventListener('change', (event) => {
-        const theme = event.target.value;
-        applyTheme(theme);
-      });
-    }
   </script>
 </head>
 <body>
