@@ -19,22 +19,151 @@
       onValue,
       query,
       orderByChild,
-      serverTimestamp 
+      serverTimestamp,
+      limitToLast,
+      startAfter 
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-    window.auth = auth;
-    window.db = db;
-    window.ref = ref;
-    window.push = push;
-    window.set = set;
-    window.get = get;
-    window.update = update;
-    window.onValue = onValue;
-    window.query = query;
-    window.orderByChild = orderByChild;
-    window.serverTimestamp = serverTimestamp;
-    window.onAuthStateChanged = onAuthStateChanged;
+    // Make Firebase functions available globally
+    window.firebaseApp = {
+      auth,
+      db,
+      ref,
+      push,
+      set,
+      get,
+      update,
+      onValue,
+      query,
+      orderByChild,
+      serverTimestamp,
+      limitToLast,
+      startAfter,
+      onAuthStateChanged
+    };
+
+    // Initialize after DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Giphy SDK
+      window.giphySDK = window.GiphySDK;
+      window.giphySDK.configure({ apiKey: 'GlVGYHkr3WSBnllca54iNt0yFbjz7L65' });
+
+      // Initialize message input and send button
+      const messageInput = document.getElementById('message-input');
+      const sendBtn = document.getElementById('send-btn');
+      
+      if (messageInput && sendBtn) {
+        sendBtn.addEventListener('click', () => {
+          const message = messageInput.value.trim();
+          if (message) {
+            sendMessage();
+          }
+        });
+
+        messageInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (message) {
+              sendMessage();
+            }
+          }
+        });
+      }
+
+      // Check authentication state
+      firebaseApp.onAuthStateChanged(firebaseApp.auth, (user) => {
+        if (user) {
+          window.currentUser = user;
+          initializeChat();
+        } else {
+          window.location.href = '/Chatz/signin.html';
+        }
+      });
+    });
+
+    // Function to send message
+    async function sendMessage() {
+      const messageInput = document.getElementById('message-input');
+      const message = messageInput.value.trim();
+      if (!message || !window.currentUser) return;
+
+      try {
+        const messageRef = firebaseApp.push(firebaseApp.ref(firebaseApp.db, 'globalMessages'));
+        const messageData = {
+          text: message,
+          senderId: window.currentUser.uid,
+          senderName: window.currentUser.displayName || 'Anonymous',
+          senderPhoto: window.currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(window.currentUser.displayName || 'A')}&background=726dff&color=fff`,
+          timestamp: firebaseApp.serverTimestamp()
+        };
+
+        if (window.replyTo) {
+          messageData.replyTo = {
+            messageId: window.replyTo.messageId,
+            senderId: window.replyTo.senderId,
+            text: window.replyTo.text
+          };
+        }
+
+        await firebaseApp.set(messageRef, messageData);
+        messageInput.value = '';
+        if (window.cancelReply) {
+          window.cancelReply();
+        }
+        scrollToBottom();
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+      }
+    }
+
+    // Function to initialize chat
+    async function initializeChat() {
+      if (!window.currentUser) return;
+
+      try {
+        // Listen for messages
+        const messagesRef = firebaseApp.ref(firebaseApp.db, 'globalMessages');
+        const messagesQuery = firebaseApp.query(messagesRef, firebaseApp.orderByChild('timestamp'), firebaseApp.limitToLast(50));
+
+        firebaseApp.onValue(messagesQuery, (snapshot) => {
+          const chatMessages = document.getElementById('chat-messages');
+          if (!chatMessages) return;
+          
+          chatMessages.innerHTML = '';
+          const messages = [];
+          snapshot.forEach((childSnapshot) => {
+            const message = childSnapshot.val();
+            messages.push(message);
+            renderMessage(message, childSnapshot.key);
+          });
+          scrollToBottom();
+          if (window.updateStats) {
+            window.updateStats(messages);
+          }
+        });
+
+      } catch (error) {
+        console.error('Error initializing chat:', error);
+        alert('Failed to load chat. Please try again.');
+      }
+    }
+
+    // Function to search GIFs
+    async function searchGifs(query) {
+      try {
+        const endpoint = query === 'trending' 
+          ? window.giphySDK.trending({ limit: 20 })
+          : window.giphySDK.search({ q: query, limit: 20 });
+        
+        const response = await endpoint;
+        displayGifs(response.data);
+      } catch (error) {
+        console.error('Error fetching GIFs:', error);
+      }
+    }
   </script>
   <style>
     /* Base Theme Variables */
@@ -734,21 +863,7 @@
       }, 500);
     });
 
-    // Function to search GIFs
-    async function searchGifs(query) {
-      try {
-        const endpoint = query === 'trending' 
-          ? GiphySDK.trending({ limit: 20 })
-          : GiphySDK.search({ q: query, limit: 20 });
-        
-        const response = await endpoint;
-        displayGifs(response.data);
-      } catch (error) {
-        console.error('Error fetching GIFs:', error);
-      }
-    }
-
-    // Display GIFs in the picker
+    // Function to display GIFs
     function displayGifs(gifs) {
       gifResults.innerHTML = '';
       gifs.forEach(gif => {
