@@ -856,12 +856,19 @@
         `;
       }
 
+      let contentHTML = '';
+      if (message.type === 'gif') {
+        contentHTML = `<img src="${escapeHtml(message.content)}" alt="GIF" class="message-gif" style="max-width: 200px; border-radius: 8px;">`;
+      } else {
+        contentHTML = escapeHtml(message.text);
+      }
+
       messageDiv.innerHTML = `
         <img src="${photoURL}" alt="Profile" data-uid="${message.senderId}" class="message-avatar" />
         <div class="message-content">
           ${!isOwn ? `<div class="message-sender">${escapeHtml(displayName)}</div>` : ''}
           ${replyHTML}
-          ${escapeHtml(message.text)}
+          ${contentHTML}
           <div class="message-time">${timestamp}</div>
         </div>
       `;
@@ -1020,6 +1027,57 @@
     const gifButton = document.querySelector('.gif-button');
     let gifPicker = null;
 
+    // Message sending functionality
+    const messageInput = document.querySelector('.message-input');
+    const sendButton = document.querySelector('.send-button');
+
+    // Send message function
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || !currentUser) return;
+
+      const message = {
+        text: text,
+        senderId: currentUser.uid,
+        timestamp: Date.now()
+      };
+
+      if (replyTo) {
+        message.replyTo = replyTo;
+        cancelReply();
+      }
+
+      try {
+        // Clear input before sending
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+
+        // Send message to Firebase
+        const messagesRef = ref(db, 'global_messages');
+        await push(messagesRef, message);
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+      }
+    }
+
+    // Handle send button click
+    sendButton.addEventListener('click', sendMessage);
+
+    // Handle enter key press
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Auto-resize textarea
+    messageInput.addEventListener('input', () => {
+      messageInput.style.height = 'auto';
+      messageInput.style.height = messageInput.scrollHeight + 'px';
+    });
+
     // Initialize GIF picker
     gifButton.addEventListener('click', () => {
       if (!gifPicker) {
@@ -1028,14 +1086,13 @@
           const messageData = {
             type: 'gif',
             content: gif.url,
-            sender: currentUser.uid,
-            senderName: currentUser.displayName,
-            senderAvatar: currentUser.photoURL,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            senderId: currentUser.uid,
+            timestamp: Date.now()
           };
           
           // Send the GIF message
-          db.collection('messages').add(messageData)
+          const messagesRef = ref(db, 'global_messages');
+          push(messagesRef, messageData)
             .then(() => {
               gifPicker.hide();
             })
@@ -1061,36 +1118,6 @@
         gifPicker.hide();
       }
     });
-
-    // Modify the message display function to handle GIFs
-    function displayMessage(message) {
-      const messageElement = document.createElement('div');
-      messageElement.className = `message ${message.sender === currentUser.uid ? 'own-message' : 'other-message'}`;
-      
-      if (message.type === 'gif') {
-        messageElement.innerHTML = `
-          <div class="message-content">
-            <img src="${message.content}" alt="GIF" class="message-gif" style="max-width: 200px; border-radius: 8px;">
-          </div>
-          <div class="message-info">
-            <span class="message-sender">${message.senderName}</span>
-            <span class="message-time">${formatTimestamp(message.timestamp)}</span>
-          </div>
-        `;
-      } else {
-        // Handle regular text messages as before
-        messageElement.innerHTML = `
-          <div class="message-content">${message.content}</div>
-          <div class="message-info">
-            <span class="message-sender">${message.senderName}</span>
-            <span class="message-time">${formatTimestamp(message.timestamp)}</span>
-          </div>
-        `;
-      }
-      
-      messagesContainer.appendChild(messageElement);
-      scrollToBottom();
-    }
   </script>
 </body>
 </html>
