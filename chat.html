@@ -21,18 +21,81 @@
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-    window.auth = auth;
-    window.db = db;
-    window.ref = ref;
-    window.push = push;
-    window.set = set;
-    window.get = get;
-    window.update = update;
-    window.onValue = onValue;
-    window.query = query;
-    window.orderByChild = orderByChild;
-    window.serverTimestamp = serverTimestamp;
-    window.onAuthStateChanged = onAuthStateChanged;
+    // Make Firebase functions available globally
+    window.firebaseApp = {
+      auth,
+      db,
+      ref,
+      push,
+      set,
+      get,
+      update,
+      onValue,
+      query,
+      orderByChild,
+      serverTimestamp,
+      onAuthStateChanged
+    };
+
+    // Initialize after DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Giphy SDK
+      window.giphySDK = window.GiphySDK;
+      window.giphySDK.configure({ apiKey: 'GlVGYHkr3WSBnllca54iNt0yFbjz7L65' });
+
+      // Initialize message input and send button
+      const messageInput = document.getElementById('message-input');
+      const sendBtn = document.getElementById('send-btn');
+      
+      if (messageInput && sendBtn) {
+        sendBtn.addEventListener('click', () => {
+          const message = messageInput.value.trim();
+          if (message) {
+            sendMessage();
+          }
+        });
+
+        messageInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (message) {
+              sendMessage();
+            }
+          }
+        });
+      }
+
+      // Check authentication state
+      firebaseApp.onAuthStateChanged(firebaseApp.auth, (user) => {
+        if (user) {
+          window.currentUser = user;
+          const urlParams = new URLSearchParams(window.location.search);
+          const otherUserId = urlParams.get('uid');
+          if (otherUserId) {
+            initializeChat(otherUserId);
+          } else {
+            window.location.href = '/Chatz/index.html';
+          }
+        } else {
+          window.location.href = '/Chatz/signin.html';
+        }
+      });
+    });
+
+    // Function to search GIFs
+    async function searchGifs(query) {
+      try {
+        const endpoint = query === 'trending' 
+          ? window.giphySDK.trending({ limit: 20 })
+          : window.giphySDK.search({ q: query, limit: 20 });
+        
+        const response = await endpoint;
+        displayGifs(response.data);
+      } catch (error) {
+        console.error('Error fetching GIFs:', error);
+      }
+    }
   </script>
   <style>
     /* Base Theme Variables */
@@ -900,38 +963,41 @@
 
     // Function to send message
     async function sendMessage() {
+      const messageInput = document.getElementById('message-input');
       const message = messageInput.value.trim();
-      if (!message || !currentUser || !chatId) return;
+      if (!message || !window.currentUser || !window.chatId) return;
 
       try {
-        const messageRef = push(ref(db, `dms/${chatId}/messages`));
+        const messageRef = firebaseApp.push(firebaseApp.ref(firebaseApp.db, `dms/${window.chatId}/messages`));
         const messageData = {
           text: message,
-          senderId: currentUser.uid,
-          timestamp: serverTimestamp()
+          senderId: window.currentUser.uid,
+          timestamp: firebaseApp.serverTimestamp()
         };
 
-        if (replyTo) {
+        if (window.replyTo) {
           messageData.replyTo = {
-            messageId: replyTo.messageId,
-            senderId: replyTo.senderId,
-            text: replyTo.text
+            messageId: window.replyTo.messageId,
+            senderId: window.replyTo.senderId,
+            text: window.replyTo.text
           };
         }
 
-        await set(messageRef, messageData);
+        await firebaseApp.set(messageRef, messageData);
 
         // Update last message
-        await update(ref(db, `dms/${chatId}`), {
+        await firebaseApp.update(firebaseApp.ref(firebaseApp.db, `dms/${window.chatId}`), {
           lastMessage: {
             text: message,
-            timestamp: serverTimestamp(),
-            senderId: currentUser.uid
+            timestamp: firebaseApp.serverTimestamp(),
+            senderId: window.currentUser.uid
           }
         });
 
         messageInput.value = '';
-        cancelReply();
+        if (window.cancelReply) {
+          window.cancelReply();
+        }
         scrollToBottom();
       } catch (error) {
         console.error('Error sending message:', error);
@@ -1003,22 +1069,6 @@
     };
 
     cancelReplyBtn.onclick = cancelReply;
-
-    // Initialize chat when user is authenticated
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        currentUser = user;
-        const urlParams = new URLSearchParams(window.location.search);
-        const otherUserId = urlParams.get('uid');
-        if (otherUserId) {
-          initializeChat(otherUserId);
-        } else {
-          window.location.href = '/Chatz/index.html';
-        }
-      } else {
-        window.location.href = '/Chatz/signin.html';
-      }
-    });
 
     // Setup profile clicks
     document.addEventListener('click', (e) => {
