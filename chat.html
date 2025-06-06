@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz | Chat</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="styles/giphy.css" />
+  <script src="https://giphy.com/static/sdk/sdk.min.js"></script>
   <style>
     /* Base Theme Variables */
     :root {
@@ -305,54 +307,71 @@
       text-align: right;
     }
 
-    .chat-input-container {
+    .message-input-container {
       display: flex;
       gap: 1rem;
       padding: 1rem;
       background: var(--bg-light);
-      border-radius: 1rem;
-      margin-top: 1rem;
+      border-radius: var(--border-radius-md);
+      position: relative;
+      margin-top: auto;
+    }
+
+    .message-input-wrapper {
+      flex: 1;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
     }
 
     .message-input {
       flex: 1;
-      background: var(--input-bg);
+      padding: 0.8rem 1rem;
       border: 1px solid var(--input-border);
-      border-radius: 1.2rem;
-      padding: 0.8rem 1.2rem;
-      color: #fff;
-      font-size: 0.95rem;
-      resize: none;
-      min-height: 44px;
-      max-height: 120px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .message-input:focus {
-      border-color: var(--main);
-    }
-
-    .send-btn {
-      background: var(--main);
-      color: #fff;
-      border: none;
-      border-radius: 1.2rem;
-      padding: 0 1.5rem;
+      border-radius: var(--border-radius-sm);
+      background: var(--input-bg);
+      color: var(--text);
       font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.2s;
+      resize: none;
+      max-height: 120px;
+      min-height: 42px;
+    }
+
+    .message-actions {
       display: flex;
-      align-items: center;
       gap: 0.5rem;
+      align-items: center;
     }
 
-    .send-btn:hover {
+    .action-button {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      border-radius: var(--border-radius-sm);
+      transition: color var(--transition-speed);
+    }
+
+    .action-button:hover {
+      color: var(--main);
+    }
+
+    .send-button {
+      background: var(--main);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius-sm);
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition-speed);
+    }
+
+    .send-button:hover {
       background: var(--main-dark);
-    }
-
-    .send-btn i {
-      font-size: 1.1rem;
     }
 
     .typing-indicator {
@@ -511,9 +530,23 @@
         </div>
       </div>
 
-      <div class="chat-input-container">
-        <input type="text" id="message-input" placeholder="Type a message..." class="message-input" />
-        <button id="send-btn" class="send-btn">
+      <div class="message-input-container">
+        <div class="message-input-wrapper">
+          <textarea
+            class="message-input"
+            placeholder="Type a message..."
+            rows="1"
+          ></textarea>
+          <div class="message-actions">
+            <button class="action-button gif-button" title="Send GIF">
+              <i class="fas fa-images"></i>
+            </button>
+            <button class="action-button emoji-button" title="Add emoji">
+              <i class="far fa-smile"></i>
+            </button>
+          </div>
+        </div>
+        <button class="send-button">
           <i class="fas fa-paper-plane"></i>
         </button>
       </div>
@@ -587,7 +620,7 @@
         chatId = participants.join('_');
 
         // Create or update chat participants
-        const chatRef = ref(db, `dms/${chatId}`);
+        const chatRef = ref(db, `chats/${chatId}`);
         await update(chatRef, {
           participants: {
             [currentUser.uid]: true,
@@ -596,7 +629,7 @@
         });
 
         // Listen for messages
-        const messagesRef = ref(db, `dms/${chatId}/messages`);
+        const messagesRef = ref(db, `chats/${chatId}/messages`);
         const messagesQuery = query(messagesRef, orderByChild('timestamp'));
 
         onValue(messagesQuery, (snapshot) => {
@@ -613,7 +646,7 @@
         });
 
         // Listen for typing status
-        const typingRef = ref(db, `dms/${chatId}/typing/${otherUserId}`);
+        const typingRef = ref(db, `chats/${chatId}/typing/${otherUserId}`);
         onValue(typingRef, (snapshot) => {
           if (!typingIndicator || !typingText) return; // Guard against undefined
           if (snapshot.val()) {
@@ -685,7 +718,7 @@
       if (!message || !currentUser || !chatId) return;
 
       try {
-        const messageRef = push(ref(db, `dms/${chatId}/messages`));
+        const messageRef = push(ref(db, `chats/${chatId}/messages`));
         const messageData = {
           text: message,
           senderId: currentUser.uid,
@@ -703,7 +736,7 @@
         await set(messageRef, messageData);
 
         // Update last message
-        await update(ref(db, `dms/${chatId}`), {
+        await update(ref(db, `chats/${chatId}`), {
           lastMessage: {
             text: message,
             timestamp: serverTimestamp(),
@@ -769,7 +802,7 @@
       if (!currentUser || !chatId) return;
 
       // Set typing status
-      const typingRef = ref(db, `dms/${chatId}/typing/${currentUser.uid}`);
+      const typingRef = ref(db, `chats/${chatId}/typing/${currentUser.uid}`);
       set(typingRef, true);
 
       // Clear previous timeout
@@ -972,6 +1005,90 @@
         }
       }
     });
+  </script>
+  <script src="js/giphy.js"></script>
+  <script>
+    // Initialize GIPHY integration
+    const giphyIntegration = new GiphyIntegration();
+    const messageInputContainer = document.querySelector('.message-input-container');
+    const gifButton = document.querySelector('.gif-button');
+    let gifPicker = null;
+
+    // Initialize GIF picker
+    gifButton.addEventListener('click', () => {
+      if (!gifPicker) {
+        gifPicker = giphyIntegration.createGifPickerUI(messageInputContainer, (gif) => {
+          // When a GIF is selected, send it as a message
+          const messageData = {
+            type: 'gif',
+            content: gif.url,
+            sender: currentUser.uid,
+            senderName: currentUser.displayName,
+            senderAvatar: currentUser.photoURL,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            chatId: activeChatId
+          };
+          
+          // Send the GIF message
+          db.collection('chats').doc(activeChatId).collection('messages').add(messageData)
+            .then(() => {
+              gifPicker.hide();
+              // Update last message in chats collection
+              db.collection('chats').doc(activeChatId).update({
+                lastMessage: 'Sent a GIF',
+                lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            })
+            .catch((error) => {
+              console.error('Error sending GIF:', error);
+            });
+        });
+      }
+      
+      if (gifPicker) {
+        const isVisible = messageInputContainer.querySelector('.gif-picker').style.display === 'block';
+        if (isVisible) {
+          gifPicker.hide();
+        } else {
+          gifPicker.show();
+        }
+      }
+    });
+
+    // Close GIF picker when clicking outside
+    document.addEventListener('click', (e) => {
+      if (gifPicker && !e.target.closest('.gif-picker') && !e.target.closest('.gif-button')) {
+        gifPicker.hide();
+      }
+    });
+
+    // Modify the message display function to handle GIFs
+    function displayMessage(message) {
+      const messageElement = document.createElement('div');
+      messageElement.className = `message ${message.sender === currentUser.uid ? 'own-message' : 'other-message'}`;
+      
+      if (message.type === 'gif') {
+        messageElement.innerHTML = `
+          <div class="message-content">
+            <img src="${message.content}" alt="GIF" class="message-gif" style="max-width: 200px; border-radius: 8px;">
+          </div>
+          <div class="message-info">
+            <span class="message-time">${formatTimestamp(message.timestamp)}</span>
+          </div>
+        `;
+      } else {
+        // Handle regular text messages as before
+        messageElement.innerHTML = `
+          <div class="message-content">${message.content}</div>
+          <div class="message-info">
+            <span class="message-time">${formatTimestamp(message.timestamp)}</span>
+          </div>
+        `;
+      }
+      
+      messagesContainer.appendChild(messageElement);
+      scrollToBottom();
+    }
   </script>
 </body>
 </html> 
