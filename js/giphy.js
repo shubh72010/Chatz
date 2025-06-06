@@ -1,107 +1,86 @@
-// Replace 'YOUR_GIPHY_API_KEY' with your actual GIPHY API key
-const GIPHY_API_KEY = 'YOUR_GIPHY_API_KEY';
-const GIPHY_ENDPOINT = 'https://api.giphy.com/v1/gifs';
-
+// Replace 'YOUR_SDK_KEY' with your actual GIPHY SDK key
 class GiphyIntegration {
     constructor() {
-        this.searchEndpoint = `${GIPHY_ENDPOINT}/search`;
-        this.trendingEndpoint = `${GIPHY_ENDPOINT}/trending`;
+        this.initializeGiphySDK();
     }
 
-    async searchGifs(query, limit = 20, offset = 0) {
-        try {
-            const response = await fetch(
-                `${this.searchEndpoint}?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`
-            );
-            const data = await response.json();
-            return data.data;
-        } catch (error) {
-            console.error('Error searching GIFs:', error);
-            return [];
-        }
-    }
-
-    async getTrendingGifs(limit = 20) {
-        try {
-            const response = await fetch(
-                `${this.trendingEndpoint}?api_key=${GIPHY_API_KEY}&limit=${limit}`
-            );
-            const data = await response.json();
-            return data.data;
-        } catch (error) {
-            console.error('Error fetching trending GIFs:', error);
-            return [];
-        }
+    initializeGiphySDK() {
+        window.giphySDK = new window.GiphySDK();
+        window.giphySDK.configure({ sdk_key: 'JDYaLkWja1iraKwxqsUsHJOQesqcdDyk' });
     }
 
     createGifPickerUI(container, onGifSelect) {
-        const gifPickerHTML = `
-            <div class="gif-picker" style="display: none;">
-                <div class="gif-search-container">
-                    <input type="text" class="gif-search-input" placeholder="Search GIFs...">
-                    <button class="gif-search-button">Search</button>
-                </div>
-                <div class="gif-results"></div>
-            </div>
-        `;
-        
-        container.insertAdjacentHTML('beforeend', gifPickerHTML);
-        
-        const gifPicker = container.querySelector('.gif-picker');
-        const searchInput = gifPicker.querySelector('.gif-search-input');
-        const searchButton = gifPicker.querySelector('.gif-search-button');
-        const resultsContainer = gifPicker.querySelector('.gif-results');
+        // Create a container for the GIPHY SDK grid
+        const gridContainer = document.createElement('div');
+        gridContainer.className = 'gif-picker';
+        gridContainer.style.display = 'none';
+        container.appendChild(gridContainer);
 
-        // Load trending GIFs initially
-        this.loadTrendingGifs(resultsContainer, onGifSelect);
+        // Initialize the GIPHY Grid
+        const grid = window.giphySDK.Grid({
+            container: gridContainer,
+            width: 320,
+            columns: 2,
+            gutter: 8,
+            noLink: true,
+            hideAttribution: true,
+            rating: 'pg-13',
+            theme: document.body.classList.contains('theme-dark') ? 'dark' : 'light'
+        });
+
+        // Create search bar
+        const searchContainer = document.createElement('div');
+        searchContainer.className = 'gif-search-container';
+        searchContainer.innerHTML = `
+            <input type="text" class="gif-search-input" placeholder="Search GIFs...">
+            <button class="gif-search-button">Search</button>
+        `;
+        gridContainer.insertBefore(searchContainer, gridContainer.firstChild);
+
+        // Handle search
+        const searchInput = searchContainer.querySelector('.gif-search-input');
+        const searchButton = searchContainer.querySelector('.gif-search-button');
+
+        const performSearch = (query) => {
+            if (query) {
+                grid.search(query);
+            } else {
+                grid.trending();
+            }
+        };
 
         searchButton.addEventListener('click', () => {
-            this.handleGifSearch(searchInput.value, resultsContainer, onGifSelect);
+            performSearch(searchInput.value);
         });
 
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                this.handleGifSearch(searchInput.value, resultsContainer, onGifSelect);
+                performSearch(searchInput.value);
             }
         });
 
-        return {
-            show: () => gifPicker.style.display = 'block',
-            hide: () => gifPicker.style.display = 'none'
-        };
-    }
-
-    async handleGifSearch(query, container, onGifSelect) {
-        container.innerHTML = '<div class="loading">Searching...</div>';
-        const gifs = await this.searchGifs(query);
-        this.displayGifs(gifs, container, onGifSelect);
-    }
-
-    async loadTrendingGifs(container, onGifSelect) {
-        container.innerHTML = '<div class="loading">Loading trending GIFs...</div>';
-        const gifs = await this.getTrendingGifs();
-        this.displayGifs(gifs, container, onGifSelect);
-    }
-
-    displayGifs(gifs, container, onGifSelect) {
-        container.innerHTML = '';
-        gifs.forEach(gif => {
-            const gifElement = document.createElement('div');
-            gifElement.className = 'gif-item';
-            gifElement.innerHTML = `
-                <img src="${gif.images.fixed_height_small.url}" 
-                     alt="${gif.title}"
-                     loading="lazy">
-            `;
-            gifElement.addEventListener('click', () => {
-                onGifSelect({
-                    url: gif.images.original.url,
-                    width: gif.images.original.width,
-                    height: gif.images.original.height,
-                    title: gif.title
-                });
+        // Handle GIF selection
+        grid.on('click', (gif) => {
+            onGifSelect({
+                url: gif.images.original.url,
+                width: gif.images.original.width,
+                height: gif.images.original.height,
+                title: gif.title
             });
-            container.appendChild(gifElement);
         });
+
+        // Load trending GIFs initially
+        grid.trending();
+
+        return {
+            show: () => {
+                gridContainer.style.display = 'block';
+                // Refresh grid when showing to fix layout issues
+                grid.refresh();
+            },
+            hide: () => {
+                gridContainer.style.display = 'none';
+            }
+        };
     }
 } 
