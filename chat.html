@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz | Chat</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://js.giphy.com/v2/sdk.js"></script>
   <style>
     /* Base Theme Variables */
     :root {
@@ -441,6 +442,56 @@
         display: none;
       }
     }
+
+    .gif-picker {
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      width: 100%;
+      max-height: 400px;
+      background: var(--bg-light);
+      border-radius: var(--border-radius-md);
+      box-shadow: var(--header-shadow);
+      display: none;
+      padding: 1rem;
+      z-index: 1000;
+    }
+
+    .gif-search {
+      width: 100%;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--input-border);
+      border-radius: var(--border-radius-sm);
+      background: var(--input-bg);
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+
+    .gif-results {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1rem;
+      overflow-y: auto;
+      max-height: 300px;
+      padding-right: 0.5rem;
+    }
+
+    .gif-item {
+      cursor: pointer;
+      border-radius: var(--border-radius-sm);
+      overflow: hidden;
+      transition: transform var(--transition-speed);
+    }
+
+    .gif-item:hover {
+      transform: scale(1.05);
+    }
+
+    .gif-item img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+    }
   </style>
 </head>
 <body>
@@ -512,6 +563,13 @@
       </div>
 
       <div class="chat-input-container">
+        <div class="gif-picker" id="gifPicker">
+          <input type="text" class="gif-search" id="gifSearch" placeholder="Search GIFs...">
+          <div class="gif-results" id="gifResults"></div>
+        </div>
+        <button class="input-action-btn" id="gifBtn">
+          <i class="fas fa-gif"></i>
+        </button>
         <input type="text" id="message-input" placeholder="Type a message..." class="message-input" />
         <button id="send-btn" class="send-btn">
           <i class="fas fa-paper-plane"></i>
@@ -562,6 +620,120 @@
     let messageCount = 0;
     let mediaCount = 0;
     let fileCount = 0;
+
+    // Initialize Giphy SDK
+    const GIPHY_API_KEY = 'GlVGYHkr3WSBnllca54iNt0yFbjz7L65'; // This is a public API key for development
+    GiphySDK.configure({ apiKey: GIPHY_API_KEY });
+
+    // GIF picker elements
+    const gifBtn = document.getElementById('gifBtn');
+    const gifPicker = document.getElementById('gifPicker');
+    const gifSearch = document.getElementById('gifSearch');
+    const gifResults = document.getElementById('gifResults');
+
+    let isGifPickerOpen = false;
+
+    // Toggle GIF picker
+    gifBtn.onclick = () => {
+      isGifPickerOpen = !isGifPickerOpen;
+      gifPicker.style.display = isGifPickerOpen ? 'block' : 'none';
+      if (isGifPickerOpen) {
+        searchGifs('trending');
+      }
+    };
+
+    // Close GIF picker when clicking outside
+    document.addEventListener('click', (e) => {
+      if (isGifPickerOpen && !gifPicker.contains(e.target) && e.target !== gifBtn) {
+        isGifPickerOpen = false;
+        gifPicker.style.display = 'none';
+      }
+    });
+
+    // Search GIFs
+    let searchTimeout;
+    gifSearch.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        searchGifs(e.target.value);
+      }, 500);
+    });
+
+    // Function to search GIFs
+    async function searchGifs(query) {
+      try {
+        const endpoint = query === 'trending' 
+          ? GiphySDK.trending({ limit: 20 })
+          : GiphySDK.search({ q: query, limit: 20 });
+        
+        const response = await endpoint;
+        displayGifs(response.data);
+      } catch (error) {
+        console.error('Error fetching GIFs:', error);
+      }
+    }
+
+    // Display GIFs in the picker
+    function displayGifs(gifs) {
+      gifResults.innerHTML = '';
+      gifs.forEach(gif => {
+        const gifItem = document.createElement('div');
+        gifItem.className = 'gif-item';
+        
+        const img = document.createElement('img');
+        img.src = gif.images.fixed_height_small.url;
+        img.alt = gif.title;
+        
+        gifItem.onclick = () => sendGif(gif);
+        gifItem.appendChild(img);
+        gifResults.appendChild(gifItem);
+      });
+    }
+
+    // Function to send GIF
+    async function sendGif(gif) {
+      if (!currentUser || !chatId) return;
+
+      try {
+        const messageRef = push(ref(db, `dms/${chatId}/messages`));
+        const messageData = {
+          type: 'gif',
+          gifUrl: gif.images.original.url,
+          gifId: gif.id,
+          senderId: currentUser.uid,
+          timestamp: serverTimestamp()
+        };
+
+        if (replyTo) {
+          messageData.replyTo = {
+            messageId: replyTo.messageId,
+            senderId: replyTo.senderId,
+            text: replyTo.text
+          };
+        }
+
+        await set(messageRef, messageData);
+
+        // Update last message
+        await update(ref(db, `dms/${chatId}`), {
+          lastMessage: {
+            text: '🖼️ Sent a GIF',
+            timestamp: serverTimestamp(),
+            senderId: currentUser.uid
+          }
+        });
+
+        // Close GIF picker and reset
+        isGifPickerOpen = false;
+        gifPicker.style.display = 'none';
+        gifSearch.value = '';
+        cancelReply();
+        scrollToBottom();
+      } catch (error) {
+        console.error('Error sending GIF:', error);
+        alert('Failed to send GIF. Please try again.');
+      }
+    }
 
     // Function to initialize chat
     async function initializeChat(otherUserId) {
@@ -656,17 +828,36 @@
         `;
       }
 
-      messageDiv.innerHTML = `
-        <img src="${isOwn ? (currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || 'U')}&background=726dff&color=fff`) : (otherUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.displayName || 'U')}&background=726dff&color=fff`)}" 
-             alt="Profile" 
-             class="message-avatar"
-             data-uid="${message.senderId}" />
-        <div class="message-content">
-          ${replyHTML}
-          ${escapeHtml(message.text)}
-          <div class="message-time">${timestamp}</div>
-        </div>
-      `;
+      if (message.type === 'gif') {
+        const gifImg = document.createElement('img');
+        gifImg.src = message.gifUrl;
+        gifImg.alt = 'GIF';
+        gifImg.style.maxWidth = '300px';
+        gifImg.style.borderRadius = 'var(--border-radius-sm)';
+        messageDiv.innerHTML = `
+          <img src="${isOwn ? (currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || 'U')}&background=726dff&color=fff`) : (otherUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.displayName || 'U')}&background=726dff&color=fff`)}" 
+               alt="Profile" 
+               class="message-avatar"
+               data-uid="${message.senderId}" />
+          <div class="message-content">
+            ${replyHTML}
+            ${gifImg}
+            <div class="message-time">${timestamp}</div>
+          </div>
+        `;
+      } else {
+        messageDiv.innerHTML = `
+          <img src="${isOwn ? (currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || 'U')}&background=726dff&color=fff`) : (otherUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.displayName || 'U')}&background=726dff&color=fff`)}" 
+               alt="Profile" 
+               class="message-avatar"
+               data-uid="${message.senderId}" />
+          <div class="message-content">
+            ${replyHTML}
+            ${escapeHtml(message.text)}
+            <div class="message-time">${timestamp}</div>
+          </div>
+        `;
+      }
 
       // Add click handler for reply
       const messageContent = messageDiv.querySelector('.message-content');
