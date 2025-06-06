@@ -7,6 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="styles/profileModal.css" />
+  <link rel="stylesheet" href="styles/giphy.css" />
+  <script src="https://giphy.com/static/sdk/sdk.min.js"></script>
   <style>
     /* Base Theme Variables */
     :root {
@@ -466,6 +468,72 @@
         max-width: 90%;
       }
     }
+
+    .message-input-container {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg-light);
+      border-radius: var(--border-radius-md);
+      position: relative;
+    }
+
+    .message-input-wrapper {
+      flex: 1;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .message-input {
+      flex: 1;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--input-border);
+      border-radius: var(--border-radius-sm);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 1rem;
+      resize: none;
+      max-height: 120px;
+      min-height: 42px;
+    }
+
+    .message-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .action-button {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      border-radius: var(--border-radius-sm);
+      transition: color var(--transition-speed);
+    }
+
+    .action-button:hover {
+      color: var(--main);
+    }
+
+    .send-button {
+      background: var(--main);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius-sm);
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition-speed);
+    }
+
+    .send-button:hover {
+      background: var(--main-dark);
+    }
   </style>
   <script>
     function getTimeBasedTheme() {
@@ -558,9 +626,25 @@
       </div>
     </div>
 
-    <div class="chat-input">
-      <input type="text" id="message-input" placeholder="Type a message..." />
-      <button id="send-btn">Send</button>
+    <div class="message-input-container">
+      <div class="message-input-wrapper">
+        <textarea
+          class="message-input"
+          placeholder="Type a message..."
+          rows="1"
+        ></textarea>
+        <div class="message-actions">
+          <button class="action-button gif-button" title="Send GIF">
+            <i class="fas fa-images"></i>
+          </button>
+          <button class="action-button emoji-button" title="Add emoji">
+            <i class="far fa-smile"></i>
+          </button>
+        </div>
+      </div>
+      <button class="send-button">
+        <i class="fas fa-paper-plane"></i>
+      </button>
     </div>
   </div>
 
@@ -925,6 +1009,88 @@
 
     // Add cancel reply handler
     document.getElementById('cancel-reply').onclick = cancelReply;
+  </script>
+
+  <!-- Add these script imports before the closing body tag -->
+  <script src="js/giphy.js"></script>
+  <script>
+    // Initialize GIPHY integration
+    const giphyIntegration = new GiphyIntegration();
+    const messageInputContainer = document.querySelector('.message-input-container');
+    const gifButton = document.querySelector('.gif-button');
+    let gifPicker = null;
+
+    // Initialize GIF picker
+    gifButton.addEventListener('click', () => {
+      if (!gifPicker) {
+        gifPicker = giphyIntegration.createGifPickerUI(messageInputContainer, (gif) => {
+          // When a GIF is selected, send it as a message
+          const messageData = {
+            type: 'gif',
+            content: gif.url,
+            sender: currentUser.uid,
+            senderName: currentUser.displayName,
+            senderAvatar: currentUser.photoURL,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          };
+          
+          // Send the GIF message
+          db.collection('messages').add(messageData)
+            .then(() => {
+              gifPicker.hide();
+            })
+            .catch((error) => {
+              console.error('Error sending GIF:', error);
+            });
+        });
+      }
+      
+      if (gifPicker) {
+        const isVisible = messageInputContainer.querySelector('.gif-picker').style.display === 'block';
+        if (isVisible) {
+          gifPicker.hide();
+        } else {
+          gifPicker.show();
+        }
+      }
+    });
+
+    // Close GIF picker when clicking outside
+    document.addEventListener('click', (e) => {
+      if (gifPicker && !e.target.closest('.gif-picker') && !e.target.closest('.gif-button')) {
+        gifPicker.hide();
+      }
+    });
+
+    // Modify the message display function to handle GIFs
+    function displayMessage(message) {
+      const messageElement = document.createElement('div');
+      messageElement.className = `message ${message.sender === currentUser.uid ? 'own-message' : 'other-message'}`;
+      
+      if (message.type === 'gif') {
+        messageElement.innerHTML = `
+          <div class="message-content">
+            <img src="${message.content}" alt="GIF" class="message-gif" style="max-width: 200px; border-radius: 8px;">
+          </div>
+          <div class="message-info">
+            <span class="message-sender">${message.senderName}</span>
+            <span class="message-time">${formatTimestamp(message.timestamp)}</span>
+          </div>
+        `;
+      } else {
+        // Handle regular text messages as before
+        messageElement.innerHTML = `
+          <div class="message-content">${message.content}</div>
+          <div class="message-info">
+            <span class="message-sender">${message.senderName}</span>
+            <span class="message-time">${formatTimestamp(message.timestamp)}</span>
+          </div>
+        `;
+      }
+      
+      messagesContainer.appendChild(messageElement);
+      scrollToBottom();
+    }
   </script>
 </body>
 </html>
