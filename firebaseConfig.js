@@ -44,17 +44,19 @@ const dbRules = {
         ".write": "auth != null && auth.uid === $uid"
       }
     },
-    "chats": {
+    "dms": {
       "$chatId": {
-        ".read": "auth != null && (data.child('participants').child(auth.uid).exists() || !data.child('participants').exists())",
-        ".write": "auth != null && (data.child('participants').child(auth.uid).exists() || !data.child('participants').exists())"
+        ".read": "auth != null && data.child('participants').child(auth.uid).exists()",
+        ".write": "auth != null && data.child('participants').child(auth.uid).exists()",
+        "messages": {
+          ".read": "auth != null && root.child('dms').child($chatId).child('participants').child(auth.uid).exists()",
+          ".write": "auth != null && root.child('dms').child($chatId).child('participants').child(auth.uid).exists()"
+        }
       }
     },
-    "messages": {
-      "$chatId": {
-        ".read": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()",
-        ".write": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()"
-      }
+    "globalMessages": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     }
   }
 };
