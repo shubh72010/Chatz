@@ -7,8 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="styles/profileModal.css" />
-  <link rel="stylesheet" href="styles/giphy.css" />
-  <script src="https://unpkg.com/@giphy/js-fetch-api@4.0.0/dist/bundle.js"></script>
   <style>
     /* Base Theme Variables */
     :root {
@@ -629,20 +627,18 @@
     <div class="message-input-container">
       <div class="message-input-wrapper">
         <textarea
+          id="message-input"
           class="message-input"
           placeholder="Type a message..."
           rows="1"
         ></textarea>
         <div class="message-actions">
-          <button class="action-button gif-button" title="Send GIF">
-            <i class="fas fa-images"></i>
-          </button>
           <button class="action-button emoji-button" title="Add emoji">
             <i class="far fa-smile"></i>
           </button>
         </div>
       </div>
-      <button class="send-button">
+      <button id="send-button" class="send-button">
         <i class="fas fa-paper-plane"></i>
       </button>
     </div>
@@ -678,7 +674,7 @@
 
     const chatMessages = document.getElementById('chat-messages');
     const messageInput = document.getElementById('message-input');
-    const sendBtn = document.querySelector('.send-button');
+    const sendButton = document.getElementById('send-button');
     const typingIndicator = document.getElementById('typing-indicator');
     const typingText = document.getElementById('typing-text');
     const loadingMessages = document.getElementById('loading-messages');
@@ -689,7 +685,7 @@
     let replyTo = null;
     let isLoading = false;
     let lastScrollTop = 0;
-    let scrollThreshold = 100; // pixels from top to trigger loading more messages
+    let scrollThreshold = 100;
     let lastLoadedTimestamp = null;
 
     // Escape HTML to prevent XSS
@@ -949,182 +945,89 @@
             userDataCache[childSnapshot.key] = childSnapshot.val();
           });
         });
+
+        // Setup message input handlers
+        if (messageInput) {
+          messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage();
+            }
+          });
+
+          messageInput.addEventListener('input', () => {
+            // Auto-resize textarea
+            messageInput.style.height = 'auto';
+            messageInput.style.height = messageInput.scrollHeight + 'px';
+
+            // Update typing status
+            if (currentUser) {
+              const typingRef = ref(db, `global_typing/${currentUser.uid}`);
+              set(typingRef, true);
+
+              if (typingTimeout) {
+                clearTimeout(typingTimeout);
+              }
+
+              typingTimeout = setTimeout(() => {
+                set(typingRef, false);
+              }, 2000);
+            }
+          });
+        }
+
+        if (sendButton) {
+          sendButton.addEventListener('click', sendMessage);
+        }
+
+        // Add cancel reply handler
+        const cancelReplyBtn = document.getElementById('cancel-reply');
+        if (cancelReplyBtn) {
+          cancelReplyBtn.addEventListener('click', cancelReply);
+        }
       } else {
-        window.location.href = '/Chatz/index.html';
+        window.location.href = '/Chatz/signin.html';
       }
     });
 
-    // Send message
-    if (sendBtn) {
-        sendBtn.onclick = async () => {
-            const message = messageInput.value.trim();
-            if (!message || !currentUser) return;
-
-            try {
-                const messageRef = push(ref(db, 'global_messages'));
-                const messageData = {
-                    text: message,
-                    senderId: currentUser.uid,
-                    timestamp: serverTimestamp()
-                };
-
-                if (replyTo) {
-                    messageData.replyTo = {
-                        messageId: replyTo.messageId,
-                        senderId: replyTo.senderId,
-                        text: replyTo.text,
-                        senderName: replyTo.senderName
-                    };
-                }
-
-                await set(messageRef, messageData);
-
-                messageInput.value = '';
-                cancelReply();
-                scrollToBottom();
-            } catch (error) {
-                console.error("Error sending message:", error);
-                alert("Failed to send message. Please try again.");
-            }
-        };
-    }
-
-    // Handle enter key
-    if (messageInput) {
-        messageInput.onkeypress = (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (sendBtn) sendBtn.click();
-            }
-        };
-    }
-
-    // Typing indicator
-    messageInput.oninput = () => {
-      if (!currentUser) return;
-
-      // Set typing status
-      const typingRef = ref(db, `global_typing/${currentUser.uid}`);
-      set(typingRef, true);
-
-      // Clear previous timeout
-      if (typingTimeout) {
-        clearTimeout(typingTimeout);
-      }
-
-      // Set timeout to clear typing status
-      typingTimeout = setTimeout(() => {
-        set(typingRef, false);
-      }, 2000);
-    };
-
-    // Add cancel reply handler
-    const cancelReplyBtn = document.getElementById('cancel-reply');
-    if (cancelReplyBtn) {
-        cancelReplyBtn.onclick = cancelReply;
-    }
-  </script>
-
-  <!-- Add these script imports before the closing body tag -->
-  <script src="js/giphy.js"></script>
-  <script>
-    // Initialize GIPHY integration
-    const giphyIntegration = new GiphyIntegration();
-    const messageInputContainer = document.querySelector('.message-input-container');
-    const gifButton = document.querySelector('.gif-button');
-    let gifPicker = null;
-
-    // Message sending functionality
-    const messageInput = document.querySelector('.message-input');
-    const sendButton = document.querySelector('.send-button');
-
     // Send message function
     async function sendMessage() {
+      if (!messageInput || !currentUser) return;
+      
       const text = messageInput.value.trim();
-      if (!text || !currentUser) return;
-
-      const message = {
-        text: text,
-        senderId: currentUser.uid,
-        timestamp: Date.now()
-      };
-
-      if (replyTo) {
-        message.replyTo = replyTo;
-        cancelReply();
-      }
+      if (!text) return;
 
       try {
+        const messageData = {
+          text: text,
+          senderId: currentUser.uid,
+          timestamp: serverTimestamp()
+        };
+
+        if (replyTo) {
+          messageData.replyTo = {
+            messageId: replyTo.messageId,
+            senderId: replyTo.senderId,
+            text: replyTo.text,
+            senderName: replyTo.senderName
+          };
+          cancelReply();
+        }
+
         // Clear input before sending
         messageInput.value = '';
         messageInput.style.height = 'auto';
 
         // Send message to Firebase
         const messagesRef = ref(db, 'global_messages');
-        await push(messagesRef, message);
+        await push(messagesRef, messageData);
+        
+        scrollToBottom();
       } catch (error) {
         console.error('Error sending message:', error);
         alert('Failed to send message. Please try again.');
       }
     }
-
-    // Handle send button click
-    sendButton.addEventListener('click', sendMessage);
-
-    // Handle enter key press
-    messageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-
-    // Auto-resize textarea
-    messageInput.addEventListener('input', () => {
-      messageInput.style.height = 'auto';
-      messageInput.style.height = messageInput.scrollHeight + 'px';
-    });
-
-    // Initialize GIF picker
-    gifButton.addEventListener('click', () => {
-      if (!gifPicker) {
-        gifPicker = giphyIntegration.createGifPickerUI(messageInputContainer, (gif) => {
-          // When a GIF is selected, send it as a message
-          const messageData = {
-            type: 'gif',
-            content: gif.url,
-            senderId: currentUser.uid,
-            timestamp: Date.now()
-          };
-          
-          // Send the GIF message
-          const messagesRef = ref(db, 'global_messages');
-          push(messagesRef, messageData)
-            .then(() => {
-              gifPicker.hide();
-            })
-            .catch((error) => {
-              console.error('Error sending GIF:', error);
-            });
-        });
-      }
-      
-      if (gifPicker) {
-        const isVisible = messageInputContainer.querySelector('.gif-picker').style.display === 'block';
-        if (isVisible) {
-          gifPicker.hide();
-        } else {
-          gifPicker.show();
-        }
-      }
-    });
-
-    // Close GIF picker when clicking outside
-    document.addEventListener('click', (e) => {
-      if (gifPicker && !e.target.closest('.gif-picker') && !e.target.closest('.gif-button')) {
-        gifPicker.hide();
-      }
-    });
   </script>
 </body>
 </html>
