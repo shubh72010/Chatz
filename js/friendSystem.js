@@ -1,7 +1,7 @@
 // Friend System Module
 import { authHandler } from './auth.js';
 import { chatLogic } from './chatLogic.js';
-import { db } from './firebaseConfig.js';
+import { db } from '/Chatz/js/firebaseConfig.js';
 import {
   ref,
   set,

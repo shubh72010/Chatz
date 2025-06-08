@@ -1,5 +1,5 @@
 // chatLogic.js
-import { app } from './firebaseConfig.js';
+import { app } from '/Chatz/js/firebaseConfig.js';
 import {
   getDatabase,
   ref,
