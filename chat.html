@@ -585,7 +585,6 @@
     import { chatLogic } from './js/chatLogic.js';
     import { friendSystem } from './js/friendSystem.js';
     import { initializeTheme } from './js/themeManager.js';
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { ref, onValue, push, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
     // Get DOM elements
@@ -862,7 +861,7 @@
     cancelReplyBtn.onclick = cancelReply;
 
     // Initialize chat when user is authenticated
-    onAuthStateChanged(authHandler.auth, (user) => {
+    authHandler.onAuthStateChanged((user) => {
       if (user) {
         initializeChat();
       } else {
