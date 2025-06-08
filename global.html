@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="styles/profileModal.css" />
   <link rel="stylesheet" href="styles/giphy.css" />
-  <script src="https://unpkg.com/@giphy/js-fetch-api@4.0.0/dist/index.js"></script>
+  <script src="https://unpkg.com/@giphy/js-fetch-api@4.0.0/dist/bundle.js"></script>
   <style>
     /* Base Theme Variables */
     :root {
@@ -678,7 +678,7 @@
 
     const chatMessages = document.getElementById('chat-messages');
     const messageInput = document.getElementById('message-input');
-    const sendBtn = document.getElementById('send-btn');
+    const sendBtn = document.querySelector('.send-button');
     const typingIndicator = document.getElementById('typing-indicator');
     const typingText = document.getElementById('typing-text');
     const loadingMessages = document.getElementById('loading-messages');
@@ -955,45 +955,49 @@
     });
 
     // Send message
-    sendBtn.onclick = async () => {
-      const message = messageInput.value.trim();
-      if (!message || !currentUser) return;
+    if (sendBtn) {
+        sendBtn.onclick = async () => {
+            const message = messageInput.value.trim();
+            if (!message || !currentUser) return;
 
-      try {
-        const messageRef = push(ref(db, 'global_messages'));
-        const messageData = {
-          text: message,
-          senderId: currentUser.uid,
-          timestamp: serverTimestamp()
+            try {
+                const messageRef = push(ref(db, 'global_messages'));
+                const messageData = {
+                    text: message,
+                    senderId: currentUser.uid,
+                    timestamp: serverTimestamp()
+                };
+
+                if (replyTo) {
+                    messageData.replyTo = {
+                        messageId: replyTo.messageId,
+                        senderId: replyTo.senderId,
+                        text: replyTo.text,
+                        senderName: replyTo.senderName
+                    };
+                }
+
+                await set(messageRef, messageData);
+
+                messageInput.value = '';
+                cancelReply();
+                scrollToBottom();
+            } catch (error) {
+                console.error("Error sending message:", error);
+                alert("Failed to send message. Please try again.");
+            }
         };
-
-        if (replyTo) {
-          messageData.replyTo = {
-            messageId: replyTo.messageId,
-            senderId: replyTo.senderId,
-            text: replyTo.text,
-            senderName: replyTo.senderName
-          };
-        }
-
-        await set(messageRef, messageData);
-
-        messageInput.value = '';
-        cancelReply();
-        scrollToBottom();
-      } catch (error) {
-        console.error("Error sending message:", error);
-        alert("Failed to send message. Please try again.");
-      }
-    };
+    }
 
     // Handle enter key
-    messageInput.onkeypress = (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendBtn.click();
-      }
-    };
+    if (messageInput) {
+        messageInput.onkeypress = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (sendBtn) sendBtn.click();
+            }
+        };
+    }
 
     // Typing indicator
     messageInput.oninput = () => {
@@ -1015,7 +1019,10 @@
     };
 
     // Add cancel reply handler
-    document.getElementById('cancel-reply').onclick = cancelReply;
+    const cancelReplyBtn = document.getElementById('cancel-reply');
+    if (cancelReplyBtn) {
+        cancelReplyBtn.onclick = cancelReply;
+    }
   </script>
 
   <!-- Add these script imports before the closing body tag -->

@@ -5,8 +5,9 @@ class GiphyIntegration {
     }
 
     initializeGiphySDK() {
-        // The new SDK uses GiphyFetch from @giphy/js-fetch-api
-        this.gf = new window.GiphyFetch('JDYaLkWja1iraKwxqsUsHJOQesqcdDyk');
+        // The SDK is now available as window.GiphyFetch
+        const { GiphyFetch } = window.giphyFetch;
+        this.gf = new GiphyFetch('JDYaLkWja1iraKwxqsUsHJOQesqcdDyk');
     }
 
     createGifPickerUI(container, onGifSelect) {

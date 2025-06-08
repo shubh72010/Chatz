@@ -54,6 +54,15 @@ const dbRules = {
         }
       }
     },
+    "global_messages": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ["timestamp"],
+      "$messageId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "chats": {
       "$chatId": {
         ".read": "auth != null && data.child('participants').child(auth.uid).exists()",
