@@ -64,18 +64,20 @@
           <textarea
             id="message-input"
             class="message-input"
-            placeholder="Type a message to everyone..."
+            placeholder="Type a message..."
             rows="1"
+            maxlength="1000"
+            readonly
           ></textarea>
           <div class="message-actions">
             <button class="action-button emoji-button" title="Add emoji">
               <i class="far fa-smile"></i>
             </button>
+            <button id="send-btn" class="send-button" title="Send message">
+              <i class="fas fa-paper-plane"></i>
+            </button>
           </div>
         </div>
-        <button id="send-btn" class="send-button">
-          <i class="fas fa-paper-plane"></i>
-        </button>
       </div>
     </div>
   </div>
@@ -150,6 +152,151 @@
 
       .stat-item span {
         font-size: 0.8rem;
+      }
+    }
+
+    /* Message Input Styles */
+    .message-input-container {
+      padding: 1rem;
+      background: var(--bg);
+      border-top: 1px solid var(--input-border);
+    }
+
+    .message-input-wrapper {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.5rem;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--border-radius-lg);
+      padding: 0.75rem;
+      backdrop-filter: blur(8px);
+    }
+
+    .message-input {
+      flex: 1;
+      min-height: 24px;
+      max-height: 24px;
+      padding: 0;
+      margin: 0;
+      border: none;
+      background: none;
+      color: var(--text);
+      font-size: 1rem;
+      line-height: 24px;
+      resize: none;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .message-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .message-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .action-button {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-radius: var(--border-radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-speed) var(--transition-timing);
+    }
+
+    .action-button:hover {
+      color: var(--main);
+      background: var(--hover-overlay);
+    }
+
+    .send-button {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: none;
+      background: var(--main);
+      color: var(--button-text);
+      border-radius: var(--border-radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-speed) var(--transition-timing);
+    }
+
+    .send-button:hover {
+      background: var(--main-dark);
+      transform: translateY(-2px);
+    }
+
+    .send-button:disabled {
+      background: var(--input-border);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Typing Indicator Styles */
+    .typing-indicator {
+      padding: 0.5rem 1rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      min-height: 24px;
+      display: none;
+    }
+
+    .typing-indicator.active {
+      display: block;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .message-input-container {
+        padding: 0.75rem;
+      }
+
+      .message-input-wrapper {
+        padding: 0.5rem;
+      }
+
+      .action-button,
+      .send-button {
+        width: 32px;
+        height: 32px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .message-input-container {
+        padding: 0.5rem;
+      }
+
+      .message-input-wrapper {
+        padding: 0.4rem;
+      }
+
+      .message-input {
+        font-size: 0.95rem;
+      }
+
+      .action-button,
+      .send-button {
+        width: 28px;
+        height: 28px;
+      }
+
+      .action-button i,
+      .send-button i {
+        font-size: 0.9rem;
       }
     }
   </style>
@@ -304,6 +451,13 @@
 
       const typingUser = typingUsers[0];
       const typingUserName = typingUser[1].senderName || 'Someone';
+      const isCurrentUser = typingUser[0] === authHandler.getCurrentUser()?.uid;
+      
+      if (isCurrentUser) {
+        typingIndicator.classList.remove('active');
+        return;
+      }
+
       typingText.textContent = `${typingUserName} is typing...`;
       typingIndicator.classList.add('active');
     }
@@ -377,46 +531,26 @@
     }
 
     // Event listeners
-    sendBtn.onclick = async () => {
-      const message = messageInput.value.trim();
-      if (!message) return;
+    messageInput.onfocus = () => {
+      if (!authHandler.getCurrentUser()) {
+        window.location.href = '/Chatz/signin.html';
+        return;
+      }
+      messageInput.readOnly = false;
+    };
 
-      try {
-        const user = authHandler.getCurrentUser();
-        if (!user) throw new Error('Not authenticated');
-
-        const messageData = {
-          text: message,
-          sender: user.uid,
-          senderName: user.displayName || 'Anonymous',
-          senderPhoto: user.photoURL,
-          timestamp: serverTimestamp()
-        };
-
-        if (replyTo) {
-          messageData.replyTo = {
-            messageId: replyTo.messageId,
-            senderId: replyTo.senderId,
-            senderName: replyTo.senderName,
-            text: replyTo.text
-          };
-        }
-
-        await push(ref(db, 'global_messages'), messageData);
-        messageInput.value = '';
-        cancelReply();
-        scrollToBottom();
-        setTypingStatus(false);
-      } catch (error) {
-        console.error('Error sending message:', error);
-        alert('Failed to send message. Please try again.');
+    messageInput.onblur = () => {
+      if (!messageInput.value.trim()) {
+        messageInput.readOnly = true;
       }
     };
 
     messageInput.onkeypress = (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        sendBtn.click();
+        if (!messageInput.readOnly) {
+          sendBtn.click();
+        }
       }
     };
 
@@ -424,10 +558,16 @@
       if (typingTimeout) {
         clearTimeout(typingTimeout);
       }
-      setTypingStatus(true);
-      typingTimeout = setTimeout(() => {
-        setTypingStatus(false);
-      }, 3000);
+      
+      const message = messageInput.value.trim();
+      sendBtn.disabled = !message;
+      
+      if (!messageInput.readOnly) {
+        setTypingStatus(true);
+        typingTimeout = setTimeout(() => {
+          setTypingStatus(false);
+        }, 3000);
+      }
     };
 
     cancelReplyBtn.onclick = cancelReply;
