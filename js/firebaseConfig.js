@@ -44,6 +44,10 @@ const dbRules = {
       "$uid": {
         ".read": true,
         ".write": "$uid === auth.uid",
+        "username": {
+          ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 20 && /^[a-zA-Z0-9_]+$/.test(newData.val())",
+          ".write": "$uid === auth.uid"
+        },
         "online": {
           ".read": true,
           ".write": "$uid === auth.uid"
@@ -100,7 +104,11 @@ const dbRules = {
     "usernames": {
       ".read": true,
       ".write": "auth != null",
-      ".indexOn": [".value"]
+      ".indexOn": [".value"],
+      "$username": {
+        ".validate": "!data.exists() || data.val() === auth.uid",
+        ".write": "auth != null && (!data.exists() || data.val() === auth.uid)"
+      }
     }
   }
 };

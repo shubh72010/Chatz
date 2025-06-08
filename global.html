@@ -690,6 +690,7 @@
     // Import Firebase services first
     import { app, auth, db } from '/Chatz/js/firebaseConfig.js';
     import { profileModal } from './js/profileModal.js';
+    import { usernameModal } from './js/usernameModal.js';
     import 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1.12.1/index.js';
     import {
       onAuthStateChanged
@@ -707,235 +708,35 @@
       limitToLast
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-    // Check authentication state immediately
-    onAuthStateChanged(auth, (user) => {
+    // Initialize username modal
+    usernameModal.init((username) => {
+      console.log('Username set:', username);
+      // Reload the page to update the UI with the new username
+      window.location.reload();
+    });
+
+    // Check authentication state and username
+    onAuthStateChanged(auth, async (user) => {
       if (!user) {
         // User is not signed in, redirect to signin page
         window.location.href = '/Chatz/signin.html';
+        return;
       }
-    });
 
-    const chatMessages = document.getElementById('chat-messages');
-    const messageInput = document.getElementById('message-input');
-    const sendButton = document.getElementById('send-button');
-    const typingIndicator = document.getElementById('typing-indicator');
-    const typingText = document.getElementById('typing-text');
-    const loadingMessages = document.getElementById('loading-messages');
-
-    let currentUser = null;
-    let typingTimeout = null;
-    let userDataCache = {};
-    let replyTo = null;
-    let isLoading = false;
-    let lastScrollTop = 0;
-    let scrollThreshold = 100;
-    let lastLoadedTimestamp = null;
-
-    // Escape HTML to prevent XSS
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    // Function to check if we're near the top of the chat
-    function isNearTop() {
-      return chatMessages.scrollTop < scrollThreshold;
-    }
-
-    // Function to check if we're near the bottom of the chat
-    function isNearBottom() {
-      return chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 100;
-    }
-
-    // Function to scroll to bottom smoothly
-    function scrollToBottom(smooth = true) {
-      if (smooth) {
-        chatMessages.scrollTo({
-          top: chatMessages.scrollHeight,
-          behavior: 'smooth'
-        });
-      } else {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
-    }
-
-    // Handle scroll events
-    chatMessages.addEventListener('scroll', () => {
-      // Store current scroll position
-      const currentScrollTop = chatMessages.scrollTop;
-      
-      // If scrolling up and near top, trigger loading more messages
-      if (currentScrollTop < lastScrollTop && isNearTop() && !isLoading) {
-        loadingMessages.classList.add('active');
-        isLoading = true;
-        
-        // Load more messages
-        loadMoreMessages();
-      }
-      
-      // Update last scroll position
-      lastScrollTop = currentScrollTop;
-    });
-
-    // Function to load more messages
-    async function loadMoreMessages() {
       try {
-        const messagesRef = ref(db, 'global_messages');
-        let messagesQuery = query(messagesRef, orderByChild('timestamp'));
-        
-        if (lastLoadedTimestamp) {
-          messagesQuery = query(messagesRef, 
-            orderByChild('timestamp'),
-            endBefore(lastLoadedTimestamp),
-            limitToLast(20)
-          );
+        // Check if user has a username
+        const userRef = ref(db, `users/${user.uid}`);
+        const snapshot = await get(userRef);
+        const userData = snapshot.val();
+
+        if (!userData || !userData.username) {
+          // Show username modal if no username is set
+          usernameModal.show();
+          return;
         }
 
-        const snapshot = await get(messagesQuery);
-        const messages = [];
-        
-        snapshot.forEach((childSnapshot) => {
-          const message = childSnapshot.val();
-          messages.unshift(message); // Add to beginning of array
-          lastLoadedTimestamp = message.timestamp;
-        });
-
-        // Prepend messages to chat
-        messages.forEach(message => {
-          const messageDiv = createMessageElement(message, childSnapshot.key);
-          chatMessages.insertBefore(messageDiv, chatMessages.firstChild);
-        });
-
-        // Adjust scroll position to maintain relative position
-        if (messages.length > 0) {
-          const firstMessage = chatMessages.firstChild;
-          const scrollOffset = firstMessage.offsetHeight * messages.length;
-          chatMessages.scrollTop += scrollOffset;
-        }
-
-        stopLoading();
-      } catch (error) {
-        console.error("Error loading more messages:", error);
-        stopLoading();
-      }
-    }
-
-    // Function to stop loading indicator
-    function stopLoading() {
-      loadingMessages.classList.remove('active');
-      isLoading = false;
-    }
-
-    // Add profile click handler
-    function setupProfileClicks() {
-      document.addEventListener('click', (e) => {
-        const avatar = e.target.closest('img[data-uid]');
-        if (avatar && avatar.dataset.uid) {
-          e.preventDefault();
-          e.stopPropagation();
-          profileModal.show(avatar.dataset.uid);
-        }
-      });
-    }
-
-    // Function to truncate text
-    function truncate(text, length) {
-      if (text.length <= length) return text;
-      return text.substring(0, length) + '...';
-    }
-
-    // Function to set reply
-    function setReply(message, messageId) {
-      replyTo = {
-        messageId: messageId,
-        senderId: message.senderId,
-        text: message.text,
-        senderName: userDataCache[message.senderId]?.nickname || userDataCache[message.senderId]?.displayName || "Anonymous"
-      };
-      
-      // Show reply preview
-      const replyPreview = document.getElementById('reply-preview');
-      const replySender = document.getElementById('reply-sender');
-      const replyText = document.getElementById('reply-text');
-      
-      replySender.textContent = replyTo.senderName;
-      replyText.textContent = truncate(replyTo.text, 40);
-      replyPreview.style.display = 'block';
-      
-      // Focus input
-      messageInput.focus();
-    }
-
-    // Function to cancel reply
-    function cancelReply() {
-      replyTo = null;
-      document.getElementById('reply-preview').style.display = 'none';
-    }
-
-    // Function to create message element
-    function createMessageElement(message, messageId) {
-      const isOwn = message.senderId === currentUser?.uid;
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${isOwn ? 'own' : ''}`;
-      
-      const userData = userDataCache[message.senderId] || {};
-      const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : 'Sending...';
-      const displayName = userData.nickname || userData.displayName || "Anonymous";
-      const photoURL = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=726dff&color=fff`;
-
-      let replyHTML = '';
-      if (message.replyTo) {
-        const replyUserData = userDataCache[message.replyTo.senderId] || {};
-        const replyDisplayName = replyUserData.nickname || replyUserData.displayName || "Anonymous";
-        replyHTML = `
-          <div class="reply-to">
-            Reply to ${escapeHtml(replyDisplayName)}: ${escapeHtml(truncate(message.replyTo.text, 40))}
-          </div>
-        `;
-      }
-
-      let contentHTML = '';
-      if (message.type === 'gif') {
-        contentHTML = `<img src="${escapeHtml(message.content)}" alt="GIF" class="message-gif" style="max-width: 200px; border-radius: 8px;">`;
-      } else {
-        contentHTML = escapeHtml(message.text);
-      }
-
-      messageDiv.innerHTML = `
-        <img src="${photoURL}" alt="Profile" data-uid="${message.senderId}" class="message-avatar" />
-        <div class="message-content">
-          ${!isOwn ? `<div class="message-sender">${escapeHtml(displayName)}</div>` : ''}
-          ${replyHTML}
-          ${contentHTML}
-          <div class="message-time">${timestamp}</div>
-        </div>
-      `;
-
-      // Add click handler for reply
-      const messageContent = messageDiv.querySelector('.message-content');
-      messageContent.onclick = (e) => {
-        if (!isOwn && !e.target.closest('img[data-uid]')) {
-          setReply(message, messageId);
-        }
-      };
-
-      return messageDiv;
-    }
-
-    // Function to render a single message
-    function renderMessage(message, messageId) {
-      const messageElement = createMessageElement(message, messageId);
-      chatMessages.appendChild(messageElement);
-      return messageElement;
-    }
-
-    // Initialize chat with profile functionality
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
+        // User has a username, proceed with normal initialization
         currentUser = user;
-        
-        // Setup profile clicks
         setupProfileClicks();
         
         // Setup emoji picker
@@ -1074,7 +875,8 @@
         if (cancelReplyBtn) {
           cancelReplyBtn.addEventListener('click', cancelReply);
         }
-      } else {
+      } catch (error) {
+        console.error('Error checking authentication:', error);
         window.location.href = '/Chatz/signin.html';
       }
     });
