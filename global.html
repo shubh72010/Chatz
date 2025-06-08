@@ -480,9 +480,11 @@
     /* Message Styles */
     .message {
       display: flex;
-      gap: 0.75rem;
-      max-width: 85%;
+      gap: 0.5rem;
+      max-width: 70%;
       animation: messageSlide 0.3s ease-out;
+      margin-bottom: 0.25rem;
+      transition: box-shadow 0.2s;
     }
 
     .message.own {
@@ -491,25 +493,34 @@
     }
 
     .message-avatar {
-      width: 40px;
-      height: 40px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid var(--input-border);
+      border: 1.5px solid var(--input-border);
       flex-shrink: 0;
       transition: transform 0.2s ease;
     }
 
     .message-avatar:hover {
-      transform: scale(1.1);
+      transform: scale(1.08);
       cursor: pointer;
     }
 
     .message-content {
-      padding: 0.75rem 1rem;
+      padding: 0.5rem 0.75rem;
       position: relative;
-      border-radius: 12px;
+      border-radius: 8px;
       border: 1px solid var(--input-border);
+      font-size: 0.97rem;
+      min-width: 0;
+      transition: box-shadow 0.2s, background 0.2s;
+      background: none;
+    }
+
+    .message-content:hover {
+      box-shadow: 0 2px 8px rgba(255, 15, 47, 0.08);
+      background: rgba(255,255,255,0.01);
     }
 
     .message.own .message-content {
@@ -517,9 +528,9 @@
     }
 
     .message-sender {
-      font-weight: 600;
-      font-size: 0.9rem;
-      margin-bottom: 0.25rem;
+      font-weight: 500;
+      font-size: 0.85rem;
+      margin-bottom: 0.1rem;
       color: var(--text);
     }
 
@@ -528,19 +539,19 @@
     }
 
     .message-time {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
-      margin-top: 0.25rem;
+      margin-top: 0.15rem;
       text-align: right;
     }
 
     .reply-to {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
-      padding: 0.5rem;
-      margin: -0.5rem -0.75rem 0.5rem -0.75rem;
+      padding: 0.3rem 0.5rem 0.3rem 0.5rem;
+      margin: -0.3rem -0.75rem 0.3rem -0.75rem;
       border-bottom: 1px solid var(--input-border);
-      border-radius: 12px 12px 0 0;
+      border-radius: 8px 8px 0 0;
     }
 
     .message.own .reply-to {
@@ -562,50 +573,43 @@
     /* Responsive Message Styles */
     @media (max-width: 768px) {
       .chat-messages {
-        padding: 0.75rem;
-        gap: 0.75rem;
+        padding: 0.5rem;
+        gap: 0.5rem;
       }
-
       .message {
-        max-width: 90%;
+        max-width: 85%;
       }
-
       .message-avatar {
-        width: 36px;
-        height: 36px;
+        width: 28px;
+        height: 28px;
       }
-
       .message-content {
-        padding: 0.6rem 0.8rem;
+        padding: 0.4rem 0.6rem;
+        font-size: 0.93rem;
       }
     }
 
     @media (max-width: 480px) {
       .chat-messages {
-        padding: 0.5rem;
-        gap: 0.5rem;
+        padding: 0.3rem;
+        gap: 0.3rem;
       }
-
       .message {
         max-width: 95%;
       }
-
       .message-avatar {
-        width: 32px;
-        height: 32px;
+        width: 24px;
+        height: 24px;
       }
-
       .message-content {
-        padding: 0.5rem 0.7rem;
-        font-size: 0.95rem;
+        padding: 0.3rem 0.5rem;
+        font-size: 0.9rem;
       }
-
       .message-sender {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
       }
-
       .message-time {
-        font-size: 0.7rem;
+        font-size: 0.65rem;
       }
     }
   </style>
