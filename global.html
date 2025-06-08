@@ -5,126 +5,211 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz | Global Chat</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="styles/profileModal.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.12.1/index.css" />
   <style>
     /* Base Theme Variables */
     :root {
-      /* Brand Colors */
-      --main: #726dff;
-      --main-dark: #554fa6;
-      --main-light: #a3a0ff;
-      --accent: #5f27cd;
-      --danger: #ff5252;
+      /* Brand Colors - Nothing's signature colors */
+      --main: #00FF94;  /* Nothing's signature green */
+      --main-dark: #00CC77;
+      --main-light: #33FFA8;
+      --accent: #00FF94;
+      --danger: #FF3B30;
 
       /* Common Variables */
-      --header-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
+      --header-shadow: 0 2px 12px 0 rgba(0,0,0,0.12);
       --input-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
       --scrollbar-width: 6px;
-      --border-radius-sm: 0.7rem;
-      --border-radius-md: 1rem;
-      --border-radius-lg: 1.2rem;
+      --border-radius-sm: 12px;  /* Nothing's rounded corners */
+      --border-radius-md: 16px;
+      --border-radius-lg: 24px;
       --transition-speed: 0.2s;
+      --font-family: 'Space Grotesk', sans-serif;  /* Nothing's primary font */
     }
 
-    /* Default (Purple) Theme */
-    :root {
+    /* Font Options */
+    .font-ntype {
+      --font-family: 'Space Grotesk', sans-serif;  /* Nothing's primary font */
+      letter-spacing: -0.02em;
+    }
+
+    .font-ndot {
+      --font-family: 'Inter', sans-serif;  /* Nothing's secondary font */
+      letter-spacing: 0;
+    }
+
+    /* Nothing Theme */
+    .theme-nothing {
       /* Background Colors */
-      --bg: #23272f;
-      --bg-light: #2e323c;
-      --bg-gradient: linear-gradient(135deg, #726dff 0%, #554fa6 100%);
+      --bg: #000000;  /* Nothing's signature black */
+      --bg-light: #111111;
+      --bg-gradient: linear-gradient(135deg, #000000 0%, #111111 100%);
       
       /* Text Colors */
-      --text: #f0eaff;
+      --text: #FFFFFF;
       --text-muted: rgba(255,255,255,0.7);
       
       /* Input Colors */
-      --input-bg: rgba(255,255,255,0.16);
-      --input-border: #44415e;
+      --input-bg: rgba(255,255,255,0.08);
+      --input-border: rgba(255,255,255,0.12);
       
       /* Message Bubble Colors */
-      --bubble-own: #726dff;
-      --bubble-other: #2e323c;
-      --bubble-own-text: #fff;
-      --bubble-other-text: #e6e6fa;
+      --bubble-own: #00FF94;  /* Nothing's signature green */
+      --bubble-other: #1A1A1A;
+      --bubble-own-text: #000000;
+      --bubble-other-text: #FFFFFF;
       
       /* Header Colors */
-      --header-bg: rgba(44,32,69,0.85);
+      --header-bg: rgba(0,0,0,0.95);
       
       /* Scrollbar Colors */
-      --scrollbar-thumb: #726dff55;
-      --scrollbar-track: #23272f;
+      --scrollbar-thumb: rgba(0,255,148,0.3);  /* Nothing's green with opacity */
+      --scrollbar-track: #000000;
       
       /* Reply Colors */
-      --reply-bg: #554fa6;
-      --reply-border: #a3a0ff;
+      --reply-bg: #1A1A1A;
+      --reply-border: #00FF94;
+
+      /* Brand Colors Override */
+      --main: #00FF94;
+      --main-dark: #00CC77;
+      --main-light: #33FFA8;
+      --accent: #00FF94;
+      --danger: #FF3B30;
+
+      /* Nothing-specific styles */
+      --dot-matrix-size: 4px;
+      --dot-matrix-gap: 8px;
     }
 
-    /* Dark Theme */
-    .theme-dark {
-      /* Background Colors */
-      --bg: #131324;
-      --bg-light: #191938;
-      --bg-gradient: linear-gradient(135deg, #131324 0%, #191938 100%);
-      
-      /* Text Colors */
-      --text: #f0eaff;
-      --text-muted: rgba(255,255,255,0.7);
-      
-      /* Input Colors */
-      --input-bg: #191938;
-      --input-border: #44415e;
-      
-      /* Message Bubble Colors */
-      --bubble-own: #44415e;
-      --bubble-other: #23272f;
-      --bubble-own-text: #fff;
-      --bubble-other-text: #e6e6fa;
-      
-      /* Header Colors */
-      --header-bg: #191938;
-      
-      /* Scrollbar Colors */
-      --scrollbar-thumb: #44415e;
-      --scrollbar-track: #131324;
-      
-      /* Reply Colors */
-      --reply-bg: #23272f;
-      --reply-border: #726dff;
+    /* Dot Matrix Background Effect */
+    .theme-nothing::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        radial-gradient(circle at var(--dot-matrix-size) var(--dot-matrix-size), 
+        rgba(0,255,148,0.03) var(--dot-matrix-size), 
+        transparent 0);
+      background-size: var(--dot-matrix-gap) var(--dot-matrix-gap);
+      pointer-events: none;
+      z-index: 0;
     }
 
-    /* Light Theme */
-    .theme-light {
-      /* Background Colors */
-      --bg: #f7f4fb;
-      --bg-light: #fff;
-      --bg-gradient: linear-gradient(135deg, #e9e6ff 0%, #f7f4fb 100%);
-      
-      /* Text Colors */
-      --text: #2c2045;
-      --text-muted: rgba(44,32,69,0.7);
-      
-      /* Input Colors */
-      --input-bg: #f0eaff;
-      --input-border: #b3aaff;
-      
-      /* Message Bubble Colors */
-      --bubble-own: #7b5cff;
-      --bubble-other: #e9e6ff;
-      --bubble-own-text: #fff;
-      --bubble-other-text: #2c2045;
-      
-      /* Header Colors */
-      --header-bg: #fff;
-      
-      /* Scrollbar Colors */
-      --scrollbar-thumb: #b3aaff;
-      --scrollbar-track: #f7f4fb;
-      
-      /* Reply Colors */
-      --reply-bg: #e9e6ff;
-      --reply-border: #7b5cff;
+    /* Nothing-style Button */
+    .theme-nothing .send-button,
+    .theme-nothing .back-btn {
+      background: #00FF94;
+      color: #000000;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--border-radius-sm);
+      transition: all 0.2s ease;
+    }
+
+    .theme-nothing .send-button:hover,
+    .theme-nothing .back-btn:hover {
+      background: #33FFA8;
+      transform: translateY(-1px);
+    }
+
+    /* Nothing-style Input */
+    .theme-nothing .message-input {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #FFFFFF;
+      font-family: var(--font-family);
+    }
+
+    .theme-nothing .message-input:focus {
+      border-color: #00FF94;
+      box-shadow: 0 0 0 2px rgba(0,255,148,0.2);
+    }
+
+    /* Nothing-style Message Bubbles */
+    .theme-nothing .message-content {
+      border-radius: var(--border-radius-md);
+      font-family: var(--font-family);
+    }
+
+    .theme-nothing .message.own .message-content {
+      background: #00FF94;
+      color: #000000;
+    }
+
+    .theme-nothing .message.other .message-content {
+      background: #1A1A1A;
+      color: #FFFFFF;
+    }
+
+    /* Nothing-style Theme Settings */
+    .theme-nothing .theme-settings {
+      background: rgba(0,0,0,0.95);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
+    }
+
+    .theme-nothing .theme-option input[type="radio"] {
+      accent-color: #00FF94;
+    }
+
+    /* Theme Settings Button */
+    .theme-settings {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--bg-light);
+      border: 2px solid var(--input-border);
+      border-radius: var(--border-radius-md);
+      padding: 1rem;
+      z-index: 1000;
+      box-shadow: var(--header-shadow);
+    }
+
+    .theme-settings h3 {
+      color: var(--text);
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    .theme-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .theme-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .theme-option label {
+      color: var(--text);
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .theme-option input[type="radio"] {
+      accent-color: var(--main);
+    }
+
+    .font-options {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--input-border);
+    }
+
+    /* Apply font family to all elements */
+    * {
+      font-family: var(--font-family);
     }
 
     * { 
@@ -600,11 +685,18 @@
       
       // Apply the theme class
       document.documentElement.className = currentTheme === 'default' ? '' : 'theme-' + currentTheme;
+
+      // Apply font family
+      const fontFamily = localStorage.getItem('chatzFont') || 'ndot';
+      document.documentElement.classList.remove('font-ntype', 'font-ndot');
+      document.documentElement.classList.add('font-' + fontFamily);
     }
 
-    // Initialize theme
+    // Initialize theme and font
     const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
+    const savedFont = localStorage.getItem('chatzFont') || 'ndot';
     applyTheme(savedTheme);
+    document.documentElement.classList.add('font-' + savedFont);
 
     // Update theme every minute only if auto is selected
     setInterval(() => {
@@ -619,13 +711,51 @@
       if (e.key === 'chatzTheme') {
         const theme = e.newValue || 'auto';
         applyTheme(theme);
+      } else if (e.key === 'chatzFont') {
+        const font = e.newValue || 'ndot';
+        document.documentElement.classList.remove('font-ntype', 'font-ndot');
+        document.documentElement.classList.add('font-' + font);
       }
     });
-
-    // Remove duplicate theme initialization code
   </script>
 </head>
 <body>
+  <!-- Add theme settings button -->
+  <div class="theme-settings">
+    <h3>Nothing Style</h3>
+    <div class="theme-options">
+      <div class="theme-option">
+        <input type="radio" id="theme-auto" name="theme" value="auto">
+        <label for="theme-auto">Auto (Time-based)</label>
+      </div>
+      <div class="theme-option">
+        <input type="radio" id="theme-nothing" name="theme" value="nothing" checked>
+        <label for="theme-nothing">Nothing</label>
+      </div>
+      <div class="theme-option">
+        <input type="radio" id="theme-dark" name="theme" value="dark">
+        <label for="theme-dark">Dark</label>
+      </div>
+      <div class="theme-option">
+        <input type="radio" id="theme-light" name="theme" value="light">
+        <label for="theme-light">Light</label>
+      </div>
+    </div>
+    <div class="font-options">
+      <h3>Nothing Font</h3>
+      <div class="theme-options">
+        <div class="theme-option">
+          <input type="radio" id="font-ntype" name="font" value="ntype" checked>
+          <label for="font-ntype">NType (Space Grotesk)</label>
+        </div>
+        <div class="theme-option">
+          <input type="radio" id="font-ndot" name="font" value="ndot">
+          <label for="font-ndot">NDot (Inter)</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <header>
     <button class="back-btn" onclick="window.location.href='/Chatz/index.html'">&larr; Back</button>
     <span>Global Chat</span>
@@ -931,6 +1061,69 @@
         alert('Failed to send message. Please try again.');
       }
     }
+  </script>
+
+  <script>
+    // Theme settings handlers
+    document.querySelectorAll('input[name="theme"]').forEach(radio => {
+      radio.checked = radio.value === (localStorage.getItem('chatzTheme') || 'auto');
+      radio.addEventListener('change', (e) => {
+        localStorage.setItem('chatzTheme', e.target.value);
+        applyTheme(e.target.value);
+      });
+    });
+
+    // Font settings handlers
+    document.querySelectorAll('input[name="font"]').forEach(radio => {
+      radio.checked = radio.value === (localStorage.getItem('chatzFont') || 'ndot');
+      radio.addEventListener('change', (e) => {
+        localStorage.setItem('chatzFont', e.target.value);
+        document.documentElement.classList.remove('font-ntype', 'font-ndot');
+        document.documentElement.classList.add('font-' + e.target.value);
+      });
+    });
+
+    // Update theme settings HTML
+    document.querySelector('.theme-settings').innerHTML = `
+      <h3>Nothing Style</h3>
+      <div class="theme-options">
+        <div class="theme-option">
+          <input type="radio" id="theme-auto" name="theme" value="auto">
+          <label for="theme-auto">Auto (Time-based)</label>
+        </div>
+        <div class="theme-option">
+          <input type="radio" id="theme-nothing" name="theme" value="nothing" checked>
+          <label for="theme-nothing">Nothing</label>
+        </div>
+        <div class="theme-option">
+          <input type="radio" id="theme-dark" name="theme" value="dark">
+          <label for="theme-dark">Dark</label>
+        </div>
+        <div class="theme-option">
+          <input type="radio" id="theme-light" name="theme" value="light">
+          <label for="theme-light">Light</label>
+        </div>
+      </div>
+      <div class="font-options">
+        <h3>Nothing Font</h3>
+        <div class="theme-options">
+          <div class="theme-option">
+            <input type="radio" id="font-ntype" name="font" value="ntype" checked>
+            <label for="font-ntype">NType (Space Grotesk)</label>
+          </div>
+          <div class="theme-option">
+            <input type="radio" id="font-ndot" name="font" value="ndot">
+            <label for="font-ndot">NDot (Inter)</label>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Set Nothing theme as default
+    localStorage.setItem('chatzTheme', 'nothing');
+    localStorage.setItem('chatzFont', 'ntype');
+    applyTheme('nothing');
+    document.documentElement.classList.add('font-ntype');
   </script>
 </body>
 </html>
