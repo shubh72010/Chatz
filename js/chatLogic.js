@@ -14,10 +14,17 @@ import {
   onDisconnect,
   remove
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { authHandler } from './auth.js';
 
 // Initialize Firebase
 const db = getDatabase(app);
+const storage = getStorage(app);
 
 class ChatLogic {
   constructor() {
@@ -140,9 +147,9 @@ class ChatLogic {
     onDisconnect(userTypingRef).remove();
   }
 
-  async sendMessage(text, replyTo = null) {
+  async sendMessage(text, replyTo = null, fileData = null) {
     const currentUser = authHandler.getCurrentUser();
-    if (!currentUser || !this.currentChat || !text) return null;
+    if (!currentUser || !this.currentChat || (!text && !fileData)) return null;
 
     try {
       const messageRef = push(ref(db, `chats/${this.currentChat}/messages`));
@@ -150,7 +157,7 @@ class ChatLogic {
 
       const messageData = {
         id: messageId,
-        text,
+        text: text || '',
         sender: currentUser.uid,
         senderName: currentUser.displayName,
         senderPhoto: currentUser.photoURL,
@@ -167,11 +174,15 @@ class ChatLogic {
         };
       }
 
+      if (fileData) {
+        Object.assign(messageData, fileData);
+      }
+
       // Update messages and last message atomically
       const updates = {};
       updates[`chats/${this.currentChat}/messages/${messageId}`] = messageData;
       updates[`chats/${this.currentChat}/lastMessage`] = {
-        text,
+        text: fileData ? `Sent a ${fileData.type}` : text,
         timestamp: serverTimestamp(),
         sender: currentUser.uid
       };
@@ -180,6 +191,59 @@ class ChatLogic {
       return messageId;
     } catch (error) {
       console.error('Error sending message:', error);
+      throw error;
+    }
+  }
+
+  async uploadFile(file) {
+    if (!file) return null;
+
+    try {
+      const currentUser = authHandler.getCurrentUser();
+      if (!currentUser) throw new Error('User not authenticated');
+
+      // Create a unique file path
+      const filePath = `chats/${this.currentChat}/files/${Date.now()}_${file.name}`;
+      const fileRef = storageRef(storage, filePath);
+
+      // Upload file
+      await uploadBytes(fileRef, file);
+
+      // Get download URL
+      const downloadURL = await getDownloadURL(fileRef);
+
+      return downloadURL;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  }
+
+  async clearChat(chatId) {
+    if (!chatId) return;
+
+    try {
+      const currentUser = authHandler.getCurrentUser();
+      if (!currentUser) throw new Error('User not authenticated');
+
+      // Get all messages
+      const messagesRef = ref(db, `chats/${chatId}/messages`);
+      const snapshot = await get(messagesRef);
+
+      if (snapshot.exists()) {
+        // Delete all messages
+        const updates = {};
+        snapshot.forEach((childSnapshot) => {
+          updates[`chats/${chatId}/messages/${childSnapshot.key}`] = null;
+        });
+
+        // Update last message
+        updates[`chats/${chatId}/lastMessage`] = null;
+
+        await update(ref(db), updates);
+      }
+    } catch (error) {
+      console.error('Error clearing chat:', error);
       throw error;
     }
   }
