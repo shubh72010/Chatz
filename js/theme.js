@@ -2,7 +2,7 @@
 const ThemeManager = {
   // Theme names and their corresponding classes
   themes: {
-    nothing: '',  // Default theme (no class needed)
+    nothing: 'theme-nothing',  // Changed from empty string to actual class name
     dark: 'theme-dark',
     light: 'theme-light'
   },
@@ -42,12 +42,15 @@ const ThemeManager = {
     
     // Remove all theme classes
     Object.values(this.themes).forEach(themeClass => {
-      document.documentElement.classList.remove(themeClass);
+      if (themeClass) {  // Only remove if class name exists
+        document.documentElement.classList.remove(themeClass);
+      }
     });
     
-    // Apply new theme class if not default
-    if (this.themes[currentTheme]) {
-      document.documentElement.classList.add(this.themes[currentTheme]);
+    // Apply new theme class
+    const themeClass = this.themes[currentTheme];
+    if (themeClass) {
+      document.documentElement.classList.add(themeClass);
     }
     
     // Save to localStorage

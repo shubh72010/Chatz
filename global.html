@@ -88,7 +88,6 @@
   <script type="module">
     import { authHandler } from './js/auth.js';
     import { initializeTheme } from './js/themeManager.js';
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { ref, onValue, push, set, serverTimestamp, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
     import { db } from './js/firebaseConfig.js';
 
@@ -388,7 +387,7 @@
     };
 
     // Initialize chat when user is authenticated
-    onAuthStateChanged(authHandler.auth, (user) => {
+    authHandler.onAuthStateChanged((user) => {
       if (user) {
         initializeGlobalChat();
       } else {
