@@ -508,14 +508,17 @@
     }
 
     .message-content {
-      padding: 0.5rem 0.75rem;
+      display: inline-block;
+      padding: 0.5rem 1.5rem;
       position: relative;
       border-radius: 999px;
       border: 1px solid var(--input-border);
       font-size: 0.97rem;
-      min-width: 0;
+      min-width: 60px;
+      max-width: 100%;
       transition: box-shadow 0.2s, background 0.2s;
       background: none;
+      word-break: break-word;
     }
 
     .message-content:hover {
