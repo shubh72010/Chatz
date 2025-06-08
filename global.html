@@ -4,1056 +4,329 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz | Global Chat</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-  <link rel="stylesheet" href="styles/profileModal.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.12.1/index.css" />
-  <style>
-    /* Base Theme Variables */
-    :root {
-      /* Brand Colors - Nothing's signature colors */
-      --main: #00FF94;  /* Nothing's signature green */
-      --main-dark: #00CC77;
-      --main-light: #33FFA8;
-      --accent: #00FF94;
-      --danger: #FF3B30;
-
-      /* Common Variables */
-      --header-shadow: 0 2px 12px 0 rgba(0,0,0,0.12);
-      --input-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
-      --scrollbar-width: 6px;
-      --border-radius-sm: 12px;  /* Nothing's rounded corners */
-      --border-radius-md: 16px;
-      --border-radius-lg: 24px;
-      --transition-speed: 0.2s;
-      --font-family: 'Space Grotesk', sans-serif;  /* Nothing's primary font */
-    }
-
-    /* Font Options */
-    .font-ntype {
-      --font-family: 'Space Grotesk', sans-serif;  /* Nothing's primary font */
-      letter-spacing: -0.02em;
-    }
-
-    .font-ndot {
-      --font-family: 'Inter', sans-serif;  /* Nothing's secondary font */
-      letter-spacing: 0;
-    }
-
-    /* Nothing Theme */
-    .theme-nothing {
-      /* Background Colors */
-      --bg: #000000;  /* Nothing's signature black */
-      --bg-light: #111111;
-      --bg-gradient: linear-gradient(135deg, #000000 0%, #111111 100%);
-      
-      /* Text Colors */
-      --text: #FFFFFF;
-      --text-muted: rgba(255,255,255,0.7);
-      
-      /* Input Colors */
-      --input-bg: rgba(255,255,255,0.08);
-      --input-border: rgba(255,255,255,0.12);
-      
-      /* Message Bubble Colors */
-      --bubble-own: #00FF94;  /* Nothing's signature green */
-      --bubble-other: #1A1A1A;
-      --bubble-own-text: #000000;
-      --bubble-other-text: #FFFFFF;
-      
-      /* Header Colors */
-      --header-bg: rgba(0,0,0,0.95);
-      
-      /* Scrollbar Colors */
-      --scrollbar-thumb: rgba(0,255,148,0.3);  /* Nothing's green with opacity */
-      --scrollbar-track: #000000;
-      
-      /* Reply Colors */
-      --reply-bg: #1A1A1A;
-      --reply-border: #00FF94;
-
-      /* Brand Colors Override */
-      --main: #00FF94;
-      --main-dark: #00CC77;
-      --main-light: #33FFA8;
-      --accent: #00FF94;
-      --danger: #FF3B30;
-
-      /* Nothing-specific styles */
-      --dot-matrix-size: 4px;
-      --dot-matrix-gap: 8px;
-    }
-
-    /* Dot Matrix Background Effect */
-    .theme-nothing::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-image: 
-        radial-gradient(circle at var(--dot-matrix-size) var(--dot-matrix-size), 
-        rgba(0,255,148,0.03) var(--dot-matrix-size), 
-        transparent 0);
-      background-size: var(--dot-matrix-gap) var(--dot-matrix-gap);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Nothing-style Button */
-    .theme-nothing .send-button,
-    .theme-nothing .back-btn {
-      background: #00FF94;
-      color: #000000;
-      font-weight: 600;
-      border: none;
-      border-radius: var(--border-radius-sm);
-      transition: all 0.2s ease;
-    }
-
-    .theme-nothing .send-button:hover,
-    .theme-nothing .back-btn:hover {
-      background: #33FFA8;
-      transform: translateY(-1px);
-    }
-
-    /* Nothing-style Input */
-    .theme-nothing .message-input {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: #FFFFFF;
-      font-family: var(--font-family);
-    }
-
-    .theme-nothing .message-input:focus {
-      border-color: #00FF94;
-      box-shadow: 0 0 0 2px rgba(0,255,148,0.2);
-    }
-
-    /* Nothing-style Message Bubbles */
-    .theme-nothing .message-content {
-      border-radius: var(--border-radius-md);
-      font-family: var(--font-family);
-    }
-
-    .theme-nothing .message.own .message-content {
-      background: #00FF94;
-      color: #000000;
-    }
-
-    .theme-nothing .message.other .message-content {
-      background: #1A1A1A;
-      color: #FFFFFF;
-    }
-
-    /* Nothing-style Theme Settings */
-    .theme-nothing .theme-settings {
-      background: rgba(0,0,0,0.95);
-      border: 1px solid rgba(255,255,255,0.12);
-      backdrop-filter: blur(10px);
-    }
-
-    .theme-nothing .theme-option input[type="radio"] {
-      accent-color: #00FF94;
-    }
-
-    /* Theme Settings Button */
-    .theme-settings {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: var(--bg-light);
-      border: 2px solid var(--input-border);
-      border-radius: var(--border-radius-md);
-      padding: 1rem;
-      z-index: 1000;
-      box-shadow: var(--header-shadow);
-    }
-
-    .theme-settings h3 {
-      color: var(--text);
-      margin-bottom: 1rem;
-      font-size: 1rem;
-    }
-
-    .theme-options {
-      display: flex;
-      flex-direction: column;
-      gap: 0.8rem;
-    }
-
-    .theme-option {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .theme-option label {
-      color: var(--text);
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-
-    .theme-option input[type="radio"] {
-      accent-color: var(--main);
-    }
-
-    .font-options {
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--input-border);
-    }
-
-    /* Apply font family to all elements */
-    * {
-      font-family: var(--font-family);
-    }
-
-    * { 
-      box-sizing: border-box; 
-      margin: 0; 
-      padding: 0; 
-    }
-
-    body {
-      margin: 0;
-      font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--bg);
-      color: #f5f5f5;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    header {
-      background: var(--header-bg);
-      color: #fff;
-      padding: 1rem 2rem;
-      font-size: 1.5rem;
-      font-weight: 700;
-      box-shadow: var(--header-shadow);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-    }
-
-    .back-btn {
-      background: var(--main);
-      color: #fff;
-      border: none;
-      border-radius: 1.5rem;
-      padding: 0.6rem 1.3rem;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 2px 8px #726dff33;
-      transition: background 0.2s;
-    }
-
-    .back-btn:hover {
-      background: var(--main-dark);
-    }
-
-    .chat-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      margin-top: 4rem;
-      height: calc(100vh - 4rem);
-      padding: 1rem;
-      max-width: 1200px;
-      margin-left: auto;
-      margin-right: auto;
-      width: 100%;
-    }
-
-    .chat-header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem;
-      background: var(--bg-light);
-      border-radius: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .chat-header-info {
-      flex: 1;
-    }
-
-    .chat-header-title {
-      font-weight: 600;
-      color: var(--main);
-      font-size: 1.2rem;
-    }
-
-    .chat-header-subtitle {
-      font-size: 0.9rem;
-      color: var(--main-light);
-    }
-
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      scroll-behavior: smooth;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* Loading indicator */
-    .loading-messages {
-      text-align: center;
-      padding: 1rem;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      display: none;
-    }
-
-    .loading-messages.active {
-      display: block;
-    }
-
-    .loading-spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 2px solid var(--main-light);
-      border-radius: 50%;
-      border-top-color: var(--main);
-      animation: spin 1s linear infinite;
-      margin-right: 0.5rem;
-      vertical-align: middle;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .message {
-      display: flex;
-      gap: 0.8rem;
-      max-width: 80%;
-      animation: messageAppear 0.3s ease;
-    }
-
-    @keyframes messageAppear {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .message.own {
-      margin-left: auto;
-      flex-direction: row-reverse;
-    }
-
-    .message img {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid var(--main);
-      flex-shrink: 0;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-
-    .message img:hover {
-      transform: scale(1.1);
-    }
-
-    .message-content {
-      background: var(--bubble-other);
-      color: var(--bubble-other-text);
-      padding: 0.8rem 1.2rem;
-      border-radius: 1.2rem;
-      position: relative;
-      word-break: break-word;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-
-    .message-content:hover {
-      transform: translateY(-1px);
-    }
-
-    .message.own .message-content {
-      background: var(--bubble-own);
-      color: var(--bubble-own-text);
-    }
-
-    .message-sender {
-      font-size: 0.8rem;
-      color: var(--main);
-      margin-bottom: 0.3rem;
-    }
-
-    .message-time {
-      font-size: 0.7rem;
-      color: rgba(255,255,255,0.5);
-      margin-top: 0.3rem;
-      text-align: right;
-    }
-
-    .reply-preview {
-      display: none;
-      background: var(--reply-bg);
-      padding: 0.5rem 1.1rem;
-      margin: 0 1.2rem 0.7rem 1.2rem;
-      border-left: 3px solid var(--reply-border);
-      font-size: 0.93rem;
-      color: #dcdcff;
-      user-select: none;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-radius: 0.7rem;
-      box-shadow: 0 2px 8px 0 rgba(114,109,255,0.08);
-    }
-
-    .reply-preview-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .reply-preview-text {
-      flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .reply-preview-sender {
-      color: var(--main);
-      font-weight: 600;
-    }
-
-    .reply-preview-cancel {
-      background: none;
-      border: none;
-      color: var(--bubble-other-text);
-      font-size: 1.2rem;
-      cursor: pointer;
-      padding: 0.2rem;
-      opacity: 0.7;
-      transition: opacity 0.2s;
-    }
-
-    .reply-preview-cancel:hover {
-      opacity: 1;
-    }
-
-    .reply-to {
-      font-size: 0.8rem;
-      color: var(--main);
-      margin-bottom: 0.3rem;
-      padding-left: 0.5rem;
-      border-left: 2px solid var(--main);
-    }
-
-    .chat-input {
-      display: flex;
-      gap: 1rem;
-      padding: 1rem;
-      background: var(--bg-light);
-      border-radius: 1rem;
-      margin-top: 1rem;
-    }
-
-    .chat-input input {
-      flex: 1;
-      background: var(--input-bg);
-      border: 1.5px solid var(--input-border);
-      border-radius: 1.2rem;
-      padding: 0.8rem 1.2rem;
-      color: #fff;
-      font-size: 1rem;
-      outline: none;
-      transition: border 0.2s;
-    }
-
-    .chat-input input:focus {
-      border-color: var(--main);
-    }
-
-    .chat-input button {
-      background: var(--main);
-      color: #fff;
-      border: none;
-      border-radius: 1.2rem;
-      padding: 0.8rem 1.5rem;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .chat-input button:hover {
-      background: var(--main-dark);
-    }
-
-    .chat-input button:disabled {
-      background: var(--input-border);
-      cursor: not-allowed;
-    }
-
-    .typing-indicator {
-      font-size: 0.9rem;
-      color: var(--main-light);
-      padding: 0.5rem 1rem;
-      display: none;
-    }
-
-    .typing-indicator.active {
-      display: block;
-    }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: var(--scrollbar-track);
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--scrollbar-thumb);
-      border-radius: 3px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--main);
-    }
-
-    @media (max-width: 768px) {
-      .chat-container {
-        padding: 0.5rem;
-      }
-      .message {
-        max-width: 90%;
-      }
-    }
-
-    .message-input-container {
-      display: flex;
-      gap: 1rem;
-      padding: 1rem;
-      background: var(--bg-light);
-      border-radius: var(--border-radius-md);
-      position: relative;
-    }
-
-    .message-input-wrapper {
-      flex: 1;
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    .message-input {
-      flex: 1;
-      padding: 0.8rem 1rem;
-      border: 1px solid var(--input-border);
-      border-radius: var(--border-radius-sm);
-      background: var(--input-bg);
-      color: var(--text);
-      font-size: 1rem;
-      resize: none;
-      max-height: 120px;
-      min-height: 42px;
-    }
-
-    .message-actions {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    .action-button {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 1.2rem;
-      padding: 0.5rem;
-      cursor: pointer;
-      border-radius: var(--border-radius-sm);
-      transition: color var(--transition-speed);
-    }
-
-    .action-button:hover {
-      color: var(--main);
-    }
-
-    .send-button {
-      background: var(--main);
-      color: white;
-      border: none;
-      border-radius: var(--border-radius-sm);
-      padding: 0.8rem 1.5rem;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background var(--transition-speed);
-    }
-
-    .send-button:hover {
-      background: var(--main-dark);
-    }
-
-    /* Emoji Picker Styles */
-    .emoji-picker-container {
-      position: absolute;
-      bottom: 100%;
-      right: 0;
-      margin-bottom: 10px;
-      z-index: 1000;
-      display: none;
-    }
-
-    .emoji-picker-container.active {
-      display: block;
-    }
-
-    emoji-picker {
-      --background: var(--bg-light);
-      --border-color: var(--input-border);
-      --button-active-background: var(--main);
-      --button-hover-background: var(--main-light);
-      --category-emoji-color: var(--text);
-      --category-emoji-selected-color: var(--text);
-      --category-font-color: var(--text);
-      --category-font-selected-color: var(--text);
-      --indicator-color: var(--main);
-      --input-border-color: var(--input-border);
-      --input-font-color: var(--text);
-      --num-columns: 8;
-      --outline-color: var(--main);
-      --outline-size: 1px;
-      --skintone-dropdown-border-color: var(--input-border);
-      width: 350px;
-      height: 400px;
-    }
-
-    .message-input-container {
-      position: relative;
-    }
-  </style>
-  <script>
-    function getTimeBasedTheme() {
-      const hour = new Date().getHours();
-      
-      // 6:00 to 14:00 - Light mode
-      if (hour >= 6 && hour < 14) {
-        return 'light';
-      }
-      // 14:00 to 20:00 - Purple mode (default)
-      else if (hour >= 14 && hour < 20) {
-        return 'default';
-      }
-      // 20:00 to 6:00 - Dark mode
-      else {
-        return 'dark';
-      }
-    }
-
-    function applyTheme(theme) {
-      // Remove all theme classes first
-      document.documentElement.classList.remove('theme-dark', 'theme-light', 'theme-nothing');
-      
-      // Apply the new theme class
-      if (theme === 'nothing') {
-        document.documentElement.classList.add('theme-nothing');
-      } else if (theme === 'dark') {
-        document.documentElement.classList.add('theme-dark');
-      } else if (theme === 'light') {
-        document.documentElement.classList.add('theme-light');
-      }
-      // Default theme doesn't need a class
-
-      // Apply font family
-      const fontFamily = localStorage.getItem('chatzFont') || 'ntype';
-      document.documentElement.classList.remove('font-ntype', 'font-ndot');
-      document.documentElement.classList.add('font-' + fontFamily);
-    }
-
-    // Initialize theme and font immediately
-    document.addEventListener('DOMContentLoaded', () => {
-      // Set Nothing theme as default if no theme is set
-      const savedTheme = localStorage.getItem('chatzTheme') || 'nothing';
-      const savedFont = localStorage.getItem('chatzFont') || 'ntype';
-      
-      // Apply theme and font
-      applyTheme(savedTheme);
-      document.documentElement.classList.add('font-' + savedFont);
-
-      // Update radio buttons to reflect current theme
-      const themeRadios = document.querySelectorAll('input[name="theme"]');
-      themeRadios.forEach(radio => {
-        radio.checked = radio.value === savedTheme;
-      });
-
-      // Update font radios to reflect current font
-      const fontRadios = document.querySelectorAll('input[name="font"]');
-      fontRadios.forEach(radio => {
-        radio.checked = radio.value === savedFont;
-      });
-    });
-
-    // Update theme every minute only if auto is selected
-    setInterval(() => {
-      const currentTheme = localStorage.getItem('chatzTheme') || 'nothing';
-      if (currentTheme === 'auto') {
-        applyTheme(getTimeBasedTheme());
-      }
-    }, 60000);
-
-    // Listen for theme changes in other tabs
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'chatzTheme') {
-        const theme = e.newValue || 'nothing';
-        applyTheme(theme);
-      } else if (e.key === 'chatzFont') {
-        const font = e.newValue || 'ntype';
-        document.documentElement.classList.remove('font-ntype', 'font-ndot');
-        document.documentElement.classList.add('font-' + font);
-      }
-    });
-  </script>
+  <link rel="stylesheet" href="styles/giphy.css" />
+  <link rel="stylesheet" href="styles/global.css" />
+  <link rel="stylesheet" href="styles/nothing-theme.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://js.giphy.com/v2/sdk.min.js"></script>
+  <script src="js/theme.js"></script>
 </head>
 <body>
-  <!-- Add theme settings button -->
-  <div class="theme-settings">
-    <h3>Nothing Style</h3>
-    <div class="theme-options">
-      <div class="theme-option">
-        <input type="radio" id="theme-nothing" name="theme" value="nothing" checked>
-        <label for="theme-nothing">Nothing</label>
-      </div>
-      <div class="theme-option">
-        <input type="radio" id="theme-auto" name="theme" value="auto">
-        <label for="theme-auto">Auto (Time-based)</label>
-      </div>
-      <div class="theme-option">
-        <input type="radio" id="theme-dark" name="theme" value="dark">
-        <label for="theme-dark">Dark</label>
-      </div>
-      <div class="theme-option">
-        <input type="radio" id="theme-light" name="theme" value="light">
-        <label for="theme-light">Light</label>
-      </div>
-    </div>
-    <div class="font-options">
-      <h3>Nothing Font</h3>
-      <div class="theme-options">
-        <div class="theme-option">
-          <input type="radio" id="font-ntype" name="font" value="ntype" checked>
-          <label for="font-ntype">NType (Space Grotesk)</label>
-        </div>
-        <div class="theme-option">
-          <input type="radio" id="font-ndot" name="font" value="ndot">
-          <label for="font-ndot">NDot (Inter)</label>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <header>
     <button class="back-btn" onclick="window.location.href='/Chatz/index.html'">&larr; Back</button>
-    <span>Global Chat</span>
+    <span id="chat-header-title">Global Chat</span>
     <div style="width: 100px;"></div>
   </header>
 
-  <div class="chat-container">
-    <div class="chat-header">
-      <div class="chat-header-info">
-        <div class="chat-header-title">Global Chat</div>
-        <div class="chat-header-subtitle">Chat with everyone in real-time</div>
-      </div>
-    </div>
-
-    <div class="loading-messages" id="loading-messages">
-      <div class="loading-spinner"></div>
-      Loading messages...
-    </div>
-
-    <div class="chat-messages" id="chat-messages">
-      <!-- Messages will be populated here -->
-    </div>
-
-    <div class="typing-indicator" id="typing-indicator">
-      <span id="typing-text"></span>
-    </div>
-
-    <div class="reply-preview" id="reply-preview">
-      <div class="reply-preview-content">
-        <div class="reply-preview-text">
-          <span class="reply-preview-sender" id="reply-sender"></span>
-          <span id="reply-text"></span>
+  <div class="main-container">
+    <div class="chat-container">
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <div class="chat-header-title">Global Chat</div>
+          <div class="chat-header-status" id="online-count">0 online</div>
         </div>
-        <button class="reply-preview-cancel" id="cancel-reply">&times;</button>
-      </div>
-    </div>
-
-    <div class="message-input-container">
-      <div class="message-input-wrapper">
-        <textarea
-          id="message-input"
-          class="message-input"
-          placeholder="Type a message..."
-          rows="1"
-        ></textarea>
-        <div class="message-actions">
-          <button id="emoji-button" class="action-button emoji-button" title="Add emoji">
-            <i class="far fa-smile"></i>
+        <div class="chat-header-actions">
+          <button class="action-btn" id="refresh-btn" title="Refresh Messages">
+            <i class="fas fa-sync-alt"></i>
           </button>
+          <div class="chat-stats">
+            <div class="stat-item">
+              <i class="fas fa-message"></i>
+              <span id="message-count">0</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-users"></i>
+              <span id="user-count">0</span>
+            </div>
+          </div>
         </div>
       </div>
-      <div id="emoji-picker-container" class="emoji-picker-container">
-        <emoji-picker></emoji-picker>
+
+      <div class="loading-messages" id="loading-messages">
+        <div class="loading-spinner"></div>
+        Loading messages...
       </div>
-      <button id="send-button" class="send-button">
-        <i class="fas fa-paper-plane"></i>
-      </button>
+
+      <div class="chat-messages" id="chat-messages">
+        <!-- Messages will be populated here -->
+      </div>
+
+      <div class="typing-indicator" id="typing-indicator">
+        <span id="typing-text"></span>
+      </div>
+
+      <div class="reply-preview" id="reply-preview" style="display: none;">
+        <div class="reply-preview-content">
+          <div class="reply-preview-text">
+            <span class="reply-preview-sender" id="reply-sender"></span>
+            <span id="reply-text"></span>
+          </div>
+          <button class="reply-preview-cancel" id="cancel-reply">&times;</button>
+        </div>
+      </div>
+
+      <div class="message-input-container">
+        <div class="message-input-wrapper">
+          <textarea
+            id="message-input"
+            class="message-input"
+            placeholder="Type a message to everyone..."
+            rows="1"
+          ></textarea>
+          <div class="message-actions">
+            <button class="action-button gif-button" title="Send GIF">
+              <i class="fas fa-images"></i>
+            </button>
+            <button class="action-button emoji-button" title="Add emoji">
+              <i class="far fa-smile"></i>
+            </button>
+          </div>
+        </div>
+        <button id="send-btn" class="send-button">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
     </div>
   </div>
 
   <script type="module">
-    // Import Firebase services first
-    import { app, auth, db } from '/Chatz/js/firebaseConfig.js';
-    import { profileModal } from './js/profileModal.js';
-    import { usernameModal } from './js/usernameModal.js';
-    import 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1.12.1/index.js';
-    import {
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import {
-      ref,
-      push,
-      set,
-      onValue,
-      serverTimestamp,
-      query,
-      orderByChild,
-      get,
-      endBefore,
-      limitToLast
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { authHandler } from './js/auth.js';
+    import { initializeTheme } from './js/themeManager.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { ref, onValue, push, set, serverTimestamp, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { db } from './js/firebaseConfig.js';
 
-    // Initialize username modal
-    usernameModal.init((username) => {
-      console.log('Username set:', username);
-      // Reload the page to update the UI with the new username
-      window.location.reload();
-    });
+    // Get DOM elements
+    const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const typingText = document.getElementById('typing-text');
+    const loadingMessages = document.getElementById('loading-messages');
+    const replyPreview = document.getElementById('reply-preview');
+    const replySender = document.getElementById('reply-sender');
+    const replyText = document.getElementById('reply-text');
+    const cancelReplyBtn = document.getElementById('cancel-reply');
+    const messageCountEl = document.getElementById('message-count');
+    const userCountEl = document.getElementById('user-count');
+    const onlineCountEl = document.getElementById('online-count');
+    const refreshBtn = document.getElementById('refresh-btn');
 
-    // Hide all chat content initially
-    const chatContainer = document.querySelector('.chat-container');
-    if (chatContainer) {
-      chatContainer.style.display = 'none';
+    let replyTo = null;
+    let messageCount = 0;
+    let userCount = 0;
+    let onlineCount = 0;
+    let typingTimeout = null;
+
+    // Initialize global chat
+    async function initializeGlobalChat() {
+      try {
+        // Set up message listeners
+        const messagesRef = ref(db, 'global_messages');
+        onValue(messagesRef, (snapshot) => {
+          const messages = [];
+          snapshot.forEach((childSnapshot) => {
+            messages.push([childSnapshot.key, childSnapshot.val()]);
+          });
+          updateMessages(messages);
+          loadingMessages.style.display = 'none';
+        });
+
+        // Set up online users listener
+        const usersRef = ref(db, 'users');
+        onValue(usersRef, (snapshot) => {
+          let online = 0;
+          let total = 0;
+          snapshot.forEach((childSnapshot) => {
+            total++;
+            if (childSnapshot.val().online) {
+              online++;
+            }
+          });
+          onlineCount = online;
+          userCount = total;
+          updateStats();
+        });
+
+        // Set up typing status listener
+        const typingRef = ref(db, 'global_typing');
+        onValue(typingRef, (snapshot) => {
+          const typingUsers = [];
+          snapshot.forEach((childSnapshot) => {
+            if (childSnapshot.key !== authHandler.getCurrentUser()?.uid) {
+              typingUsers.push([childSnapshot.key, childSnapshot.val()]);
+            }
+          });
+          updateTypingStatus(typingUsers);
+        });
+
+      } catch (error) {
+        console.error('Error initializing global chat:', error);
+        alert('Failed to load global chat. Please try again.');
+        window.location.href = '/Chatz/index.html';
+      }
     }
 
-    // Check authentication state and username
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        // User is not signed in, redirect to signin page
-        window.location.href = '/Chatz/signin.html';
+    // Update messages
+    function updateMessages(messages) {
+      if (!messages) return;
+
+      const wasNearBottom = isNearBottom();
+      chatMessages.innerHTML = '';
+
+      messages.forEach(([messageId, message]) => {
+        const messageElement = createMessageElement(message, messageId);
+        chatMessages.appendChild(messageElement);
+      });
+
+      if (wasNearBottom) {
+        scrollToBottom();
+      }
+
+      messageCount = messages.length;
+      updateStats();
+    }
+
+    // Create message element
+    function createMessageElement(message, messageId) {
+      const isOwn = message.sender === authHandler.getCurrentUser()?.uid;
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isOwn ? 'own' : ''}`;
+
+      const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : 'Sending...';
+      const senderName = message.senderName || 'Anonymous';
+      const senderPhoto = message.senderPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=726dff&color=fff`;
+
+      let replyHTML = '';
+      if (message.replyTo) {
+        replyHTML = `
+          <div class="reply-to">
+            Reply to ${escapeHtml(message.replyTo.senderName)}: ${escapeHtml(truncate(message.replyTo.text, 40))}
+          </div>
+        `;
+      }
+
+      messageDiv.innerHTML = `
+        <img src="${senderPhoto}" 
+             alt="Profile" 
+             class="message-avatar"
+             data-uid="${message.sender}" />
+        <div class="message-content">
+          <div class="message-sender">${escapeHtml(senderName)}</div>
+          ${replyHTML}
+          ${escapeHtml(message.text)}
+          <div class="message-time">${timestamp}</div>
+        </div>
+      `;
+
+      // Add click handler for reply
+      const messageContentDiv = messageDiv.querySelector('.message-content');
+      messageContentDiv.onclick = (e) => {
+        if (!isOwn && !e.target.closest('img[data-uid]')) {
+          setReply(message, messageId);
+        }
+      };
+
+      return messageDiv;
+    }
+
+    // Update typing status
+    function updateTypingStatus(typingUsers) {
+      if (!typingUsers || typingUsers.length === 0) {
+        typingIndicator.classList.remove('active');
         return;
       }
 
-      try {
-        // Check if user has a username
-        const userRef = ref(db, `users/${user.uid}`);
-        const snapshot = await get(userRef);
-        const userData = snapshot.val();
+      const typingUser = typingUsers[0];
+      const typingUserName = typingUser[1].senderName || 'Someone';
+      typingText.textContent = `${typingUserName} is typing...`;
+      typingIndicator.classList.add('active');
+    }
 
-        if (!userData || !userData.username) {
-          // Show username modal and hide chat content
-          if (chatContainer) {
-            chatContainer.style.display = 'none';
-          }
-          usernameModal.show();
-          return;
-        }
+    // Update stats
+    function updateStats() {
+      if (messageCountEl) messageCountEl.textContent = messageCount;
+      if (userCountEl) userCountEl.textContent = userCount;
+      if (onlineCountEl) onlineCountEl.textContent = `${onlineCount} online`;
+    }
 
-        // User has a username, show chat content and proceed with initialization
-        if (chatContainer) {
-          chatContainer.style.display = 'flex';
-        }
-        currentUser = user;
-        setupProfileClicks();
-        
-        // Setup emoji picker
-        const emojiButton = document.getElementById('emoji-button');
-        const emojiPickerContainer = document.getElementById('emoji-picker-container');
-        const emojiPicker = emojiPickerContainer.querySelector('emoji-picker');
-        const messageInput = document.getElementById('message-input');
+    // Helper functions
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
 
-        if (emojiButton && emojiPicker && messageInput) {
-          // Toggle emoji picker
-          emojiButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            emojiPickerContainer.classList.toggle('active');
-          });
+    function truncate(text, length) {
+      if (text.length <= length) return text;
+      return text.substring(0, length) + '...';
+    }
 
-          // Handle emoji selection
-          emojiPicker.addEventListener('emoji-click', (e) => {
-            const cursorPos = messageInput.selectionStart;
-            const text = messageInput.value;
-            const newText = text.slice(0, cursorPos) + e.detail.unicode + text.slice(cursorPos);
-            messageInput.value = newText;
-            
-            // Update cursor position
-            const newCursorPos = cursorPos + e.detail.unicode.length;
-            messageInput.setSelectionRange(newCursorPos, newCursorPos);
-            
-            // Trigger input event for auto-resize and typing indicator
-            messageInput.dispatchEvent(new Event('input'));
-            
-            // Focus back on input
-            messageInput.focus();
-          });
-
-          // Close emoji picker when clicking outside
-          document.addEventListener('click', (e) => {
-            if (!emojiPickerContainer.contains(e.target) && !emojiButton.contains(e.target)) {
-              emojiPickerContainer.classList.remove('active');
-            }
-          });
-
-          // Close emoji picker when pressing Escape
-          document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-              emojiPickerContainer.classList.remove('active');
-            }
-          });
-        }
-
-        // Load initial messages
-        const messagesRef = ref(db, 'global_messages');
-        const messagesQuery = query(messagesRef, 
-          orderByChild('timestamp'),
-          limitToLast(20)
-        );
-        
-        onValue(messagesQuery, (snapshot) => {
-          const wasNearBottom = isNearBottom();
-          chatMessages.innerHTML = '';
-          
-          snapshot.forEach((childSnapshot) => {
-            const message = childSnapshot.val();
-            renderMessage(message, childSnapshot.key);
-            lastLoadedTimestamp = message.timestamp;
-          });
-          
-          if (wasNearBottom) {
-            scrollToBottom(false);
-          }
+    function scrollToBottom(smooth = true) {
+      if (smooth) {
+        chatMessages.scrollTo({
+          top: chatMessages.scrollHeight,
+          behavior: 'smooth'
         });
-
-        // Listen for typing status
-        onValue(ref(db, 'global_typing'), (snapshot) => {
-          const typingUsers = [];
-          snapshot.forEach((childSnapshot) => {
-            if (childSnapshot.key !== currentUser.uid && childSnapshot.val()) {
-              const userData = userDataCache[childSnapshot.key];
-              if (userData) {
-                typingUsers.push(userData.nickname || userData.displayName || "Anonymous");
-              }
-            }
-          });
-
-          if (typingUsers.length > 0) {
-            typingIndicator.classList.add('active');
-            typingText.textContent = typingUsers.length === 1 
-              ? `${typingUsers[0]} is typing...`
-              : `${typingUsers.length} people are typing...`;
-          } else {
-            typingIndicator.classList.remove('active');
-          }
-        });
-
-        // Cache user data
-        onValue(ref(db, 'users'), (snapshot) => {
-          snapshot.forEach((childSnapshot) => {
-            userDataCache[childSnapshot.key] = childSnapshot.val();
-          });
-        });
-
-        // Setup message input handlers
-        if (messageInput) {
-          messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              sendMessage();
-            }
-          });
-
-          messageInput.addEventListener('input', () => {
-            // Auto-resize textarea
-            messageInput.style.height = 'auto';
-            messageInput.style.height = messageInput.scrollHeight + 'px';
-
-            // Update typing status
-            if (currentUser) {
-              const typingRef = ref(db, `global_typing/${currentUser.uid}`);
-              set(typingRef, true);
-
-              if (typingTimeout) {
-                clearTimeout(typingTimeout);
-              }
-
-              typingTimeout = setTimeout(() => {
-                set(typingRef, false);
-              }, 2000);
-            }
-          });
-        }
-
-        if (sendButton) {
-          sendButton.addEventListener('click', sendMessage);
-        }
-
-        // Add cancel reply handler
-        const cancelReplyBtn = document.getElementById('cancel-reply');
-        if (cancelReplyBtn) {
-          cancelReplyBtn.addEventListener('click', cancelReply);
-        }
-      } catch (error) {
-        console.error('Error checking authentication:', error);
-        window.location.href = '/Chatz/signin.html';
+      } else {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
       }
-    });
+    }
 
-    // Send message function
-    async function sendMessage() {
-      if (!messageInput || !currentUser) return;
+    function isNearBottom() {
+      return chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 100;
+    }
+
+    function setReply(message, messageId) {
+      replyTo = {
+        messageId,
+        senderId: message.sender,
+        senderName: message.senderName,
+        text: message.text
+      };
       
-      const text = messageInput.value.trim();
-      if (!text) return;
+      replySender.textContent = message.senderName || 'Anonymous';
+      replyText.textContent = truncate(replyTo.text, 40);
+      replyPreview.style.display = 'block';
+      
+      messageInput.focus();
+    }
+
+    function cancelReply() {
+      replyTo = null;
+      replyPreview.style.display = 'none';
+    }
+
+    // Set typing status
+    function setTypingStatus(isTyping) {
+      if (!authHandler.getCurrentUser()) return;
+
+      const typingRef = ref(db, `global_typing/${authHandler.getCurrentUser().uid}`);
+      if (isTyping) {
+        set(typingRef, {
+          senderName: authHandler.getCurrentUser().displayName,
+          timestamp: serverTimestamp()
+        });
+      } else {
+        set(typingRef, null);
+      }
+    }
+
+    // Event listeners
+    sendBtn.onclick = async () => {
+      const message = messageInput.value.trim();
+      if (!message) return;
 
       try {
+        const user = authHandler.getCurrentUser();
+        if (!user) throw new Error('Not authenticated');
+
         const messageData = {
-          text: text,
-          senderId: currentUser.uid,
+          text: message,
+          sender: user.uid,
+          senderName: user.displayName || 'Anonymous',
+          senderPhoto: user.photoURL,
           timestamp: serverTimestamp()
         };
 
@@ -1061,48 +334,86 @@
           messageData.replyTo = {
             messageId: replyTo.messageId,
             senderId: replyTo.senderId,
-            text: replyTo.text,
-            senderName: replyTo.senderName
+            senderName: replyTo.senderName,
+            text: replyTo.text
           };
-          cancelReply();
         }
 
-        // Clear input before sending
+        await push(ref(db, 'global_messages'), messageData);
         messageInput.value = '';
-        messageInput.style.height = 'auto';
-
-        // Send message to Firebase
-        const messagesRef = ref(db, 'global_messages');
-        await push(messagesRef, messageData);
-        
+        cancelReply();
         scrollToBottom();
+        setTypingStatus(false);
       } catch (error) {
         console.error('Error sending message:', error);
         alert('Failed to send message. Please try again.');
       }
-    }
-  </script>
+    };
 
-  <script>
-    // Theme settings handlers
-    document.addEventListener('DOMContentLoaded', () => {
-      // Theme settings handlers
-      document.querySelectorAll('input[name="theme"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-          localStorage.setItem('chatzTheme', e.target.value);
-          applyTheme(e.target.value);
-        });
-      });
+    messageInput.onkeypress = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    };
 
-      // Font settings handlers
-      document.querySelectorAll('input[name="font"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-          localStorage.setItem('chatzFont', e.target.value);
-          document.documentElement.classList.remove('font-ntype', 'font-ndot');
-          document.documentElement.classList.add('font-' + e.target.value);
+    messageInput.oninput = () => {
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
+      setTypingStatus(true);
+      typingTimeout = setTimeout(() => {
+        setTypingStatus(false);
+      }, 3000);
+    };
+
+    cancelReplyBtn.onclick = cancelReply;
+
+    refreshBtn.onclick = async () => {
+      try {
+        loadingMessages.style.display = 'flex';
+        const messagesRef = ref(db, 'global_messages');
+        const snapshot = await get(messagesRef);
+        const messages = [];
+        snapshot.forEach((childSnapshot) => {
+          messages.push([childSnapshot.key, childSnapshot.val()]);
         });
-      });
+        updateMessages(messages);
+      } catch (error) {
+        console.error('Error refreshing messages:', error);
+        alert('Failed to refresh messages. Please try again.');
+      } finally {
+        loadingMessages.style.display = 'none';
+      }
+    };
+
+    // Initialize chat when user is authenticated
+    onAuthStateChanged(authHandler.auth, (user) => {
+      if (user) {
+        initializeGlobalChat();
+      } else {
+        window.location.href = '/Chatz/signin.html';
+      }
+    });
+
+    // Setup profile clicks
+    document.addEventListener('click', (e) => {
+      const avatar = e.target.closest('img[data-uid]');
+      if (avatar && avatar.dataset.uid) {
+        e.preventDefault();
+        e.stopPropagation();
+        authHandler.showProfileModal(avatar.dataset.uid);
+      }
+    });
+
+    // Add event listeners for action buttons
+    document.querySelector('.gif-button').addEventListener('click', () => {
+      alert('GIF sharing feature coming soon!');
+    });
+
+    document.querySelector('.emoji-button').addEventListener('click', () => {
+      alert('Emoji picker feature coming soon!');
     });
   </script>
 </body>
-</html>
+</html> 
