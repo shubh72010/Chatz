@@ -57,7 +57,7 @@ const dbRules = {
     "global_messages": {
       ".read": "auth != null",
       ".write": "auth != null",
-      ".indexOn": ["timestamp"],
+      ".indexOn": "timestamp",
       "$messageId": {
         ".read": "auth != null",
         ".write": "auth != null"
