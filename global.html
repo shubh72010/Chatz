@@ -715,6 +715,12 @@
       window.location.reload();
     });
 
+    // Hide all chat content initially
+    const chatContainer = document.querySelector('.chat-container');
+    if (chatContainer) {
+      chatContainer.style.display = 'none';
+    }
+
     // Check authentication state and username
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -730,12 +736,18 @@
         const userData = snapshot.val();
 
         if (!userData || !userData.username) {
-          // Show username modal if no username is set
+          // Show username modal and hide chat content
+          if (chatContainer) {
+            chatContainer.style.display = 'none';
+          }
           usernameModal.show();
           return;
         }
 
-        // User has a username, proceed with normal initialization
+        // User has a username, show chat content and proceed with initialization
+        if (chatContainer) {
+          chatContainer.style.display = 'flex';
+        }
         currentUser = user;
         setupProfileClicks();
         
