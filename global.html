@@ -25,7 +25,6 @@
         </div>
       </div>
     </div>
-    <div style="width: 100px;"></div>
   </header>
 
   <div class="main-container">
@@ -102,17 +101,18 @@
 
     /* Back Button Styles */
     .back-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
+      height: 36px;
+      padding: 0 1rem;
+      border-radius: 18px;
       border: 1px solid var(--input-border);
       background: var(--input-bg);
       color: var(--text);
       cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 500;
       transition: all var(--transition-speed) var(--transition-timing);
       backdrop-filter: blur(8px);
       flex-shrink: 0;
@@ -131,17 +131,17 @@
 
     @media (max-width: 768px) {
       .back-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 1.1rem;
+        height: 32px;
+        padding: 0 0.75rem;
+        font-size: 0.9rem;
       }
     }
 
     @media (max-width: 480px) {
       .back-btn {
-        width: 32px;
-        height: 32px;
-        font-size: 1rem;
+        height: 28px;
+        padding: 0 0.6rem;
+        font-size: 0.85rem;
       }
     }
 
@@ -178,9 +178,42 @@
       scroll-padding-top: 1rem;
     }
 
-    /* Adjust scroll button position to account for fixed header */
+    /* Scroll to Bottom Button */
     .scroll-bottom-btn {
-      bottom: calc(100px + 60px); /* Original bottom + header height */
+      position: fixed;
+      bottom: calc(100px + 60px);
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--main);
+      color: var(--button-text);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px);
+      transition: all 0.3s var(--transition-timing);
+      z-index: 1000;
+    }
+
+    .scroll-bottom-btn.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .scroll-bottom-btn:hover {
+      background: var(--main-dark);
+      transform: translateY(-2px);
+    }
+
+    .scroll-bottom-btn:active {
+      transform: translateY(0);
     }
 
     @media (max-width: 768px) {
@@ -196,6 +229,9 @@
 
       .scroll-bottom-btn {
         bottom: calc(80px + 56px);
+        right: 16px;
+        width: 36px;
+        height: 36px;
       }
     }
 
@@ -212,6 +248,9 @@
 
       .scroll-bottom-btn {
         bottom: calc(70px + 52px);
+        right: 12px;
+        width: 32px;
+        height: 32px;
       }
     }
 
@@ -598,18 +637,22 @@
 
     // Scroll handling
     let isNearBottom = true;
-    const SCROLL_THRESHOLD = 100; // pixels from bottom to consider "near bottom"
+    const SCROLL_THRESHOLD = 300; // Increased threshold to show button only when significantly scrolled up
+    const SCROLL_SHOW_THRESHOLD = 500; // Minimum scroll up distance to show the button
 
     function checkScroll() {
       const scrollPosition = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight;
-      isNearBottom = scrollPosition < SCROLL_THRESHOLD;
+      const scrollUpDistance = chatMessages.scrollTop;
       
-      // Show/hide scroll button
-      if (isNearBottom) {
-        scrollBottomBtn.classList.remove('visible');
-      } else {
+      // Only show button if scrolled up significantly
+      if (scrollUpDistance > SCROLL_SHOW_THRESHOLD) {
         scrollBottomBtn.classList.add('visible');
+      } else {
+        scrollBottomBtn.classList.remove('visible');
       }
+
+      // Update isNearBottom for message loading behavior
+      isNearBottom = scrollPosition < SCROLL_THRESHOLD;
     }
 
     function scrollToBottom(smooth = true) {
@@ -679,6 +722,7 @@
 
       messageCount = messages.length;
       updateStats();
+      checkScroll(); // Check scroll position after messages update
     }
 
     // Create message element
@@ -822,10 +866,14 @@
     });
 
     // Event listeners for scroll handling
-    chatMessages.addEventListener('scroll', checkScroll);
-    scrollBottomBtn.addEventListener('click', () => {
-      scrollToBottom();
-      scrollBottomBtn.classList.remove('visible');
+    let scrollTimeout;
+    chatMessages.addEventListener('scroll', () => {
+      if (!scrollTimeout) {
+        scrollTimeout = setTimeout(() => {
+          checkScroll();
+          scrollTimeout = null;
+        }, 100); // Throttle to run at most every 100ms
+      }
     });
 
     // Add back button click handler
