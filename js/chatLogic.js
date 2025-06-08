@@ -19,7 +19,8 @@ import {
   get,
   endBefore,
   limitToLast,
-  onDisconnect
+  onDisconnect,
+  remove
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 import { authHandler } from './auth.js';
 import { friendSystem } from './friendSystem.js';
