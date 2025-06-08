@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles/global.css">
   <link rel="stylesheet" href="styles/nothing-theme.css">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="js/theme.js"></script>
   <style>
     /* Base Theme Variables */
     :root {
@@ -520,53 +521,9 @@
   </div>
 
   <script>
-    function getTimeBasedTheme() {
-      const hour = new Date().getHours();
-      
-      // 6:00 to 14:00 - Light mode
-      if (hour >= 6 && hour < 14) {
-        return 'light';
-      }
-      // 14:00 to 20:00 - Purple mode (default)
-      else if (hour >= 14 && hour < 20) {
-        return 'default';
-      }
-      // 20:00 to 6:00 - Dark mode
-      else {
-        return 'dark';
-      }
-    }
-
-    function applyTheme(theme) {
-      let currentTheme = theme;
-      
-      // If no theme provided or theme is 'auto', use time-based theme
-      if (!currentTheme || currentTheme === 'auto') {
-        currentTheme = getTimeBasedTheme();
-      }
-      
-      // Apply the theme class
-      document.documentElement.className = currentTheme === 'default' ? '' : 'theme-' + currentTheme;
-    }
-
-    // Initialize theme
-    const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
-    applyTheme(savedTheme);
-
-    // Update theme every minute only if auto is selected
-    setInterval(() => {
-      const currentTheme = localStorage.getItem('chatzTheme') || 'auto';
-      if (currentTheme === 'auto') {
-        applyTheme('auto');
-      }
-    }, 60000);
-
-    // Listen for theme changes in other tabs
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'chatzTheme') {
-        const theme = e.newValue || 'auto';
-        applyTheme(theme);
-      }
+    document.addEventListener('DOMContentLoaded', () => {
+      // Your existing initialization code here
+      // (excluding any theme management code)
     });
   </script>
   <script type="module">

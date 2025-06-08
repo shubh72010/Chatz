@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="styles/global.css">
   <link rel="stylesheet" href="styles/nothing-theme.css">
+  <script src="js/theme.js"></script>
   <style>
     /* Base Theme Variables */
     :root {
@@ -283,42 +284,11 @@
     <div class="loading-spinner"></div>
   </div>
 
-  <script type="module">
-    import { authHandler } from './js/auth.js';
-    import { initializeTheme } from './js/themeManager.js';
-
-    const googleSignInBtn = document.getElementById('googleSignIn');
-    const errorMessage = document.getElementById('errorMessage');
-    const loading = document.getElementById('loading');
-
-    // Hide error message initially
-    errorMessage.style.display = 'none';
-
-    // Handle Google Sign In
-    googleSignInBtn.addEventListener('click', async () => {
-        try {
-            loading.style.display = 'flex';
-            errorMessage.style.display = 'none';
-            await authHandler.signInWithGoogle();
-            // Redirect will happen automatically through auth state change
-        } catch (error) {
-            console.error('Sign in error:', error);
-            errorMessage.textContent = error.message;
-            errorMessage.style.display = 'block';
-            loading.style.display = 'none';
-        }
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Your existing initialization code here
+        // (excluding any theme management code)
     });
-
-    // Check if user is already signed in
-    authHandler.onAuthStateChanged((user) => {
-        if (user) {
-            window.location.href = '/Chatz/index.html';
-        } else {
-            loading.style.display = 'none';
-        }
-    });
-
-    // Theme will be initialized automatically when DOM is loaded
   </script>
 </body>
 </html> 
