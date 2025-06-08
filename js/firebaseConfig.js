@@ -35,25 +35,43 @@ setPersistence(auth, browserLocalPersistence)
 const db = getDatabase(app);
 const storage = getStorage(app);
 
-// Configure database rules with indexes
+// Configure database rules with proper indexes
 const dbRules = {
   "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
     "users": {
       "$uid": {
-        ".read": "auth != null",
-        ".write": "auth != null && auth.uid === $uid"
+        ".read": true,
+        ".write": "$uid === auth.uid",
+        "online": {
+          ".read": true,
+          ".write": "$uid === auth.uid"
+        },
+        "lastSeen": {
+          ".read": true,
+          ".write": "$uid === auth.uid"
+        }
       }
     },
-    "chats": {
+    "dms": {
       "$chatId": {
-        ".read": "auth != null && (data.child('participants').child(auth.uid).exists() || !data.child('participants').exists())",
-        ".write": "auth != null && (data.child('participants').child(auth.uid).exists() || !data.child('participants').exists())"
-      }
-    },
-    "messages": {
-      "$chatId": {
-        ".read": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()",
-        ".write": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()"
+        ".read": "auth != null && data.child('participants').child(auth.uid).exists()",
+        ".write": "auth != null && (data.child('participants').child(auth.uid).exists() || newData.child('participants').child(auth.uid).exists())",
+        "messages": {
+          ".indexOn": ["timestamp"],
+          ".read": "auth != null && root.child('dms').child($chatId).child('participants').child(auth.uid).exists()",
+          ".write": "auth != null && root.child('dms').child($chatId).child('participants').child(auth.uid).exists()"
+        },
+        "typing": {
+          ".read": "auth != null && root.child('dms').child($chatId).child('participants').child(auth.uid).exists()",
+          ".write": "auth != null && root.child('dms').child($chatId).child('participants').child(auth.uid).exists()"
+        },
+        "participants": {
+          ".indexOn": [".value"],
+          ".read": "auth != null && data.child(auth.uid).exists()",
+          ".write": "auth != null && (data.child(auth.uid).exists() || newData.child(auth.uid).exists())"
+        }
       }
     },
     "global_messages": {
@@ -63,15 +81,22 @@ const dbRules = {
     },
     "friend_requests": {
       "$uid": {
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid"
+        ".read": "$uid === auth.uid",
+        ".write": "auth != null",
+        ".indexOn": ["timestamp"]
       }
     },
     "friends": {
       "$uid": {
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid"
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid",
+        ".indexOn": ["timestamp"]
       }
+    },
+    "usernames": {
+      ".read": true,
+      ".write": "auth != null",
+      ".indexOn": [".value"]
     }
   }
 };

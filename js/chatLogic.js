@@ -18,8 +18,11 @@ import {
   orderByChild,
   get,
   endBefore,
-  limitToLast
+  limitToLast,
+  onDisconnect
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { authHandler } from './auth.js';
+import { friendSystem } from './friendSystem.js';
 
 // --- Firebase Setup ---
 const db = getDatabase(app);
@@ -295,3 +298,255 @@ onAuthStateChanged(auth, (user) => {
     window.location.href = '/Chatz/index.html';
   }
 });
+
+class ChatLogic {
+  constructor() {
+    this.currentChat = null;
+    this.messages = new Map();
+    this.typingUsers = new Map();
+    this.chatListeners = new Set();
+    this.messageListeners = new Set();
+    this.typingListeners = new Set();
+    this.init();
+  }
+
+  init() {
+    // Listen for auth state changes
+    authHandler.onAuthStateChanged(async (user) => {
+      if (user) {
+        // Reset state when user changes
+        this.cleanup();
+      }
+    });
+  }
+
+  async startChat(userId) {
+    const currentUser = authHandler.getCurrentUser();
+    if (!currentUser || !userId) return;
+
+    try {
+      // Check if chat already exists
+      const existingChatId = await this.getChatId(userId);
+      if (existingChatId) {
+        this.currentChat = existingChatId;
+        await this.setupChatListeners(existingChatId);
+        return existingChatId;
+      }
+
+      // Create new chat
+      const chatRef = push(ref(db, 'dms'));
+      const newChatId = chatRef.key;
+
+      // Set up chat data
+      await set(chatRef, {
+        participants: {
+          [currentUser.uid]: true,
+          [userId]: true
+        },
+        createdAt: serverTimestamp(),
+        lastMessage: null
+      });
+
+      this.currentChat = newChatId;
+      await this.setupChatListeners(newChatId);
+      return newChatId;
+    } catch (error) {
+      console.error('Error starting chat:', error);
+      throw error;
+    }
+  }
+
+  async getChatId(userId) {
+    const currentUser = authHandler.getCurrentUser();
+    if (!currentUser || !userId) return null;
+
+    try {
+      // Query chats where both users are participants
+      const chatsRef = ref(db, 'dms');
+      const snapshot = await get(chatsRef);
+      
+      if (!snapshot.exists()) return null;
+
+      for (const [chatId, chatData] of Object.entries(snapshot.val())) {
+        const participants = chatData.participants || {};
+        if (participants[currentUser.uid] && participants[userId]) {
+          return chatId;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting chat ID:', error);
+      throw error;
+    }
+  }
+
+  async setupChatListeners(chatId) {
+    if (!chatId) return;
+
+    // Listen for messages
+    const messagesRef = query(
+      ref(db, `dms/${chatId}/messages`),
+      orderByChild('timestamp'),
+      limitToLast(50)
+    );
+
+    onValue(messagesRef, (snapshot) => {
+      this.messages.clear();
+      snapshot.forEach((childSnapshot) => {
+        const messageData = childSnapshot.val();
+        this.messages.set(childSnapshot.key, messageData);
+      });
+      this.notifyMessageListeners();
+    });
+
+    // Listen for typing status
+    const typingRef = ref(db, `dms/${chatId}/typing`);
+    onValue(typingRef, (snapshot) => {
+      this.typingUsers.clear();
+      if (snapshot.exists()) {
+        snapshot.forEach((childSnapshot) => {
+          if (childSnapshot.key !== authHandler.getCurrentUser()?.uid) {
+            this.typingUsers.set(childSnapshot.key, childSnapshot.val());
+          }
+        });
+      }
+      this.notifyTypingListeners();
+    });
+
+    // Set up disconnect handling for typing status
+    const userTypingRef = ref(db, `dms/${chatId}/typing/${authHandler.getCurrentUser()?.uid}`);
+    onDisconnect(userTypingRef).remove();
+  }
+
+  async sendMessage(text) {
+    const currentUser = authHandler.getCurrentUser();
+    if (!currentUser || !this.currentChat || !text) return;
+
+    try {
+      const messageRef = push(ref(db, `dms/${this.currentChat}/messages`));
+      const messageId = messageRef.key;
+
+      const messageData = {
+        id: messageId,
+        text,
+        sender: currentUser.uid,
+        senderName: currentUser.displayName,
+        senderPhoto: currentUser.photoURL,
+        timestamp: serverTimestamp(),
+        read: false
+      };
+
+      // Update messages and last message atomically
+      const updates = {};
+      updates[`dms/${this.currentChat}/messages/${messageId}`] = messageData;
+      updates[`dms/${this.currentChat}/lastMessage`] = {
+        text,
+        timestamp: serverTimestamp(),
+        sender: currentUser.uid
+      };
+
+      await update(ref(db), updates);
+      return messageId;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
+  }
+
+  async markMessageAsRead(messageId) {
+    const currentUser = authHandler.getCurrentUser();
+    if (!currentUser || !this.currentChat || !messageId) return;
+
+    try {
+      const messageRef = ref(db, `dms/${this.currentChat}/messages/${messageId}`);
+      const messageSnapshot = await get(messageRef);
+      
+      if (!messageSnapshot.exists()) return;
+      
+      const messageData = messageSnapshot.val();
+      if (messageData.sender === currentUser.uid) return;
+
+      await update(messageRef, {
+        read: true
+      });
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+      throw error;
+    }
+  }
+
+  async setTypingStatus(isTyping) {
+    const currentUser = authHandler.getCurrentUser();
+    if (!currentUser || !this.currentChat) return;
+
+    try {
+      const typingRef = ref(db, `dms/${this.currentChat}/typing/${currentUser.uid}`);
+      if (isTyping) {
+        await set(typingRef, {
+          timestamp: serverTimestamp()
+        });
+      } else {
+        await remove(typingRef);
+      }
+    } catch (error) {
+      console.error('Error setting typing status:', error);
+      throw error;
+    }
+  }
+
+  onChatChange(callback) {
+    this.chatListeners.add(callback);
+    callback(this.currentChat);
+    return () => this.chatListeners.delete(callback);
+  }
+
+  onMessagesChange(callback) {
+    this.messageListeners.add(callback);
+    callback(Array.from(this.messages.entries()));
+    return () => this.messageListeners.delete(callback);
+  }
+
+  onTypingChange(callback) {
+    this.typingListeners.add(callback);
+    callback(Array.from(this.typingUsers.entries()));
+    return () => this.typingListeners.delete(callback);
+  }
+
+  notifyChatListeners() {
+    this.chatListeners.forEach(callback => callback(this.currentChat));
+  }
+
+  notifyMessageListeners() {
+    const messagesList = Array.from(this.messages.entries());
+    this.messageListeners.forEach(callback => callback(messagesList));
+  }
+
+  notifyTypingListeners() {
+    const typingList = Array.from(this.typingUsers.entries());
+    this.typingListeners.forEach(callback => callback(typingList));
+  }
+
+  cleanup() {
+    this.currentChat = null;
+    this.messages.clear();
+    this.typingUsers.clear();
+    this.chatListeners.clear();
+    this.messageListeners.clear();
+    this.typingListeners.clear();
+  }
+
+  getCurrentChat() {
+    return this.currentChat;
+  }
+
+  getMessages() {
+    return Array.from(this.messages.entries());
+  }
+
+  getTypingUsers() {
+    return Array.from(this.typingUsers.entries());
+  }
+}
+
+// Create and export a single instance
+export const chatLogic = new ChatLogic();

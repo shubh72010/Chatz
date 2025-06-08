@@ -1,11 +1,7 @@
 // Friend System Module
-import { app } from '../firebaseConfig.js';
+import { authHandler } from './auth.js';
+import { db } from './firebaseConfig.js';
 import {
-  getAuth,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import {
-  getDatabase,
   ref,
   set,
   get,
@@ -13,15 +9,14 @@ import {
   push,
   remove,
   onValue,
-  serverTimestamp
+  serverTimestamp,
+  query,
+  orderByChild,
+  limitToLast
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-const auth = getAuth(app);
-const db = getDatabase(app);
 
 class FriendSystem {
   constructor() {
-    this.currentUser = null;
     this.friends = new Map();
     this.pendingRequests = new Map();
     this.friendListeners = new Set();
@@ -31,97 +26,68 @@ class FriendSystem {
 
   init() {
     // Listen for auth state changes
-    onAuthStateChanged(auth, (user) => {
-      this.currentUser = user;
+    authHandler.onAuthStateChanged(async (user) => {
       if (user) {
-        this.setupFriendListeners();
-        this.setupRequestListeners();
+        await this.loadFriends();
+        await this.loadFriendRequests();
       } else {
-        this.friends.clear();
-        this.pendingRequests.clear();
+        this.cleanup();
       }
     });
   }
 
-  setupFriendListeners() {
-    // Listen for friend list changes
-    const friendsRef = ref(db, `friends/${this.currentUser.uid}`);
+  async loadFriends() {
+    const currentUser = authHandler.getCurrentUser();
+    if (!currentUser) return;
+
+    const friendsRef = ref(db, `friends/${currentUser.uid}`);
     onValue(friendsRef, (snapshot) => {
       this.friends.clear();
-      if (snapshot.exists()) {
-        snapshot.forEach((childSnapshot) => {
-          const friendData = childSnapshot.val();
-          this.friends.set(childSnapshot.key, {
-            ...friendData,
-            id: childSnapshot.key
-          });
-        });
-      }
+      snapshot.forEach((childSnapshot) => {
+        const friendData = childSnapshot.val();
+        this.friends.set(childSnapshot.key, friendData);
+      });
       this.notifyFriendListeners();
     });
+  }
 
-    // Listen for incoming friend requests
-    const requestsRef = ref(db, `friend_requests/${this.currentUser.uid}`);
+  async loadFriendRequests() {
+    const currentUser = authHandler.getCurrentUser();
+    if (!currentUser) return;
+
+    const requestsRef = ref(db, `friend_requests/${currentUser.uid}`);
     onValue(requestsRef, (snapshot) => {
       this.pendingRequests.clear();
-      if (snapshot.exists()) {
-        snapshot.forEach((childSnapshot) => {
-          const requestData = childSnapshot.val();
-          this.pendingRequests.set(childSnapshot.key, {
-            ...requestData,
-            id: childSnapshot.key
-          });
-        });
-      }
+      snapshot.forEach((childSnapshot) => {
+        const requestData = childSnapshot.val();
+        this.pendingRequests.set(childSnapshot.key, requestData);
+      });
       this.notifyRequestListeners();
     });
   }
 
-  setupRequestListeners() {
-    // Listen for friend request settings changes
-    const userRef = ref(db, `users/${this.currentUser.uid}`);
-    onValue(userRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const userData = snapshot.val();
-        this.friendRequestSettings = userData.friendRequests || 'everyone';
-      }
-    });
-  }
-
-  // Friend request methods
-  async sendFriendRequest(userId) {
-    if (!this.currentUser || !userId) return false;
+  async sendFriendRequest(targetUserId) {
+    const currentUser = authHandler.getCurrentUser();
+    if (!currentUser || !targetUserId) return;
 
     try {
-      // Check if already friends
-      const isFriend = await this.checkFriendship(userId);
-      if (isFriend) return false;
-
       // Check if request already exists
-      const requestRef = ref(db, `friend_requests/${userId}/${this.currentUser.uid}`);
+      const requestRef = ref(db, `friend_requests/${targetUserId}/${currentUser.uid}`);
       const requestSnapshot = await get(requestRef);
-      if (requestSnapshot.exists()) return false;
-
-      // Get user's friend request settings
-      const userRef = ref(db, `users/${userId}`);
-      const userSnapshot = await get(userRef);
-      if (!userSnapshot.exists()) return false;
-
-      const userData = userSnapshot.val();
-      const settings = userData.friendRequests || 'everyone';
-
-      // Check if request is allowed based on settings
-      if (settings === 'none') return false;
-      if (settings === 'friends-of-friends') {
-        const isFriendsOfFriends = await this.checkFriendsOfFriends(userId);
-        if (!isFriendsOfFriends) return false;
+      if (requestSnapshot.exists()) {
+        throw new Error('Friend request already sent');
       }
 
-      // Send friend request
+      // Check if already friends
+      const friendRef = ref(db, `friends/${targetUserId}/${currentUser.uid}`);
+      const friendSnapshot = await get(friendRef);
+      if (friendSnapshot.exists()) {
+        throw new Error('Already friends');
+      }
+
+      // Send request
       await set(requestRef, {
-        from: this.currentUser.uid,
-        fromName: this.currentUser.displayName,
-        fromPhoto: this.currentUser.photoURL,
+        from: currentUser.uid,
         timestamp: serverTimestamp(),
         status: 'pending'
       });
@@ -129,147 +95,118 @@ class FriendSystem {
       return true;
     } catch (error) {
       console.error('Error sending friend request:', error);
-      return false;
+      throw error;
     }
   }
 
-  async acceptFriendRequest(requestId) {
-    if (!this.currentUser || !requestId) return false;
+  async acceptFriendRequest(fromUserId) {
+    const currentUser = authHandler.getCurrentUser();
+    if (!currentUser || !fromUserId) return;
 
     try {
-      const requestRef = ref(db, `friend_requests/${this.currentUser.uid}/${requestId}`);
+      // Get request data
+      const requestRef = ref(db, `friend_requests/${currentUser.uid}/${fromUserId}`);
       const requestSnapshot = await get(requestRef);
-      
-      if (!requestSnapshot.exists()) return false;
-      
+      if (!requestSnapshot.exists()) {
+        throw new Error('Friend request not found');
+      }
+
       const requestData = requestSnapshot.val();
-      
+      if (requestData.status !== 'pending') {
+        throw new Error('Invalid request status');
+      }
+
       // Add to friends list for both users
-      const timestamp = serverTimestamp();
-      await set(ref(db, `friends/${this.currentUser.uid}/${requestId}`), {
-        timestamp,
+      const batch = {};
+      batch[`friends/${currentUser.uid}/${fromUserId}`] = {
+        timestamp: serverTimestamp(),
         status: 'accepted'
-      });
-      
-      await set(ref(db, `friends/${requestId}/${this.currentUser.uid}`), {
-        timestamp,
+      };
+      batch[`friends/${fromUserId}/${currentUser.uid}`] = {
+        timestamp: serverTimestamp(),
         status: 'accepted'
-      });
+      };
 
       // Remove the request
-      await remove(requestRef);
+      batch[`friend_requests/${currentUser.uid}/${fromUserId}`] = null;
+
+      // Update all at once
+      await update(ref(db), batch);
 
       return true;
     } catch (error) {
       console.error('Error accepting friend request:', error);
-      return false;
+      throw error;
     }
   }
 
-  async declineFriendRequest(requestId) {
-    if (!this.currentUser || !requestId) return false;
+  async rejectFriendRequest(fromUserId) {
+    const currentUser = authHandler.getCurrentUser();
+    if (!currentUser || !fromUserId) return;
 
     try {
-      const requestRef = ref(db, `friend_requests/${this.currentUser.uid}/${requestId}`);
+      const requestRef = ref(db, `friend_requests/${currentUser.uid}/${fromUserId}`);
       await remove(requestRef);
       return true;
     } catch (error) {
-      console.error('Error declining friend request:', error);
-      return false;
+      console.error('Error rejecting friend request:', error);
+      throw error;
     }
   }
 
-  async removeFriend(userId) {
-    if (!this.currentUser || !userId) return false;
+  async removeFriend(friendId) {
+    const currentUser = authHandler.getCurrentUser();
+    if (!currentUser || !friendId) return;
 
     try {
-      // Remove from both users' friend lists
-      await remove(ref(db, `friends/${this.currentUser.uid}/${userId}`));
-      await remove(ref(db, `friends/${userId}/${this.currentUser.uid}`));
+      const batch = {};
+      batch[`friends/${currentUser.uid}/${friendId}`] = null;
+      batch[`friends/${friendId}/${currentUser.uid}`] = null;
+      await update(ref(db), batch);
       return true;
     } catch (error) {
       console.error('Error removing friend:', error);
-      return false;
+      throw error;
     }
   }
 
-  // Helper methods
-  async checkFriendship(userId) {
-    if (!this.currentUser || !userId) return false;
-    const friendRef = ref(db, `friends/${this.currentUser.uid}/${userId}`);
-    const snapshot = await get(friendRef);
-    return snapshot.exists();
+  onFriendsChange(callback) {
+    this.friendListeners.add(callback);
+    callback(Array.from(this.friends.entries()));
+    return () => this.friendListeners.delete(callback);
   }
 
-  async checkFriendsOfFriends(userId) {
-    if (!this.currentUser || !userId) return false;
-
-    try {
-      // Get current user's friends
-      const userFriendsRef = ref(db, `friends/${this.currentUser.uid}`);
-      const userFriendsSnapshot = await get(userFriendsRef);
-      if (!userFriendsSnapshot.exists()) return false;
-
-      // Get target user's friends
-      const targetFriendsRef = ref(db, `friends/${userId}`);
-      const targetFriendsSnapshot = await get(targetFriendsRef);
-      if (!targetFriendsSnapshot.exists()) return false;
-
-      // Check if there's any overlap
-      const userFriends = new Set(Object.keys(userFriendsSnapshot.val()));
-      const targetFriends = new Set(Object.keys(targetFriendsSnapshot.val()));
-
-      for (const friend of userFriends) {
-        if (targetFriends.has(friend)) return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('Error checking friends of friends:', error);
-      return false;
-    }
-  }
-
-  // Getter methods
-  getFriends() {
-    return Array.from(this.friends.values());
-  }
-
-  getPendingRequests() {
-    return Array.from(this.pendingRequests.values());
-  }
-
-  // Listener methods
-  addFriendListener(listener) {
-    this.friendListeners.add(listener);
-    // Immediately notify with current state
-    listener(this.getFriends());
-  }
-
-  removeFriendListener(listener) {
-    this.friendListeners.delete(listener);
-  }
-
-  addRequestListener(listener) {
-    this.requestListeners.add(listener);
-    // Immediately notify with current state
-    listener(this.getPendingRequests());
-  }
-
-  removeRequestListener(listener) {
-    this.requestListeners.delete(listener);
+  onFriendRequestsChange(callback) {
+    this.requestListeners.add(callback);
+    callback(Array.from(this.pendingRequests.entries()));
+    return () => this.requestListeners.delete(callback);
   }
 
   notifyFriendListeners() {
-    const friends = this.getFriends();
-    this.friendListeners.forEach(listener => listener(friends));
+    const friendsList = Array.from(this.friends.entries());
+    this.friendListeners.forEach(callback => callback(friendsList));
   }
 
   notifyRequestListeners() {
-    const requests = this.getPendingRequests();
-    this.requestListeners.forEach(listener => listener(requests));
+    const requestsList = Array.from(this.pendingRequests.entries());
+    this.requestListeners.forEach(callback => callback(requestsList));
+  }
+
+  cleanup() {
+    this.friends.clear();
+    this.pendingRequests.clear();
+    this.friendListeners.clear();
+    this.requestListeners.clear();
+  }
+
+  getFriends() {
+    return Array.from(this.friends.entries());
+  }
+
+  getPendingRequests() {
+    return Array.from(this.pendingRequests.entries());
   }
 }
 
-// Export singleton instance
+// Create and export a single instance
 export const friendSystem = new FriendSystem(); 
