@@ -1,0 +1,261 @@
+/* Nothing Theme Variables and Styles */
+:root {
+  /* Brand Colors - Nothing's signature colors */
+  --main: #00FF94;  /* Nothing's signature green */
+  --main-dark: #00CC77;
+  --main-light: #33FFA8;
+  --accent: #00FF94;
+  --danger: #FF3B30;
+
+  /* Common Variables */
+  --header-shadow: 0 2px 12px 0 rgba(0,0,0,0.12);
+  --input-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+  --scrollbar-width: 6px;
+  --border-radius-sm: 12px;  /* Nothing's rounded corners */
+  --border-radius-md: 16px;
+  --border-radius-lg: 24px;
+  --transition-speed: 0.2s;
+  --font-family: 'Space Grotesk', sans-serif;  /* Nothing's primary font */
+}
+
+/* Font Options */
+.font-ntype {
+  --font-family: 'Space Grotesk', sans-serif;  /* Nothing's primary font */
+  letter-spacing: -0.02em;
+}
+
+.font-ndot {
+  --font-family: 'Inter', sans-serif;  /* Nothing's secondary font */
+  letter-spacing: 0;
+}
+
+/* Nothing Theme */
+.theme-nothing {
+  /* Background Colors */
+  --bg: #000000;  /* Nothing's signature black */
+  --bg-light: #111111;
+  --bg-gradient: linear-gradient(135deg, #000000 0%, #111111 100%);
+  
+  /* Text Colors */
+  --text: #FFFFFF;
+  --text-muted: rgba(255,255,255,0.7);
+  
+  /* Input Colors */
+  --input-bg: rgba(255,255,255,0.08);
+  --input-border: rgba(255,255,255,0.12);
+  
+  /* Message Bubble Colors */
+  --bubble-own: #00FF94;  /* Nothing's signature green */
+  --bubble-other: #1A1A1A;
+  --bubble-own-text: #000000;
+  --bubble-other-text: #FFFFFF;
+  
+  /* Header Colors */
+  --header-bg: rgba(0,0,0,0.95);
+  
+  /* Scrollbar Colors */
+  --scrollbar-thumb: rgba(0,255,148,0.3);  /* Nothing's green with opacity */
+  --scrollbar-track: #000000;
+  
+  /* Reply Colors */
+  --reply-bg: #1A1A1A;
+  --reply-border: #00FF94;
+
+  /* Brand Colors Override */
+  --main: #00FF94;
+  --main-dark: #00CC77;
+  --main-light: #33FFA8;
+  --accent: #00FF94;
+  --danger: #FF3B30;
+
+  /* Nothing-specific styles */
+  --dot-matrix-size: 4px;
+  --dot-matrix-gap: 8px;
+}
+
+/* Dot Matrix Background Effect */
+.theme-nothing::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at var(--dot-matrix-size) var(--dot-matrix-size), 
+    rgba(0,255,148,0.03) var(--dot-matrix-size), 
+    transparent 0);
+  background-size: var(--dot-matrix-gap) var(--dot-matrix-gap);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Nothing-style Button */
+.theme-nothing .btn,
+.theme-nothing .send-button,
+.theme-nothing .back-btn,
+.theme-nothing button {
+  background: #00FF94;
+  color: #000000;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  transition: all 0.2s ease;
+}
+
+.theme-nothing .btn:hover,
+.theme-nothing .send-button:hover,
+.theme-nothing .back-btn:hover,
+.theme-nothing button:hover {
+  background: #33FFA8;
+  transform: translateY(-1px);
+}
+
+/* Nothing-style Input */
+.theme-nothing input,
+.theme-nothing textarea,
+.theme-nothing .message-input {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #FFFFFF;
+  font-family: var(--font-family);
+}
+
+.theme-nothing input:focus,
+.theme-nothing textarea:focus,
+.theme-nothing .message-input:focus {
+  border-color: #00FF94;
+  box-shadow: 0 0 0 2px rgba(0,255,148,0.2);
+}
+
+/* Nothing-style Cards and Containers */
+.theme-nothing .card,
+.theme-nothing .container,
+.theme-nothing .modal-content {
+  background: rgba(0,0,0,0.95);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+}
+
+/* Nothing-style Theme Settings */
+.theme-nothing .theme-settings {
+  background: rgba(0,0,0,0.95);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+}
+
+.theme-nothing .theme-option input[type="radio"] {
+  accent-color: #00FF94;
+}
+
+/* Nothing-style Links */
+.theme-nothing a {
+  color: #00FF94;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.theme-nothing a:hover {
+  color: #33FFA8;
+}
+
+/* Nothing-style Form Elements */
+.theme-nothing select,
+.theme-nothing .select {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #FFFFFF;
+  font-family: var(--font-family);
+}
+
+.theme-nothing select:focus,
+.theme-nothing .select:focus {
+  border-color: #00FF94;
+  box-shadow: 0 0 0 2px rgba(0,255,148,0.2);
+}
+
+/* Nothing-style Scrollbar */
+.theme-nothing ::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+}
+
+.theme-nothing ::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+.theme-nothing ::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: calc(var(--scrollbar-width) / 2);
+}
+
+.theme-nothing ::-webkit-scrollbar-thumb:hover {
+  background: var(--main);
+}
+
+/* Nothing-style Loading States */
+.theme-nothing .loading,
+.theme-nothing .spinner {
+  border-color: rgba(0,255,148,0.2);
+  border-top-color: #00FF94;
+}
+
+/* Nothing-style Error States */
+.theme-nothing .error {
+  color: #FF3B30;
+  background: rgba(255,59,48,0.1);
+  border: 1px solid rgba(255,59,48,0.2);
+}
+
+/* Nothing-style Success States */
+.theme-nothing .success {
+  color: #00FF94;
+  background: rgba(0,255,148,0.1);
+  border: 1px solid rgba(0,255,148,0.2);
+}
+
+/* Nothing-style Typography */
+.theme-nothing h1,
+.theme-nothing h2,
+.theme-nothing h3,
+.theme-nothing h4,
+.theme-nothing h5,
+.theme-nothing h6 {
+  color: #FFFFFF;
+  font-family: var(--font-family);
+  font-weight: 600;
+}
+
+.theme-nothing p,
+.theme-nothing span,
+.theme-nothing div {
+  color: var(--text);
+  font-family: var(--font-family);
+}
+
+/* Nothing-style Modal */
+.theme-nothing .modal {
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(8px);
+}
+
+.theme-nothing .modal-content {
+  background: rgba(0,0,0,0.95);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* Nothing-style Navigation */
+.theme-nothing nav,
+.theme-nothing .nav {
+  background: rgba(0,0,0,0.95);
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+}
+
+/* Nothing-style Footer */
+.theme-nothing footer,
+.theme-nothing .footer {
+  background: rgba(0,0,0,0.95);
+  border-top: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+} 

@@ -6,6 +6,9 @@
   <title>Chatz | Chat</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="styles/giphy.css" />
+  <link rel="stylesheet" href="styles/global.css" />
+  <link rel="stylesheet" href="styles/nothing-theme.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://js.giphy.com/v2/sdk.min.js"></script>
   <style>
     /* Base Theme Variables */
@@ -582,6 +585,9 @@
     import { authHandler } from './js/auth.js';
     import { chatLogic } from './js/chatLogic.js';
     import { friendSystem } from './js/friendSystem.js';
+    import { initializeTheme } from './js/themeManager.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { ref, onValue, push, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
     // Get DOM elements
     const chatMessages = document.getElementById('chat-messages');
@@ -866,7 +872,7 @@
     cancelReplyBtn.onclick = cancelReply;
 
     // Initialize chat when user is authenticated
-    authHandler.onAuthStateChanged((user) => {
+    onAuthStateChanged(authHandler.auth, (user) => {
       if (user) {
         initializeChat();
       } else {

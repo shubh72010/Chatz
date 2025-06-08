@@ -676,43 +676,63 @@
     }
 
     function applyTheme(theme) {
-      let currentTheme = theme;
+      // Remove all theme classes first
+      document.documentElement.classList.remove('theme-dark', 'theme-light', 'theme-nothing');
       
-      // If no theme provided or theme is 'auto', use time-based theme
-      if (!currentTheme || currentTheme === 'auto') {
-        currentTheme = getTimeBasedTheme();
+      // Apply the new theme class
+      if (theme === 'nothing') {
+        document.documentElement.classList.add('theme-nothing');
+      } else if (theme === 'dark') {
+        document.documentElement.classList.add('theme-dark');
+      } else if (theme === 'light') {
+        document.documentElement.classList.add('theme-light');
       }
-      
-      // Apply the theme class
-      document.documentElement.className = currentTheme === 'default' ? '' : 'theme-' + currentTheme;
+      // Default theme doesn't need a class
 
       // Apply font family
-      const fontFamily = localStorage.getItem('chatzFont') || 'ndot';
+      const fontFamily = localStorage.getItem('chatzFont') || 'ntype';
       document.documentElement.classList.remove('font-ntype', 'font-ndot');
       document.documentElement.classList.add('font-' + fontFamily);
     }
 
-    // Initialize theme and font
-    const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
-    const savedFont = localStorage.getItem('chatzFont') || 'ndot';
-    applyTheme(savedTheme);
-    document.documentElement.classList.add('font-' + savedFont);
+    // Initialize theme and font immediately
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set Nothing theme as default if no theme is set
+      const savedTheme = localStorage.getItem('chatzTheme') || 'nothing';
+      const savedFont = localStorage.getItem('chatzFont') || 'ntype';
+      
+      // Apply theme and font
+      applyTheme(savedTheme);
+      document.documentElement.classList.add('font-' + savedFont);
+
+      // Update radio buttons to reflect current theme
+      const themeRadios = document.querySelectorAll('input[name="theme"]');
+      themeRadios.forEach(radio => {
+        radio.checked = radio.value === savedTheme;
+      });
+
+      // Update font radios to reflect current font
+      const fontRadios = document.querySelectorAll('input[name="font"]');
+      fontRadios.forEach(radio => {
+        radio.checked = radio.value === savedFont;
+      });
+    });
 
     // Update theme every minute only if auto is selected
     setInterval(() => {
-      const currentTheme = localStorage.getItem('chatzTheme') || 'auto';
+      const currentTheme = localStorage.getItem('chatzTheme') || 'nothing';
       if (currentTheme === 'auto') {
-        applyTheme('auto');
+        applyTheme(getTimeBasedTheme());
       }
     }, 60000);
 
     // Listen for theme changes in other tabs
     window.addEventListener('storage', (e) => {
       if (e.key === 'chatzTheme') {
-        const theme = e.newValue || 'auto';
+        const theme = e.newValue || 'nothing';
         applyTheme(theme);
       } else if (e.key === 'chatzFont') {
-        const font = e.newValue || 'ndot';
+        const font = e.newValue || 'ntype';
         document.documentElement.classList.remove('font-ntype', 'font-ndot');
         document.documentElement.classList.add('font-' + font);
       }
@@ -725,12 +745,12 @@
     <h3>Nothing Style</h3>
     <div class="theme-options">
       <div class="theme-option">
-        <input type="radio" id="theme-auto" name="theme" value="auto">
-        <label for="theme-auto">Auto (Time-based)</label>
-      </div>
-      <div class="theme-option">
         <input type="radio" id="theme-nothing" name="theme" value="nothing" checked>
         <label for="theme-nothing">Nothing</label>
+      </div>
+      <div class="theme-option">
+        <input type="radio" id="theme-auto" name="theme" value="auto">
+        <label for="theme-auto">Auto (Time-based)</label>
       </div>
       <div class="theme-option">
         <input type="radio" id="theme-dark" name="theme" value="dark">
@@ -1065,65 +1085,24 @@
 
   <script>
     // Theme settings handlers
-    document.querySelectorAll('input[name="theme"]').forEach(radio => {
-      radio.checked = radio.value === (localStorage.getItem('chatzTheme') || 'auto');
-      radio.addEventListener('change', (e) => {
-        localStorage.setItem('chatzTheme', e.target.value);
-        applyTheme(e.target.value);
+    document.addEventListener('DOMContentLoaded', () => {
+      // Theme settings handlers
+      document.querySelectorAll('input[name="theme"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          localStorage.setItem('chatzTheme', e.target.value);
+          applyTheme(e.target.value);
+        });
+      });
+
+      // Font settings handlers
+      document.querySelectorAll('input[name="font"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          localStorage.setItem('chatzFont', e.target.value);
+          document.documentElement.classList.remove('font-ntype', 'font-ndot');
+          document.documentElement.classList.add('font-' + e.target.value);
+        });
       });
     });
-
-    // Font settings handlers
-    document.querySelectorAll('input[name="font"]').forEach(radio => {
-      radio.checked = radio.value === (localStorage.getItem('chatzFont') || 'ndot');
-      radio.addEventListener('change', (e) => {
-        localStorage.setItem('chatzFont', e.target.value);
-        document.documentElement.classList.remove('font-ntype', 'font-ndot');
-        document.documentElement.classList.add('font-' + e.target.value);
-      });
-    });
-
-    // Update theme settings HTML
-    document.querySelector('.theme-settings').innerHTML = `
-      <h3>Nothing Style</h3>
-      <div class="theme-options">
-        <div class="theme-option">
-          <input type="radio" id="theme-auto" name="theme" value="auto">
-          <label for="theme-auto">Auto (Time-based)</label>
-        </div>
-        <div class="theme-option">
-          <input type="radio" id="theme-nothing" name="theme" value="nothing" checked>
-          <label for="theme-nothing">Nothing</label>
-        </div>
-        <div class="theme-option">
-          <input type="radio" id="theme-dark" name="theme" value="dark">
-          <label for="theme-dark">Dark</label>
-        </div>
-        <div class="theme-option">
-          <input type="radio" id="theme-light" name="theme" value="light">
-          <label for="theme-light">Light</label>
-        </div>
-      </div>
-      <div class="font-options">
-        <h3>Nothing Font</h3>
-        <div class="theme-options">
-          <div class="theme-option">
-            <input type="radio" id="font-ntype" name="font" value="ntype" checked>
-            <label for="font-ntype">NType (Space Grotesk)</label>
-          </div>
-          <div class="theme-option">
-            <input type="radio" id="font-ndot" name="font" value="ndot">
-            <label for="font-ndot">NDot (Inter)</label>
-          </div>
-        </div>
-      </div>
-    `;
-
-    // Set Nothing theme as default
-    localStorage.setItem('chatzTheme', 'nothing');
-    localStorage.setItem('chatzFont', 'ntype');
-    applyTheme('nothing');
-    document.documentElement.classList.add('font-ntype');
   </script>
 </body>
 </html>

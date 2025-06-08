@@ -6,6 +6,8 @@
   <title>Chatz | Sign In</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/nothing-theme.css">
   <style>
     /* Base Theme Variables */
     :root {
@@ -283,6 +285,7 @@
 
   <script type="module">
     import { authHandler } from './js/auth.js';
+    import { initializeTheme } from './js/themeManager.js';
 
     const googleSignInBtn = document.getElementById('googleSignIn');
     const errorMessage = document.getElementById('errorMessage');
@@ -314,6 +317,8 @@
             loading.style.display = 'none';
         }
     });
+
+    // Theme will be initialized automatically when DOM is loaded
   </script>
 </body>
 </html> 
