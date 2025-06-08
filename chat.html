@@ -619,6 +619,7 @@
       const userId = urlParams.get('uid');
 
       if (!chatId && !userId) {
+        alert('No chat or user specified.');
         window.location.href = '/Chatz/index.html';
         return;
       }
@@ -626,10 +627,15 @@
       try {
         if (userId) {
           // Start new chat
-          currentChat = await chatLogic.startChat(userId);
-          if (!currentChat) {
-            throw new Error('Failed to start chat');
+          const startedChatId = await chatLogic.startChat(userId);
+          if (!startedChatId) {
+            alert('Failed to start chat.');
+            window.location.href = '/Chatz/index.html';
+            return;
           }
+          // Redirect to chat with chatId param to avoid duplicate chats and ensure listeners work
+          window.location.replace(`chat.html?chat=${startedChatId}`);
+          return; // Stop further execution until reload
         } else {
           // Load existing chat
           currentChat = chatId;
