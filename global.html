@@ -13,7 +13,19 @@
 <body>
   <header>
     <button class="back-btn" onclick="window.location.href='/Chatz/index.html'">&larr; Back</button>
-    <span id="chat-header-title">Global Chat</span>
+    <div class="header-stats">
+      <span id="online-count">0 online</span>
+      <div class="chat-stats">
+        <div class="stat-item" title="Total Messages">
+          <i class="fas fa-message"></i>
+          <span id="message-count">0</span>
+        </div>
+        <div class="stat-item" title="Total Users">
+          <i class="fas fa-users"></i>
+          <span id="user-count">0</span>
+        </div>
+      </div>
+    </div>
     <div style="width: 100px;"></div>
   </header>
 
@@ -21,23 +33,12 @@
     <div class="chat-container">
       <div class="chat-header">
         <div class="chat-header-info">
-          <div class="chat-header-title">Global Chat</div>
-          <div class="chat-header-status" id="online-count">0 online</div>
+          <div class="chat-header-status" id="online-count-header">0 online</div>
         </div>
         <div class="chat-header-actions">
           <button class="action-btn" id="refresh-btn" title="Refresh Messages">
             <i class="fas fa-sync-alt"></i>
           </button>
-          <div class="chat-stats">
-            <div class="stat-item">
-              <i class="fas fa-message"></i>
-              <span id="message-count">0</span>
-            </div>
-            <div class="stat-item">
-              <i class="fas fa-users"></i>
-              <span id="user-count">0</span>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -85,6 +86,91 @@
     </div>
   </div>
 
+  <style>
+    /* Adaptive Header Styles */
+    .header-stats {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .chat-stats {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      border-radius: var(--border-radius-sm);
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      min-width: 60px;
+      justify-content: center;
+    }
+
+    .stat-item i {
+      font-size: 0.9rem;
+    }
+
+    .stat-item span {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    #online-count {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .header-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .chat-stats {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .stat-item {
+        min-width: 50px;
+        padding: 0.4rem;
+      }
+
+      #online-count {
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .chat-stats {
+        gap: 0.5rem;
+      }
+
+      .stat-item {
+        min-width: 45px;
+        padding: 0.3rem;
+      }
+
+      .stat-item i {
+        font-size: 0.8rem;
+      }
+
+      .stat-item span {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+
   <script type="module">
     import { authHandler } from './js/auth.js';
     import { initializeTheme } from './js/themeManager.js';
@@ -110,6 +196,7 @@
     const messageCountEl = document.getElementById('message-count');
     const userCountEl = document.getElementById('user-count');
     const onlineCountEl = document.getElementById('online-count');
+    const onlineCountHeaderEl = document.getElementById('online-count-header');
     const refreshBtn = document.getElementById('refresh-btn');
 
     let replyTo = null;
@@ -245,9 +332,11 @@
 
     // Update stats
     function updateStats() {
+      const onlineText = `${onlineCount} online`;
       if (messageCountEl) messageCountEl.textContent = messageCount;
       if (userCountEl) userCountEl.textContent = userCount;
-      if (onlineCountEl) onlineCountEl.textContent = `${onlineCount} online`;
+      if (onlineCountEl) onlineCountEl.textContent = onlineText;
+      if (onlineCountHeaderEl) onlineCountHeaderEl.textContent = onlineText;
     }
 
     // Helper functions
