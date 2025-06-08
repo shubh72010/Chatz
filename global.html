@@ -183,8 +183,8 @@
       position: fixed;
       bottom: calc(100px + 60px);
       right: 20px;
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: var(--main);
       color: var(--button-text);
@@ -193,27 +193,38 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       opacity: 0;
       visibility: hidden;
-      transform: translateY(20px);
-      transition: all 0.3s var(--transition-timing);
+      transform: translateY(20px) scale(0.9);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 1000;
     }
 
     .scroll-bottom-btn.visible {
       opacity: 1;
       visibility: visible;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
     }
 
     .scroll-bottom-btn:hover {
       background: var(--main-dark);
-      transform: translateY(-2px);
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
     }
 
     .scroll-bottom-btn:active {
-      transform: translateY(0);
+      transform: translateY(0) scale(0.95);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .scroll-bottom-btn i {
+      font-size: 1.2rem;
+      transition: transform 0.3s ease;
+    }
+
+    .scroll-bottom-btn:hover i {
+      transform: translateY(-1px);
     }
 
     @media (max-width: 768px) {
@@ -230,8 +241,8 @@
       .scroll-bottom-btn {
         bottom: calc(80px + 56px);
         right: 16px;
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
       }
     }
 
@@ -249,8 +260,11 @@
       .scroll-bottom-btn {
         bottom: calc(70px + 52px);
         right: 12px;
-        width: 32px;
-        height: 32px;
+        width: 36px;
+        height: 36px;
+      }
+      .scroll-bottom-btn i {
+        font-size: 1.1rem;
       }
     }
 
@@ -637,8 +651,9 @@
 
     // Scroll handling
     let isNearBottom = true;
-    const SCROLL_THRESHOLD = 300; // Increased threshold to show button only when significantly scrolled up
-    const SCROLL_SHOW_THRESHOLD = 500; // Minimum scroll up distance to show the button
+    const SCROLL_THRESHOLD = 300;
+    const SCROLL_SHOW_THRESHOLD = 500;
+    let scrollTimeout;
 
     function checkScroll() {
       const scrollPosition = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight;
@@ -661,10 +676,12 @@
         behavior: smooth ? 'smooth' : 'auto'
       };
       
-      // Add a small delay for smooth scroll to work properly with fixed header
       if (smooth) {
+        // Add a small delay for smooth scroll to work properly with fixed header
         setTimeout(() => {
           chatMessages.scrollTo(scrollOptions);
+          // Hide button after scrolling
+          scrollBottomBtn.classList.remove('visible');
         }, 100);
       } else {
         chatMessages.scrollTo(scrollOptions);
@@ -829,7 +846,7 @@
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         if (!messageInput.readOnly) {
-          sendBtn.click();
+          sendMessage();
         }
       }
     };
@@ -865,15 +882,19 @@
       alert('Emoji picker feature coming soon!');
     });
 
-    // Event listeners for scroll handling
-    let scrollTimeout;
+    // Throttled scroll event listener
     chatMessages.addEventListener('scroll', () => {
       if (!scrollTimeout) {
         scrollTimeout = setTimeout(() => {
           checkScroll();
           scrollTimeout = null;
-        }, 100); // Throttle to run at most every 100ms
+        }, 100);
       }
+    });
+
+    // Click handler for scroll button
+    scrollBottomBtn.addEventListener('click', () => {
+      scrollToBottom(true);
     });
 
     // Add back button click handler
@@ -885,6 +906,63 @@
         window.location.href = '/Chatz/index.html';
       }
     });
+
+    // Send message function
+    async function sendMessage() {
+      const message = messageInput.value.trim();
+      if (!message || !authHandler.getCurrentUser()) return;
+
+      try {
+        const user = authHandler.getCurrentUser();
+        const messagesRef = ref(db, 'global_messages');
+        const newMessageRef = push(messagesRef);
+
+        const messageData = {
+          text: message,
+          sender: user.uid,
+          senderName: user.displayName || 'Anonymous',
+          senderPhoto: user.photoURL || null,
+          timestamp: serverTimestamp(),
+          replyTo: replyTo ? {
+            messageId: replyTo.messageId,
+            senderId: replyTo.senderId,
+            senderName: replyTo.senderName,
+            text: replyTo.text
+          } : null
+        };
+
+        await set(newMessageRef, messageData);
+        
+        // Clear input and reply
+        messageInput.value = '';
+        messageInput.readOnly = true;
+        cancelReply();
+        sendBtn.disabled = true;
+
+        // Scroll to bottom after sending
+        scrollToBottom(true);
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+      }
+    }
+
+    // Event listeners
+    sendBtn.addEventListener('click', sendMessage);
+
+    messageInput.onkeypress = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!messageInput.readOnly) {
+          sendMessage();
+        }
+      }
+    };
+
+    messageInput.oninput = () => {
+      const message = messageInput.value.trim();
+      sendBtn.disabled = !message;
+    };
   </script>
 </body>
 </html> 
