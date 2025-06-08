@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz | Chat</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="styles/giphy.css" />
+  <script src="https://js.giphy.com/v2/sdk.min.js"></script>
   <style>
     /* Base Theme Variables */
     :root {
@@ -122,7 +124,7 @@
       margin: 0;
       font-family: 'Segoe UI', 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
       background: var(--bg);
-      color: #f5f5f5;
+      color: var(--text);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -130,7 +132,7 @@
 
     header {
       background: var(--header-bg);
-      color: #fff;
+      color: var(--text);
       padding: 1rem 2rem;
       font-size: 1.5rem;
       font-weight: 700;
@@ -194,9 +196,71 @@
       margin-bottom: 0.2rem;
     }
 
-    .chat-header-subtitle {
-      font-size: 0.85rem;
+    .chat-header-status {
+      font-size: 0.9rem;
+      color: var(--main-light);
+    }
+
+    .chat-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .action-btn {
+      background: var(--input-bg);
+      color: var(--text);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      background: var(--main);
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    .action-btn i {
+      font-size: 1.1rem;
+    }
+
+    .chat-stats {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-left: 1rem;
+      padding-left: 1rem;
+      border-left: 2px solid var(--input-border);
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
       color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .stat-item i {
+      font-size: 0.9rem;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
     }
 
     .message {
@@ -237,96 +301,154 @@
     }
 
     .message-time {
-      font-size: 0.7rem;
-      opacity: 0.7;
+      font-size: 0.75rem;
+      color: var(--text-muted);
       margin-top: 0.3rem;
       text-align: right;
     }
 
-    .reply-to {
+    .message-sender {
       font-size: 0.8rem;
-      opacity: 0.8;
-      margin-bottom: 0.3rem;
-      padding-bottom: 0.3rem;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-muted);
+      margin-bottom: 0.2rem;
     }
 
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem 0.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      scroll-behavior: smooth;
-      -webkit-overflow-scrolling: touch;
+    .typing-indicator {
+      padding: 0.5rem 1rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-style: italic;
+      display: none;
     }
 
-    .chat-input-container {
+    .typing-indicator.active {
+      display: block;
+    }
+
+    .message-input-container {
       display: flex;
-      gap: 0.8rem;
-      padding: 0.8rem 1.2rem;
+      gap: 1rem;
+      padding: 1rem;
       background: var(--bg-light);
       border-radius: var(--border-radius-md);
       margin-top: 1rem;
       box-shadow: var(--input-shadow);
     }
 
-    .message-input {
+    .message-input-wrapper {
       flex: 1;
+      display: flex;
+      gap: 0.5rem;
       background: var(--input-bg);
       border: 1px solid var(--input-border);
-      border-radius: var(--border-radius-lg);
-      padding: 0.7rem 1.2rem;
+      border-radius: var(--border-radius-sm);
+      padding: 0.5rem;
+    }
+
+    .message-input {
+      flex: 1;
+      background: none;
+      border: none;
       color: var(--text);
       font-size: 0.95rem;
       resize: none;
-      min-height: 42px;
-      max-height: 120px;
       outline: none;
-      transition: border-color var(--transition-speed);
+      font-family: inherit;
+      max-height: 120px;
+      overflow-y: auto;
     }
 
-    .message-input:focus {
-      border-color: var(--main);
+    .message-input::placeholder {
+      color: var(--text-muted);
     }
 
-    .send-btn {
+    .message-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .action-button {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.3rem;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+    }
+
+    .action-button:hover {
+      color: var(--main);
+      background: var(--input-bg);
+    }
+
+    .send-button {
       background: var(--main);
       color: #fff;
       border: none;
-      border-radius: var(--border-radius-lg);
-      width: 42px;
-      height: 42px;
+      border-radius: var(--border-radius-sm);
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: background var(--transition-speed);
-      flex-shrink: 0;
+      transition: all 0.2s ease;
     }
 
-    .send-btn:hover {
+    .send-button:hover {
       background: var(--main-dark);
+      transform: translateY(-2px);
     }
 
-    .send-btn i {
-      font-size: 1.1rem;
+    .loading-messages {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 1rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--main-light);
+      border-radius: 50%;
+      border-top-color: var(--main);
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .message-gif {
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: var(--border-radius-sm);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .message-gif:hover {
+      transform: scale(1.02);
     }
 
     .reply-preview {
       background: var(--bg-light);
-      border-radius: var(--border-radius-md);
-      margin: 0.5rem 0;
-      padding: 0.8rem 1.2rem;
-      box-shadow: var(--input-shadow);
+      border-radius: var(--border-radius-sm);
+      margin: 0.5rem 1rem;
+      padding: 0.5rem;
+      display: none;
     }
 
     .reply-preview-content {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 1rem;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .reply-preview-text {
@@ -345,116 +467,22 @@
       background: none;
       border: none;
       color: var(--text-muted);
-      font-size: 1.2rem;
       cursor: pointer;
+      font-size: 1.2rem;
       padding: 0.2rem;
-      line-height: 1;
+      border-radius: 50%;
+      transition: all 0.2s ease;
     }
 
     .reply-preview-cancel:hover {
       color: var(--danger);
+      background: var(--input-bg);
     }
 
-    .typing-indicator {
-      display: none;
-      padding: 0.5rem 1rem;
-      color: var(--main-light);
-      font-size: 0.9rem;
-      font-style: italic;
-    }
-
-    .typing-indicator.active {
-      display: block;
-    }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: var(--scrollbar-track);
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--scrollbar-thumb);
-      border-radius: 3px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--main);
-    }
-
-    .back-btn {
-      background: var(--main);
-      color: #fff;
-      border: none;
-      border-radius: 1.2rem;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .back-btn:hover {
-      background: var(--main-dark);
-    }
-
-    .back-btn i {
-      font-size: 1.1rem;
-    }
-
-    /* Loading indicator */
-    .loading-messages {
-      text-align: center;
-      padding: 1rem;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      display: none;
-    }
-
-    .loading-messages.active {
-      display: block;
-    }
-
-    .loading-spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 2px solid var(--main-light);
-      border-radius: 50%;
-      border-top-color: var(--main);
-      animation: spin 1s linear infinite;
-      margin-right: 0.5rem;
-      vertical-align: middle;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Add styles for GIF messages */
-    .message-gif {
-      max-width: 200px;
-      max-height: 200px;
-      border-radius: var(--border-radius-sm);
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-
-    .message-gif:hover {
-      transform: scale(1.02);
-    }
-
-    .message-content {
-      max-width: 400px;
-    }
-
-    .message-content img.message-gif {
-      margin: 0.3rem 0;
+    @media (max-width: 768px) {
+      .chat-stats {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -471,7 +499,35 @@
         <img id="other-user-pic" src="https://ui-avatars.com/api/?name=U&background=726dff&color=fff" alt="Profile" />
         <div class="chat-header-info">
           <div class="chat-header-title" id="chat-title">Loading...</div>
-          <div class="chat-header-subtitle" id="chat-status">Offline</div>
+          <div class="chat-header-status" id="chat-status">Offline</div>
+        </div>
+        <div class="chat-header-actions">
+          <button class="action-btn" id="voice-call-btn" title="Voice Call">
+            <i class="fas fa-phone"></i>
+          </button>
+          <button class="action-btn" id="video-call-btn" title="Video Call">
+            <i class="fas fa-video"></i>
+          </button>
+          <button class="action-btn" id="share-media-btn" title="Share Media">
+            <i class="fas fa-image"></i>
+          </button>
+          <button class="action-btn" id="share-file-btn" title="Share File">
+            <i class="fas fa-file"></i>
+          </button>
+          <div class="chat-stats">
+            <div class="stat-item">
+              <i class="fas fa-message"></i>
+              <span id="message-count">0</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-image"></i>
+              <span id="media-count">0</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-file"></i>
+              <span id="file-count">0</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -498,9 +554,24 @@
         </div>
       </div>
 
-      <div class="chat-input-container">
-        <input type="text" id="message-input" placeholder="Type a message..." class="message-input" />
-        <button id="send-btn" class="send-btn">
+      <div class="message-input-container">
+        <div class="message-input-wrapper">
+          <textarea
+            id="message-input"
+            class="message-input"
+            placeholder="Type a message..."
+            rows="1"
+          ></textarea>
+          <div class="message-actions">
+            <button class="action-button gif-button" title="Send GIF">
+              <i class="fas fa-images"></i>
+            </button>
+            <button class="action-button emoji-button" title="Add emoji">
+              <i class="far fa-smile"></i>
+            </button>
+          </div>
+        </div>
+        <button id="send-btn" class="send-button">
           <i class="fas fa-paper-plane"></i>
         </button>
       </div>
@@ -508,23 +579,9 @@
   </div>
 
   <script type="module">
-    import { app, auth, db } from './js/firebaseConfig.js';
-    import { profileModal } from './js/profileModal.js';
-    import {
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import {
-      ref,
-      push,
-      set,
-      onValue,
-      serverTimestamp,
-      query,
-      orderByChild,
-      get,
-      update,
-      remove
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { authHandler } from './js/auth.js';
+    import { chatLogic } from './js/chatLogic.js';
+    import { friendSystem } from './js/friendSystem.js';
 
     // Get DOM elements
     const chatMessages = document.getElementById('chat-messages');
@@ -540,99 +597,107 @@
     const replySender = document.getElementById('reply-sender');
     const replyText = document.getElementById('reply-text');
     const cancelReplyBtn = document.getElementById('cancel-reply');
+    const messageCountEl = document.getElementById('message-count');
+    const mediaCountEl = document.getElementById('media-count');
+    const fileCountEl = document.getElementById('file-count');
 
-    let currentUser = null;
+    let currentChat = null;
     let otherUser = null;
-    let chatId = null;
-    let typingTimeout = null;
     let replyTo = null;
+    let messageCount = 0;
+    let mediaCount = 0;
+    let fileCount = 0;
 
-    // Function to initialize chat
-    async function initializeChat(otherUserId) {
-      if (!currentUser || !otherUserId) return;
+    // Initialize chat
+    async function initializeChat() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const chatId = urlParams.get('chat');
+      const userId = urlParams.get('uid');
+
+      if (!chatId && !userId) {
+        window.location.href = '/Chatz/index.html';
+        return;
+      }
 
       try {
-        // Get other user's data
-        const otherUserRef = ref(db, `users/${otherUserId}`);
-        const otherUserSnapshot = await get(otherUserRef);
-        if (!otherUserSnapshot.exists()) {
-          alert('User not found');
-          window.location.href = '/Chatz/index.html';
-          return;
+        if (userId) {
+          // Start new chat
+          currentChat = await chatLogic.startChat(userId);
+          if (!currentChat) {
+            throw new Error('Failed to start chat');
+          }
+        } else {
+          // Load existing chat
+          currentChat = chatId;
         }
 
-        otherUser = otherUserSnapshot.val();
-        chatTitle.textContent = otherUser.nickname || otherUser.displayName || 'Anonymous';
-        chatStatus.textContent = otherUser.online ? 'Online' : 'Offline';
-        otherUserPic.src = otherUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.displayName || 'U')}&background=726dff&color=fff`;
-
-        // Generate chat ID (sorted to ensure consistency)
-        const participants = [currentUser.uid, otherUserId].sort();
-        chatId = participants.join('_');
-
-        // Create or update chat participants
-        const chatRef = ref(db, `dms/${chatId}`);
-        await update(chatRef, {
-          participants: {
-            [currentUser.uid]: true,
-            [otherUserId]: true
-          }
-        });
-
-        // Listen for messages
-        const messagesRef = ref(db, `dms/${chatId}/messages`);
-        const messagesQuery = query(messagesRef, orderByChild('timestamp'));
-
-        onValue(messagesQuery, (snapshot) => {
-          if (!chatMessages) return; // Guard against undefined
-          chatMessages.innerHTML = '';
-          snapshot.forEach((childSnapshot) => {
-            const message = childSnapshot.val();
-            renderMessage(message, childSnapshot.key);
-          });
-          scrollToBottom();
-        });
-
-        // Listen for typing status
-        const typingRef = ref(db, `dms/${chatId}/typing/${otherUserId}`);
-        onValue(typingRef, (snapshot) => {
-          if (!typingIndicator || !typingText) return; // Guard against undefined
-          if (snapshot.val()) {
-            typingIndicator.classList.add('active');
-            typingText.textContent = `${otherUser.nickname || otherUser.displayName || 'Anonymous'} is typing...`;
-          } else {
-            typingIndicator.classList.remove('active');
-          }
-        });
-
-        // Listen for online status
-        onValue(otherUserRef, (snapshot) => {
-          if (!chatStatus) return; // Guard against undefined
-          const userData = snapshot.val();
-          chatStatus.textContent = userData.online ? 'Online' : 'Offline';
-        });
-
+        // Set up chat listeners
+        await setupChatListeners();
       } catch (error) {
         console.error('Error initializing chat:', error);
         alert('Failed to load chat. Please try again.');
+        window.location.href = '/Chatz/index.html';
       }
     }
 
-    // Function to render a message
-    function renderMessage(message, messageId) {
-      const isOwn = message.senderId === currentUser?.uid;
+    // Set up chat listeners
+    async function setupChatListeners() {
+      if (!currentChat) return;
+
+      // Listen for messages
+      chatLogic.onMessagesChange((messages) => {
+        updateMessages(messages);
+      });
+
+      // Listen for typing status
+      chatLogic.onTypingChange((typingUsers) => {
+        updateTypingStatus(typingUsers);
+      });
+
+      // Listen for chat changes
+      chatLogic.onChatChange((chat) => {
+        if (chat !== currentChat) {
+          currentChat = chat;
+          updateChatInfo();
+        }
+      });
+    }
+
+    // Update messages
+    function updateMessages(messages) {
+      if (!messages) return;
+
+      const wasNearBottom = isNearBottom();
+      chatMessages.innerHTML = '';
+
+      messages.forEach(([messageId, message]) => {
+        const messageElement = createMessageElement(message, messageId);
+        chatMessages.appendChild(messageElement);
+      });
+
+      if (wasNearBottom) {
+        scrollToBottom();
+      }
+
+      // Update stats
+      updateStats(messages);
+    }
+
+    // Create message element
+    function createMessageElement(message, messageId) {
+      const isOwn = message.sender === authHandler.getCurrentUser()?.uid;
       const messageDiv = document.createElement('div');
       messageDiv.className = `message ${isOwn ? 'own' : ''}`;
-      
+
       const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : 'Sending...';
+      const senderName = isOwn ? 'You' : (otherUser?.displayName || 'Anonymous');
+      const senderPhoto = isOwn ? authHandler.getCurrentUser()?.photoURL : otherUser?.photoURL;
 
       let replyHTML = '';
       if (message.replyTo) {
-        const replyUserData = isOwn ? otherUser : currentUser;
-        const replyDisplayName = replyUserData.nickname || replyUserData.displayName || "Anonymous";
         replyHTML = `
           <div class="reply-to">
-            Reply to ${escapeHtml(replyDisplayName)}: ${escapeHtml(truncate(message.replyTo.text, 40))}
+            Reply to ${escapeHtml(message.replyTo.senderName)}: ${escapeHtml(truncate(message.replyTo.text, 40))}
           </div>
         `;
       }
@@ -650,11 +715,12 @@
       }
 
       messageDiv.innerHTML = `
-        <img src="${isOwn ? (currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || 'U')}&background=726dff&color=fff`) : (otherUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.displayName || 'U')}&background=726dff&color=fff`)}" 
+        <img src="${senderPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=726dff&color=fff`}" 
              alt="Profile" 
              class="message-avatar"
-             data-uid="${message.senderId}" />
+             data-uid="${message.sender}" />
         <div class="message-content">
+          <div class="message-sender">${escapeHtml(senderName)}</div>
           ${replyHTML}
           ${messageContent}
           <div class="message-time">${timestamp}</div>
@@ -669,48 +735,57 @@
         }
       };
 
-      chatMessages.appendChild(messageDiv);
+      return messageDiv;
     }
 
-    // Function to send message
-    async function sendMessage() {
-      const message = messageInput.value.trim();
-      if (!message || !currentUser || !chatId) return;
+    // Update typing status
+    function updateTypingStatus(typingUsers) {
+      if (!typingUsers || typingUsers.length === 0) {
+        typingIndicator.classList.remove('active');
+        return;
+      }
+
+      const typingUser = typingUsers[0];
+      const typingUserName = typingUser[1].senderName || 'Someone';
+      typingText.textContent = `${typingUserName} is typing...`;
+      typingIndicator.classList.add('active');
+    }
+
+    // Update chat info
+    async function updateChatInfo() {
+      if (!currentChat) return;
 
       try {
-        const messageRef = push(ref(db, `dms/${chatId}/messages`));
-        const messageData = {
-          text: message,
-          senderId: currentUser.uid,
-          timestamp: serverTimestamp()
-        };
+        const chatData = await chatLogic.getChatInfo(currentChat);
+        if (!chatData) return;
 
-        if (replyTo) {
-          messageData.replyTo = {
-            messageId: replyTo.messageId,
-            senderId: replyTo.senderId,
-            text: replyTo.text
-          };
-        }
-
-        await set(messageRef, messageData);
-
-        // Update last message
-        await update(ref(db, `dms/${chatId}`), {
-          lastMessage: {
-            text: message,
-            timestamp: serverTimestamp(),
-            senderId: currentUser.uid
-          }
-        });
-
-        messageInput.value = '';
-        cancelReply();
-        scrollToBottom();
+        otherUser = chatData.otherUser;
+        chatTitle.textContent = otherUser.displayName || 'Anonymous';
+        chatStatus.textContent = otherUser.online ? 'Online' : 'Offline';
+        otherUserPic.src = otherUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.displayName || 'U')}&background=726dff&color=fff`;
       } catch (error) {
-        console.error('Error sending message:', error);
-        alert('Failed to send message. Please try again.');
+        console.error('Error updating chat info:', error);
       }
+    }
+
+    // Update stats
+    function updateStats(messages) {
+      if (!messages) return;
+      
+      messageCount = messages.length;
+      mediaCount = messages.filter(([_, msg]) => 
+        msg.type === 'image' || 
+        msg.type === 'video' || 
+        (msg.text && msg.text.match(/\.(jpg|jpeg|png|gif|mp4|webm|ogg)$/i))
+      ).length;
+      fileCount = messages.filter(([_, msg]) => 
+        msg.type === 'file' || 
+        (msg.text && msg.text.match(/\.(pdf|doc|docx|xls|xlsx|zip|rar)$/i))
+      ).length;
+
+      if (messageCountEl) messageCountEl.textContent = messageCount;
+      if (mediaCountEl) mediaCountEl.textContent = mediaCount;
+      if (fileCountEl) fileCountEl.textContent = fileCount;
     }
 
     // Helper functions
@@ -725,18 +800,30 @@
       return text.substring(0, length) + '...';
     }
 
-    function scrollToBottom() {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+    function scrollToBottom(smooth = true) {
+      if (smooth) {
+        chatMessages.scrollTo({
+          top: chatMessages.scrollHeight,
+          behavior: 'smooth'
+        });
+      } else {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    }
+
+    function isNearBottom() {
+      return chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 100;
     }
 
     function setReply(message, messageId) {
       replyTo = {
-        messageId: messageId,
-        senderId: message.senderId,
+        messageId,
+        senderId: message.sender,
+        senderName: message.senderName,
         text: message.text
       };
       
-      replySender.textContent = isOwn ? 'You' : (otherUser.nickname || otherUser.displayName || 'Anonymous');
+      replySender.textContent = message.senderName || 'Anonymous';
       replyText.textContent = truncate(replyTo.text, 40);
       replyPreview.style.display = 'block';
       
@@ -749,46 +836,39 @@
     }
 
     // Event listeners
-    sendBtn.onclick = sendMessage;
+    sendBtn.onclick = async () => {
+      const message = messageInput.value.trim();
+      if (!message || !currentChat) return;
+
+      try {
+        await chatLogic.sendMessage(message, replyTo);
+        messageInput.value = '';
+        cancelReply();
+        scrollToBottom();
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+      }
+    };
 
     messageInput.onkeypress = (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        sendMessage();
+        sendBtn.click();
       }
     };
 
     messageInput.oninput = () => {
-      if (!currentUser || !chatId) return;
-
-      // Set typing status
-      const typingRef = ref(db, `dms/${chatId}/typing/${currentUser.uid}`);
-      set(typingRef, true);
-
-      // Clear previous timeout
-      if (typingTimeout) {
-        clearTimeout(typingTimeout);
-      }
-
-      // Set timeout to clear typing status
-      typingTimeout = setTimeout(() => {
-        set(typingRef, false);
-      }, 2000);
+      if (!currentChat) return;
+      chatLogic.setTypingStatus(true);
     };
 
     cancelReplyBtn.onclick = cancelReply;
 
     // Initialize chat when user is authenticated
-    onAuthStateChanged(auth, (user) => {
+    authHandler.onAuthStateChanged((user) => {
       if (user) {
-        currentUser = user;
-        const urlParams = new URLSearchParams(window.location.search);
-        const otherUserId = urlParams.get('uid');
-        if (otherUserId) {
-          initializeChat(otherUserId);
-        } else {
-          window.location.href = '/Chatz/index.html';
-        }
+        initializeChat();
       } else {
         window.location.href = '/Chatz/signin.html';
       }
@@ -800,8 +880,82 @@
       if (avatar && avatar.dataset.uid) {
         e.preventDefault();
         e.stopPropagation();
-        profileModal.show(avatar.dataset.uid);
+        authHandler.showProfileModal(avatar.dataset.uid);
       }
+    });
+
+    // Theme handling
+    function getTimeBasedTheme() {
+      const hour = new Date().getHours();
+      
+      // 6:00 to 14:00 - Light mode
+      if (hour >= 6 && hour < 14) {
+        return 'light';
+      }
+      // 14:00 to 20:00 - Purple mode (default)
+      else if (hour >= 14 && hour < 20) {
+        return 'default';
+      }
+      // 20:00 to 6:00 - Dark mode
+      else {
+        return 'dark';
+      }
+    }
+
+    function applyTheme(theme) {
+      let currentTheme = theme;
+      
+      // If no theme provided or theme is 'auto', use time-based theme
+      if (!currentTheme || currentTheme === 'auto') {
+        currentTheme = getTimeBasedTheme();
+      }
+      
+      document.documentElement.className = currentTheme === 'default' ? '' : 'theme-' + currentTheme;
+      localStorage.setItem('chatzTheme', currentTheme);
+    }
+
+    // Apply theme on page load
+    const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
+    applyTheme(savedTheme);
+
+    // Update theme every minute if using auto theme
+    setInterval(() => {
+      const currentTheme = localStorage.getItem('chatzTheme') || 'auto';
+      if (currentTheme === 'auto') {
+        applyTheme('auto');
+      }
+    }, 60000);
+
+    // Listen for theme changes in other tabs
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'chatzTheme') {
+        applyTheme(e.newValue);
+      }
+    });
+
+    // Add event listeners for action buttons
+    document.getElementById('voice-call-btn').addEventListener('click', () => {
+      alert('Voice call feature coming soon!');
+    });
+
+    document.getElementById('video-call-btn').addEventListener('click', () => {
+      alert('Video call feature coming soon!');
+    });
+
+    document.getElementById('share-media-btn').addEventListener('click', () => {
+      alert('Media sharing feature coming soon!');
+    });
+
+    document.getElementById('share-file-btn').addEventListener('click', () => {
+      alert('File sharing feature coming soon!');
+    });
+
+    document.querySelector('.gif-button').addEventListener('click', () => {
+      alert('GIF sharing feature coming soon!');
+    });
+
+    document.querySelector('.emoji-button').addEventListener('click', () => {
+      alert('Emoji picker feature coming soon!');
     });
   </script>
 </body>

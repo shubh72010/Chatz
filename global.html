@@ -7,6 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="styles/profileModal.css" />
+  <link rel="stylesheet" href="styles/giphy.css" />
+  <script src="https://js.giphy.com/v2/sdk.min.js"></script>
   <style>
     /* Base Theme Variables */
     :root {
@@ -466,56 +468,124 @@
         max-width: 90%;
       }
     }
+
+    .message-input-container {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg-light);
+      border-radius: var(--border-radius-md);
+      position: relative;
+    }
+
+    .message-input-wrapper {
+      flex: 1;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .message-input {
+      flex: 1;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--input-border);
+      border-radius: var(--border-radius-sm);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 1rem;
+      resize: none;
+      max-height: 120px;
+      min-height: 42px;
+    }
+
+    .message-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .action-button {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      border-radius: var(--border-radius-sm);
+      transition: color var(--transition-speed);
+    }
+
+    .action-button:hover {
+      color: var(--main);
+    }
+
+    .send-button {
+      background: var(--main);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius-sm);
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition-speed);
+    }
+
+    .send-button:hover {
+      background: var(--main-dark);
+    }
   </style>
   <script>
-    // Theme sync and auto theme functionality
     function getTimeBasedTheme() {
       const hour = new Date().getHours();
-      // Use dark theme from 8 PM to 6 AM
-      return (hour >= 20 || hour < 6) ? 'dark' : 'light';
+      
+      // 6:00 to 14:00 - Light mode
+      if (hour >= 6 && hour < 14) {
+        return 'light';
+      }
+      // 14:00 to 20:00 - Purple mode (default)
+      else if (hour >= 14 && hour < 20) {
+        return 'default';
+      }
+      // 20:00 to 6:00 - Dark mode
+      else {
+        return 'dark';
+      }
     }
 
     function applyTheme(theme) {
-      if (theme === 'auto') {
-        theme = getTimeBasedTheme();
+      let currentTheme = theme;
+      
+      // If no theme provided or theme is 'auto', use time-based theme
+      if (!currentTheme || currentTheme === 'auto') {
+        currentTheme = getTimeBasedTheme();
       }
-      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
+      
+      // Apply the theme class
+      document.documentElement.className = currentTheme === 'default' ? '' : 'theme-' + currentTheme;
     }
 
-    // Apply theme on page load
-    (function() {
-      const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
-      applyTheme(savedTheme);
+    // Initialize theme
+    const savedTheme = localStorage.getItem('chatzTheme') || 'auto';
+    applyTheme(savedTheme);
 
-      // If auto theme is selected, update every minute
-      if (savedTheme === 'auto') {
-        setInterval(() => {
-          applyTheme('auto');
-        }, 60000); // Check every minute
+    // Update theme every minute only if auto is selected
+    setInterval(() => {
+      const currentTheme = localStorage.getItem('chatzTheme') || 'auto';
+      if (currentTheme === 'auto') {
+        applyTheme('auto');
       }
-    })();
+    }, 60000);
 
     // Listen for theme changes in other tabs
-    window.addEventListener('storage', function(e) {
+    window.addEventListener('storage', (e) => {
       if (e.key === 'chatzTheme') {
         const theme = e.newValue || 'auto';
         applyTheme(theme);
       }
     });
 
-    // Apply theme from localStorage on page load
-    (function() {
-      const theme = localStorage.getItem('chatzTheme') || 'default';
-      document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
-    })();
-
-    // Listen for theme changes in other tabs
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'chatzTheme') {
-        const theme = e.newValue || 'default';
-        document.documentElement.className = theme === 'default' ? '' : 'theme-' + theme;
-      }
-    });
+    // Remove duplicate theme initialization code
   </script>
 </head>
 <body>
@@ -556,9 +626,25 @@
       </div>
     </div>
 
-    <div class="chat-input">
-      <input type="text" id="message-input" placeholder="Type a message..." />
-      <button id="send-btn">Send</button>
+    <div class="message-input-container">
+      <div class="message-input-wrapper">
+        <textarea
+          class="message-input"
+          placeholder="Type a message..."
+          rows="1"
+        ></textarea>
+        <div class="message-actions">
+          <button class="action-button gif-button" title="Send GIF">
+            <i class="fas fa-images"></i>
+          </button>
+          <button class="action-button emoji-button" title="Add emoji">
+            <i class="far fa-smile"></i>
+          </button>
+        </div>
+      </div>
+      <button class="send-button">
+        <i class="fas fa-paper-plane"></i>
+      </button>
     </div>
   </div>
 
@@ -770,12 +856,19 @@
         `;
       }
 
+      let contentHTML = '';
+      if (message.type === 'gif') {
+        contentHTML = `<img src="${escapeHtml(message.content)}" alt="GIF" class="message-gif" style="max-width: 200px; border-radius: 8px;">`;
+      } else {
+        contentHTML = escapeHtml(message.text);
+      }
+
       messageDiv.innerHTML = `
         <img src="${photoURL}" alt="Profile" data-uid="${message.senderId}" class="message-avatar" />
         <div class="message-content">
           ${!isOwn ? `<div class="message-sender">${escapeHtml(displayName)}</div>` : ''}
           ${replyHTML}
-          ${escapeHtml(message.text)}
+          ${contentHTML}
           <div class="message-time">${timestamp}</div>
         </div>
       `;
@@ -923,6 +1016,108 @@
 
     // Add cancel reply handler
     document.getElementById('cancel-reply').onclick = cancelReply;
+  </script>
+
+  <!-- Add these script imports before the closing body tag -->
+  <script src="js/giphy.js"></script>
+  <script>
+    // Initialize GIPHY integration
+    const giphyIntegration = new GiphyIntegration();
+    const messageInputContainer = document.querySelector('.message-input-container');
+    const gifButton = document.querySelector('.gif-button');
+    let gifPicker = null;
+
+    // Message sending functionality
+    const messageInput = document.querySelector('.message-input');
+    const sendButton = document.querySelector('.send-button');
+
+    // Send message function
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || !currentUser) return;
+
+      const message = {
+        text: text,
+        senderId: currentUser.uid,
+        timestamp: Date.now()
+      };
+
+      if (replyTo) {
+        message.replyTo = replyTo;
+        cancelReply();
+      }
+
+      try {
+        // Clear input before sending
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+
+        // Send message to Firebase
+        const messagesRef = ref(db, 'global_messages');
+        await push(messagesRef, message);
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+      }
+    }
+
+    // Handle send button click
+    sendButton.addEventListener('click', sendMessage);
+
+    // Handle enter key press
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Auto-resize textarea
+    messageInput.addEventListener('input', () => {
+      messageInput.style.height = 'auto';
+      messageInput.style.height = messageInput.scrollHeight + 'px';
+    });
+
+    // Initialize GIF picker
+    gifButton.addEventListener('click', () => {
+      if (!gifPicker) {
+        gifPicker = giphyIntegration.createGifPickerUI(messageInputContainer, (gif) => {
+          // When a GIF is selected, send it as a message
+          const messageData = {
+            type: 'gif',
+            content: gif.url,
+            senderId: currentUser.uid,
+            timestamp: Date.now()
+          };
+          
+          // Send the GIF message
+          const messagesRef = ref(db, 'global_messages');
+          push(messagesRef, messageData)
+            .then(() => {
+              gifPicker.hide();
+            })
+            .catch((error) => {
+              console.error('Error sending GIF:', error);
+            });
+        });
+      }
+      
+      if (gifPicker) {
+        const isVisible = messageInputContainer.querySelector('.gif-picker').style.display === 'block';
+        if (isVisible) {
+          gifPicker.hide();
+        } else {
+          gifPicker.show();
+        }
+      }
+    });
+
+    // Close GIF picker when clicking outside
+    document.addEventListener('click', (e) => {
+      if (gifPicker && !e.target.closest('.gif-picker') && !e.target.closest('.gif-button')) {
+        gifPicker.hide();
+      }
+    });
   </script>
 </body>
 </html>
