@@ -14,7 +14,6 @@
   <header>
     <button class="back-btn" onclick="window.location.href='/Chatz/index.html'">&larr; Back</button>
     <div class="header-stats">
-      <span id="online-count">0 online</span>
       <div class="chat-stats">
         <div class="stat-item" title="Total Messages">
           <i class="fas fa-message"></i>
@@ -33,12 +32,7 @@
     <div class="chat-container">
       <div class="chat-header">
         <div class="chat-header-info">
-          <div class="chat-header-status" id="online-count-header">0 online</div>
-        </div>
-        <div class="chat-header-actions">
-          <button class="action-btn" id="refresh-btn" title="Refresh Messages">
-            <i class="fas fa-sync-alt"></i>
-          </button>
+          <!-- Removed online count and refresh button -->
         </div>
       </div>
 
@@ -91,9 +85,8 @@
     .header-stats {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      flex: 1;
       justify-content: center;
+      flex: 1;
     }
 
     .chat-stats {
@@ -123,12 +116,6 @@
       font-weight: 500;
     }
 
-    #online-count {
-      font-size: 1.1rem;
-      font-weight: 500;
-      color: var(--text);
-    }
-
     /* Responsive Adjustments */
     @media (max-width: 768px) {
       .header-stats {
@@ -144,10 +131,6 @@
       .stat-item {
         min-width: 50px;
         padding: 0.4rem;
-      }
-
-      #online-count {
-        font-size: 1rem;
       }
     }
 
@@ -195,14 +178,10 @@
     const cancelReplyBtn = document.getElementById('cancel-reply');
     const messageCountEl = document.getElementById('message-count');
     const userCountEl = document.getElementById('user-count');
-    const onlineCountEl = document.getElementById('online-count');
-    const onlineCountHeaderEl = document.getElementById('online-count-header');
-    const refreshBtn = document.getElementById('refresh-btn');
 
     let replyTo = null;
     let messageCount = 0;
     let userCount = 0;
-    let onlineCount = 0;
     let typingTimeout = null;
 
     // Initialize global chat
@@ -230,7 +209,6 @@
               online++;
             }
           });
-          onlineCount = online;
           userCount = total;
           updateStats();
         });
@@ -332,11 +310,8 @@
 
     // Update stats
     function updateStats() {
-      const onlineText = `${onlineCount} online`;
       if (messageCountEl) messageCountEl.textContent = messageCount;
       if (userCountEl) userCountEl.textContent = userCount;
-      if (onlineCountEl) onlineCountEl.textContent = onlineText;
-      if (onlineCountHeaderEl) onlineCountHeaderEl.textContent = onlineText;
     }
 
     // Helper functions
@@ -456,24 +431,6 @@
     };
 
     cancelReplyBtn.onclick = cancelReply;
-
-    refreshBtn.onclick = async () => {
-      try {
-        loadingMessages.style.display = 'flex';
-        const messagesRef = ref(db, 'global_messages');
-        const snapshot = await get(messagesRef);
-        const messages = [];
-        snapshot.forEach((childSnapshot) => {
-          messages.push([childSnapshot.key, childSnapshot.val()]);
-        });
-        updateMessages(messages);
-      } catch (error) {
-        console.error('Error refreshing messages:', error);
-        alert('Failed to refresh messages. Please try again.');
-      } finally {
-        loadingMessages.style.display = 'none';
-      }
-    };
 
     // Initialize chat when user is authenticated
     authHandler.onAuthStateChanged((user) => {
