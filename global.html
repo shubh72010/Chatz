@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="styles/profileModal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.12.1/index.css" />
   <style>
     /* Base Theme Variables */
     :root {
@@ -532,6 +533,44 @@
     .send-button:hover {
       background: var(--main-dark);
     }
+
+    /* Emoji Picker Styles */
+    .emoji-picker-container {
+      position: absolute;
+      bottom: 100%;
+      right: 0;
+      margin-bottom: 10px;
+      z-index: 1000;
+      display: none;
+    }
+
+    .emoji-picker-container.active {
+      display: block;
+    }
+
+    emoji-picker {
+      --background: var(--bg-light);
+      --border-color: var(--input-border);
+      --button-active-background: var(--main);
+      --button-hover-background: var(--main-light);
+      --category-emoji-color: var(--text);
+      --category-emoji-selected-color: var(--text);
+      --category-font-color: var(--text);
+      --category-font-selected-color: var(--text);
+      --indicator-color: var(--main);
+      --input-border-color: var(--input-border);
+      --input-font-color: var(--text);
+      --num-columns: 8;
+      --outline-color: var(--main);
+      --outline-size: 1px;
+      --skintone-dropdown-border-color: var(--input-border);
+      width: 350px;
+      height: 400px;
+    }
+
+    .message-input-container {
+      position: relative;
+    }
   </style>
   <script>
     function getTimeBasedTheme() {
@@ -633,10 +672,13 @@
           rows="1"
         ></textarea>
         <div class="message-actions">
-          <button class="action-button emoji-button" title="Add emoji">
+          <button id="emoji-button" class="action-button emoji-button" title="Add emoji">
             <i class="far fa-smile"></i>
           </button>
         </div>
+      </div>
+      <div id="emoji-picker-container" class="emoji-picker-container">
+        <emoji-picker></emoji-picker>
       </div>
       <button id="send-button" class="send-button">
         <i class="fas fa-paper-plane"></i>
@@ -648,6 +690,7 @@
     // Import Firebase services first
     import { app, auth, db } from '/Chatz/js/firebaseConfig.js';
     import { profileModal } from './js/profileModal.js';
+    import 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1.12.1/index.js';
     import {
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
@@ -895,6 +938,52 @@
         // Setup profile clicks
         setupProfileClicks();
         
+        // Setup emoji picker
+        const emojiButton = document.getElementById('emoji-button');
+        const emojiPickerContainer = document.getElementById('emoji-picker-container');
+        const emojiPicker = emojiPickerContainer.querySelector('emoji-picker');
+        const messageInput = document.getElementById('message-input');
+
+        if (emojiButton && emojiPicker && messageInput) {
+          // Toggle emoji picker
+          emojiButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            emojiPickerContainer.classList.toggle('active');
+          });
+
+          // Handle emoji selection
+          emojiPicker.addEventListener('emoji-click', (e) => {
+            const cursorPos = messageInput.selectionStart;
+            const text = messageInput.value;
+            const newText = text.slice(0, cursorPos) + e.detail.unicode + text.slice(cursorPos);
+            messageInput.value = newText;
+            
+            // Update cursor position
+            const newCursorPos = cursorPos + e.detail.unicode.length;
+            messageInput.setSelectionRange(newCursorPos, newCursorPos);
+            
+            // Trigger input event for auto-resize and typing indicator
+            messageInput.dispatchEvent(new Event('input'));
+            
+            // Focus back on input
+            messageInput.focus();
+          });
+
+          // Close emoji picker when clicking outside
+          document.addEventListener('click', (e) => {
+            if (!emojiPickerContainer.contains(e.target) && !emojiButton.contains(e.target)) {
+              emojiPickerContainer.classList.remove('active');
+            }
+          });
+
+          // Close emoji picker when pressing Escape
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+              emojiPickerContainer.classList.remove('active');
+            }
+          });
+        }
+
         // Load initial messages
         const messagesRef = ref(db, 'global_messages');
         const messagesQuery = query(messagesRef, 
