@@ -22,7 +22,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
 
@@ -54,18 +54,18 @@ const dbRules = {
         }
       }
     },
-    "dms": {
+    "chats": {
       "$chatId": {
         ".read": "auth != null && data.child('participants').child(auth.uid).exists()",
         ".write": "auth != null && (data.child('participants').child(auth.uid).exists() || newData.child('participants').child(auth.uid).exists())",
         "messages": {
           ".indexOn": ["timestamp"],
-          ".read": "auth != null && root.child('dms').child($chatId).child('participants').child(auth.uid).exists()",
-          ".write": "auth != null && root.child('dms').child($chatId).child('participants').child(auth.uid).exists()"
+          ".read": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()",
+          ".write": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()"
         },
         "typing": {
-          ".read": "auth != null && root.child('dms').child($chatId).child('participants').child(auth.uid).exists()",
-          ".write": "auth != null && root.child('dms').child($chatId).child('participants').child(auth.uid).exists()"
+          ".read": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()",
+          ".write": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()"
         },
         "participants": {
           ".indexOn": [".value"],
@@ -73,11 +73,6 @@ const dbRules = {
           ".write": "auth != null && (data.child(auth.uid).exists() || newData.child(auth.uid).exists())"
         }
       }
-    },
-    "global_messages": {
-      ".indexOn": ["timestamp"],
-      ".read": "auth != null",
-      ".write": "auth != null"
     },
     "friend_requests": {
       "$uid": {
@@ -102,4 +97,4 @@ const dbRules = {
 };
 
 // Export initialized services
-export { app, analytics, auth, db, storage, dbRules }; 
+export { analytics, auth, db, storage, dbRules }; 
