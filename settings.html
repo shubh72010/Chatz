@@ -10,126 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
-    /* Base Theme Variables */
-    :root {
-      /* Brand Colors */
-      --main: #726dff;
-      --main-dark: #554fa6;
-      --main-light: #a3a0ff;
-      --accent: #5f27cd;
-      --danger: #ff5252;
-
-      /* Common Variables */
-      --header-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
-      --input-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
-      --scrollbar-width: 6px;
-      --border-radius-sm: 0.7rem;
-      --border-radius-md: 1rem;
-      --border-radius-lg: 1.2rem;
-      --transition-speed: 0.2s;
-    }
-
-    /* PURPLE THEME (Default) */
-    :root {
-      /* Background Colors */
-      --bg: #23272f;
-      --bg-light: #2e323c;
-      --bg-gradient: linear-gradient(135deg, #726dff 0%, #554fa6 100%);
-      --settings-bg: rgba(44,32,69,0.96);
-      
-      /* Text Colors */
-      --text: #f0eaff;
-      --text-muted: rgba(255,255,255,0.7);
-      
-      /* Input Colors */
-      --input-bg: rgba(255,255,255,0.16);
-      --input-border: #44415e;
-      
-      /* Message Bubble Colors */
-      --bubble-own: #726dff;
-      --bubble-other: #2e323c;
-      --bubble-own-text: #fff;
-      --bubble-other-text: #e6e6fa;
-      
-      /* Header Colors */
-      --header-bg: rgba(44,32,69,0.85);
-      
-      /* Scrollbar Colors */
-      --scrollbar-thumb: #726dff55;
-      --scrollbar-track: #23272f;
-    }
-
-    /* Dark Theme */
-    .theme-dark {
-      /* Background Colors */
-      --bg: #131324;
-      --bg-light: #191938;
-      --bg-gradient: linear-gradient(135deg, #131324 0%, #191938 100%);
-      --settings-bg: #191938;
-      
-      /* Text Colors */
-      --text: #f0eaff;
-      --text-muted: rgba(255,255,255,0.7);
-      
-      /* Input Colors */
-      --input-bg: #191938;
-      --input-border: #44415e;
-      
-      /* Message Bubble Colors */
-      --bubble-own: #44415e;
-      --bubble-other: #23272f;
-      --bubble-own-text: #fff;
-      --bubble-other-text: #e6e6fa;
-      
-      /* Header Colors */
-      --header-bg: #191938;
-      
-      /* Scrollbar Colors */
-      --scrollbar-thumb: #44415e;
-      --scrollbar-track: #131324;
-    }
-
-    /* Light Theme */
-    .theme-light {
-      /* Background Colors */
-      --bg: #f7f4fb;
-      --bg-light: #fff;
-      --bg-gradient: linear-gradient(135deg, #e9e6ff 0%, #f7f4fb 100%);
-      --settings-bg: #fff;
-      
-      /* Text Colors */
-      --text: #2c2045;
-      --text-muted: rgba(44,32,69,0.7);
-      
-      /* Input Colors */
-      --input-bg: #f0eaff;
-      --input-border: #b3aaff;
-      
-      /* Message Bubble Colors */
-      --bubble-own: #7b5cff;
-      --bubble-other: #e9e6ff;
-      --bubble-own-text: #fff;
-      --bubble-other-text: #2c2045;
-      
-      /* Header Colors */
-      --header-bg: #fff;
-      
-      /* Scrollbar Colors */
-      --scrollbar-thumb: #b3aaff;
-      --scrollbar-track: #f7f4fb;
-    }
-
-    body {
-      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
-      background: var(--bg-gradient);
-      color: var(--text);
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-    }
+    /* Settings-specific styles */
     header {
       width: 100%;
       background: var(--header-bg);
@@ -383,65 +264,6 @@
       transform: scale(1.1);
     }
 
-    /* Remove old theme-specific overrides */
-    .theme-default body,
-    .theme-dark body,
-    .theme-light body {
-      background: var(--bg-gradient);
-      color: var(--text);
-    }
-
-    .settings-card {
-      background: var(--settings-bg);
-      color: var(--text);
-    }
-
-    header {
-      background: var(--header-bg);
-      color: var(--text);
-    }
-
-    .profile-info .profile-name,
-    .section label {
-      color: var(--main);
-    }
-
-    select,
-    input[type="text"],
-    textarea {
-      background: var(--input-bg);
-      color: var(--text);
-      border-color: var(--input-border);
-    }
-
-    select:focus,
-    input[type="text"]:focus,
-    textarea:focus {
-      border-color: var(--main);
-    }
-
-    .save-btn {
-      background: var(--main);
-      color: #fff;
-    }
-
-    .save-btn:hover {
-      background: var(--main-dark);
-    }
-
-    .signout-btn {
-      background: var(--danger);
-      color: #fff;
-    }
-
-    .settings-group {
-      background: rgba(255,255,255,0.05);
-    }
-
-    .settings-group h3 {
-      color: var(--main);
-    }
-
     @media (max-width: 600px) {
       .settings-card {
         padding: 1.2rem 0.7rem 1rem 0.7rem;
@@ -600,10 +422,13 @@
         <label for="theme-select">Theme</label>
         <select id="theme-select">
           <option value="auto">Automatic (Based on Time)</option>
-          <option value="default">Purple</option>
+          <option value="nothing">NOTHING® (Default)</option>
           <option value="dark">Dark</option>
           <option value="light">Light</option>
         </select>
+        <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem; display: block;">
+          NOTHING® theme features a minimalist, industrial design with subtle animations and glassmorphism effects.
+        </small>
       </div>
       <div class="section">
         <label for="accent-color">Accent Color</label>
