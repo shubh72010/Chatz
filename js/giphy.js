@@ -5,7 +5,7 @@ class GiphyIntegration {
     }
 
     initializeGiphySDK() {
-        // The correct SDK class is GiphyFetch for API usage
+        // The new SDK uses GiphyFetch from @giphy/js-fetch-api
         this.gf = new window.GiphyFetch('JDYaLkWja1iraKwxqsUsHJOQesqcdDyk');
     }
 
