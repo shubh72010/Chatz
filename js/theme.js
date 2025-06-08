@@ -2,7 +2,7 @@
 const ThemeManager = {
   // Theme names and their corresponding classes
   themes: {
-    nothing: 'theme-nothing',  // Changed from empty string to actual class name
+    nothing: 'theme-nothing',
     dark: 'theme-dark',
     light: 'theme-light'
   },
@@ -40,16 +40,23 @@ const ThemeManager = {
       currentTheme = this.getTimeBasedTheme();
     }
     
-    // Remove all theme classes
-    Object.values(this.themes).forEach(themeClass => {
-      if (themeClass) {  // Only remove if class name exists
-        document.documentElement.classList.remove(themeClass);
+    // Validate theme exists
+    if (!this.themes[currentTheme]) {
+      console.warn(`Theme "${currentTheme}" not found, using "nothing" theme`);
+      currentTheme = 'nothing';
+    }
+    
+    // Remove all theme classes safely
+    const currentClasses = Array.from(document.documentElement.classList);
+    currentClasses.forEach(className => {
+      if (className.startsWith('theme-')) {
+        document.documentElement.classList.remove(className);
       }
     });
     
     // Apply new theme class
     const themeClass = this.themes[currentTheme];
-    if (themeClass) {
+    if (themeClass && typeof themeClass === 'string' && themeClass.trim()) {
       document.documentElement.classList.add(themeClass);
     }
     
@@ -59,14 +66,24 @@ const ThemeManager = {
 
   // Apply font to document
   applyFont(font) {
-    // Remove all font classes
-    Object.values(this.fonts).forEach(fontClass => {
-      document.documentElement.classList.remove(fontClass);
+    // Validate font exists
+    if (!this.fonts[font]) {
+      console.warn(`Font "${font}" not found, using "ntype" font`);
+      font = 'ntype';
+    }
+    
+    // Remove all font classes safely
+    const currentClasses = Array.from(document.documentElement.classList);
+    currentClasses.forEach(className => {
+      if (className.startsWith('font-')) {
+        document.documentElement.classList.remove(className);
+      }
     });
     
     // Apply new font class
-    if (this.fonts[font]) {
-      document.documentElement.classList.add(this.fonts[font]);
+    const fontClass = this.fonts[font];
+    if (fontClass && typeof fontClass === 'string' && fontClass.trim()) {
+      document.documentElement.classList.add(fontClass);
     }
     
     // Save to localStorage
@@ -75,31 +92,38 @@ const ThemeManager = {
 
   // Initialize theme and font
   init() {
-    // Get saved preferences or use defaults
-    const savedTheme = localStorage.getItem('chatzTheme') || 'nothing';
-    const savedFont = localStorage.getItem('chatzFont') || 'ntype';
-    
-    // Apply saved preferences
-    this.applyTheme(savedTheme);
-    this.applyFont(savedFont);
-    
-    // Set up auto theme updates
-    if (savedTheme === 'auto') {
-      setInterval(() => {
-        if (localStorage.getItem('chatzTheme') === 'auto') {
-          this.applyTheme('auto');
-        }
-      }, 60000); // Check every minute
-    }
-    
-    // Listen for theme changes in other tabs
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'chatzTheme') {
-        this.applyTheme(e.newValue);
-      } else if (e.key === 'chatzFont') {
-        this.applyFont(e.newValue);
+    try {
+      // Get saved preferences or use defaults
+      const savedTheme = localStorage.getItem('chatzTheme') || 'nothing';
+      const savedFont = localStorage.getItem('chatzFont') || 'ntype';
+      
+      // Apply saved preferences
+      this.applyTheme(savedTheme);
+      this.applyFont(savedFont);
+      
+      // Set up auto theme updates
+      if (savedTheme === 'auto') {
+        setInterval(() => {
+          if (localStorage.getItem('chatzTheme') === 'auto') {
+            this.applyTheme('auto');
+          }
+        }, 60000); // Check every minute
       }
-    });
+      
+      // Listen for theme changes in other tabs
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'chatzTheme') {
+          this.applyTheme(e.newValue);
+        } else if (e.key === 'chatzFont') {
+          this.applyFont(e.newValue);
+        }
+      });
+    } catch (error) {
+      console.error('Error initializing theme:', error);
+      // Fallback to default theme
+      this.applyTheme('nothing');
+      this.applyFont('ntype');
+    }
   }
 };
 
