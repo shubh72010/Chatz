@@ -198,7 +198,7 @@
   color: var(--main);
 }
 
-/* Nothing Theme GIF and Emoji Buttons */
+/* Nothing Theme Emoji Button */
 .theme-nothing .action-button {
   color: var(--text-muted);
 }

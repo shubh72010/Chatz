@@ -5,12 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chatz | Global Chat</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-  <link rel="stylesheet" href="styles/giphy.css" />
   <link rel="stylesheet" href="styles/global.css" />
   <link rel="stylesheet" href="styles/nothing-theme.css" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://js.giphy.com/v2/sdk.min.js"></script>
-  <script src="js/theme.js"></script>
+  <script src="js/theme.js" defer></script>
 </head>
 <body>
   <header>
@@ -75,9 +73,6 @@
             rows="1"
           ></textarea>
           <div class="message-actions">
-            <button class="action-button gif-button" title="Send GIF">
-              <i class="fas fa-images"></i>
-            </button>
             <button class="action-button emoji-button" title="Add emoji">
               <i class="far fa-smile"></i>
             </button>
@@ -96,6 +91,11 @@
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { ref, onValue, push, set, serverTimestamp, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
     import { db } from './js/firebaseConfig.js';
+
+    // Initialize theme first
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeTheme();
+    });
 
     // Get DOM elements
     const chatMessages = document.getElementById('chat-messages');
@@ -407,10 +407,6 @@
     });
 
     // Add event listeners for action buttons
-    document.querySelector('.gif-button').addEventListener('click', () => {
-      alert('GIF sharing feature coming soon!');
-    });
-
     document.querySelector('.emoji-button').addEventListener('click', () => {
       alert('Emoji picker feature coming soon!');
     });
