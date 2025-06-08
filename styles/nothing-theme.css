@@ -1,0 +1,245 @@
+/* Nothing Theme - Minimalist Design with Red Accent */
+.theme-nothing {
+  /* Base Theme Variables */
+  --main: #FF0F2F;  /* Nothing Red */
+  --main-dark: #CC0C26;
+  --main-light: #FF3D57;
+  --accent: #FF0F2F;
+  --danger: #FF0F2F;
+
+  /* Background Colors */
+  --bg: #000000;  /* Jet Black */
+  --bg-light: rgba(28, 28, 28, 0.6);  /* Charcoal Glass */
+  --bg-gradient: linear-gradient(135deg, #000000 0%, #1C1C1C 100%);
+  
+  /* Text Colors */
+  --text: #FFFFFF;  /* Pure White */
+  --text-muted: #B0B0B0;  /* Light Gray */
+  
+  /* Input Colors */
+  --input-bg: rgba(28, 28, 28, 0.6);
+  --input-border: #2C2C2C;  /* Dark Gray */
+  
+  /* Message Bubble Colors */
+  --bubble-own: #FF0F2F;  /* Nothing Red */
+  --bubble-other: rgba(28, 28, 28, 0.6);  /* Charcoal Glass */
+  --bubble-own-text: #FFFFFF;
+  --bubble-other-text: #FFFFFF;
+  
+  /* Header Colors */
+  --header-bg: rgba(28, 28, 28, 0.85);
+  
+  /* Scrollbar Colors */
+  --scrollbar-thumb: rgba(255, 15, 47, 0.3);  /* Nothing Red with opacity */
+  --scrollbar-track: #000000;
+  
+  /* Link Colors */
+  --link: #FF0F2F;
+  
+  /* Button Colors */
+  --button-bg: #FF0F2F;
+  --button-text: #FFFFFF;
+  --button-hover: #CC0C26;
+
+  /* Interactive States */
+  --hover-overlay: rgba(255, 255, 255, 0.1);  /* White Overlay */
+  --active-overlay: rgba(255, 15, 47, 0.2);  /* Nothing Red with opacity */
+  
+  /* Shadows and Effects */
+  --header-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+  --input-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.2);
+  --card-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.4);
+  
+  /* Transitions */
+  --transition-speed: 0.2s;
+  --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Nothing Theme Specific Styles */
+.theme-nothing .chat-container {
+  background: var(--bg);
+  backdrop-filter: blur(10px);
+}
+
+.theme-nothing .message-input-wrapper {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  backdrop-filter: blur(8px);
+}
+
+.theme-nothing .action-btn {
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--input-border);
+  backdrop-filter: blur(8px);
+}
+
+.theme-nothing .action-btn:hover {
+  background: var(--hover-overlay);
+  border-color: var(--main);
+  color: var(--main);
+}
+
+.theme-nothing .send-button {
+  background: var(--main);
+  color: var(--button-text);
+}
+
+.theme-nothing .send-button:hover {
+  background: var(--main-dark);
+  transform: translateY(-2px);
+}
+
+.theme-nothing .chat-header {
+  background: var(--header-bg);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--input-border);
+}
+
+.theme-nothing .message.own .message-content {
+  background: var(--bubble-own);
+  color: var(--bubble-own-text);
+  box-shadow: 0 2px 8px rgba(255, 15, 47, 0.2);
+}
+
+.theme-nothing .message.other .message-content {
+  background: var(--bubble-other);
+  color: var(--bubble-other-text);
+  backdrop-filter: blur(8px);
+}
+
+.theme-nothing .reply-preview {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  backdrop-filter: blur(8px);
+}
+
+.theme-nothing .typing-indicator {
+  color: var(--text-muted);
+}
+
+/* Nothing Theme Scrollbar */
+.theme-nothing ::-webkit-scrollbar {
+  width: var(--scrollbar-width, 6px);
+}
+
+.theme-nothing ::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+.theme-nothing ::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+.theme-nothing ::-webkit-scrollbar-thumb:hover {
+  background: var(--main);
+}
+
+/* Nothing Theme Animations */
+.theme-nothing .message {
+  animation: nothingMessageSlide 0.3s var(--transition-timing);
+}
+
+@keyframes nothingMessageSlide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Nothing Theme Focus States */
+.theme-nothing .message-input:focus {
+  outline: none;
+  border-color: var(--main);
+  box-shadow: 0 0 0 2px rgba(255, 15, 47, 0.2);
+}
+
+/* Nothing Theme Loading Animation */
+.theme-nothing .loading-spinner {
+  border: 2px solid var(--input-border);
+  border-top-color: var(--main);
+}
+
+/* Nothing Theme Reply Preview */
+.theme-nothing .reply-preview-sender {
+  color: var(--main);
+}
+
+.theme-nothing .reply-preview-cancel:hover {
+  color: var(--main);
+  background: var(--active-overlay);
+}
+
+/* Nothing Theme Stats */
+.theme-nothing .stat-item {
+  color: var(--text-muted);
+}
+
+.theme-nothing .stat-item i {
+  color: var(--main);
+}
+
+/* Nothing Theme Back Button */
+.theme-nothing .back-btn {
+  color: var(--text);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  backdrop-filter: blur(8px);
+}
+
+.theme-nothing .back-btn:hover {
+  background: var(--hover-overlay);
+  border-color: var(--main);
+  color: var(--main);
+}
+
+/* Nothing Theme GIF and Emoji Buttons */
+.theme-nothing .action-button {
+  color: var(--text-muted);
+}
+
+.theme-nothing .action-button:hover {
+  color: var(--main);
+  background: var(--active-overlay);
+}
+
+/* Nothing Theme Profile Images */
+.theme-nothing .message-avatar {
+  border: 2px solid var(--main);
+}
+
+/* Nothing Theme Message Time */
+.theme-nothing .message-time {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+/* Nothing Theme Reply To */
+.theme-nothing .reply-to {
+  color: var(--text-muted);
+  border-left: 2px solid var(--main);
+  padding-left: 8px;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+}
+
+/* Nothing Theme Responsive Adjustments */
+@media (max-width: 768px) {
+  .theme-nothing .chat-header {
+    padding: 0.8rem;
+  }
+  
+  .theme-nothing .message {
+    max-width: 85%;
+  }
+  
+  .theme-nothing .action-btn {
+    width: 36px;
+    height: 36px;
+  }
+} 
