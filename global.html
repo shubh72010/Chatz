@@ -7,7 +7,10 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="styles/global.css" />
   <link rel="stylesheet" href="styles/nothing-theme.css" />
+  <link rel="stylesheet" href="styles/profileModal.css" />
+  <link rel="stylesheet" href="styles/giphy.css" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://js.giphy.com/v2/sdk.min.js"></script>
   <script src="js/theme.js" defer></script>
 </head>
 <body>
@@ -460,9 +463,81 @@
       .message-input-wrapper {
         padding: 0.4rem;
       }
+    }
 
-      .message-input {
-        font-size: 0.95rem;
+    .message-input-container {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg-light);
+      border-radius: var(--border-radius-md);
+      position: relative;
+    }
+
+    .message-input-wrapper {
+      flex: 1;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .message-input {
+      flex: 1;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--input-border);
+      border-radius: var(--border-radius-sm);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 1rem;
+      resize: none;
+      max-height: 120px;
+      min-height: 42px;
+    }
+
+    .message-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .action-button {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      border-radius: var(--border-radius-sm);
+      transition: color var(--transition-speed);
+    }
+
+    .action-button:hover {
+      color: var(--main);
+    }
+
+    .send-button {
+      background: var(--main);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius-sm);
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition-speed);
+    }
+
+    .send-button:hover {
+      background: var(--main-dark);
+    }
+  </style>
+  <script>
+    function getTimeBasedTheme() {
+      const hour = new Date().getHours();
+      
+      // 6:00 to 14:00 - Light mode
+      if (hour >= 6 && hour < 14) {
+        return 'light';
       }
 
       .action-button,
@@ -761,6 +836,13 @@
         `;
       }
 
+      let contentHTML = '';
+      if (message.type === 'gif') {
+        contentHTML = `<img src="${escapeHtml(message.content)}" alt="GIF" class="message-gif" style="max-width: 200px; border-radius: 8px;">`;
+      } else {
+        contentHTML = escapeHtml(message.text);
+      }
+
       messageDiv.innerHTML = `
         <img src="${senderPhoto}" 
              alt="${escapeHtml(senderName)}'s avatar" 
@@ -769,7 +851,7 @@
         <div class="message-content">
           <div class="message-sender">${escapeHtml(senderName)}</div>
           ${replyHTML}
-          ${escapeHtml(message.text)}
+          ${contentHTML}
           <div class="message-time">${timestamp}</div>
         </div>
       `;
@@ -959,6 +1041,108 @@
       const message = messageInput.value.trim();
       sendBtn.disabled = !message;
     };
+  </script>
+
+  <!-- Add these script imports before the closing body tag -->
+  <script src="js/giphy.js"></script>
+  <script>
+    // Initialize GIPHY integration
+    const giphyIntegration = new GiphyIntegration();
+    const messageInputContainer = document.querySelector('.message-input-container');
+    const gifButton = document.querySelector('.gif-button');
+    let gifPicker = null;
+
+    // Message sending functionality
+    const messageInput = document.querySelector('.message-input');
+    const sendButton = document.querySelector('.send-button');
+
+    // Send message function
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || !currentUser) return;
+
+      const message = {
+        text: text,
+        senderId: currentUser.uid,
+        timestamp: Date.now()
+      };
+
+      if (replyTo) {
+        message.replyTo = replyTo;
+        cancelReply();
+      }
+
+      try {
+        // Clear input before sending
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+
+        // Send message to Firebase
+        const messagesRef = ref(db, 'global_messages');
+        await push(messagesRef, message);
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+      }
+    }
+
+    // Handle send button click
+    sendButton.addEventListener('click', sendMessage);
+
+    // Handle enter key press
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Auto-resize textarea
+    messageInput.addEventListener('input', () => {
+      messageInput.style.height = 'auto';
+      messageInput.style.height = messageInput.scrollHeight + 'px';
+    });
+
+    // Initialize GIF picker
+    gifButton.addEventListener('click', () => {
+      if (!gifPicker) {
+        gifPicker = giphyIntegration.createGifPickerUI(messageInputContainer, (gif) => {
+          // When a GIF is selected, send it as a message
+          const messageData = {
+            type: 'gif',
+            content: gif.url,
+            senderId: currentUser.uid,
+            timestamp: Date.now()
+          };
+          
+          // Send the GIF message
+          const messagesRef = ref(db, 'global_messages');
+          push(messagesRef, messageData)
+            .then(() => {
+              gifPicker.hide();
+            })
+            .catch((error) => {
+              console.error('Error sending GIF:', error);
+            });
+        });
+      }
+      
+      if (gifPicker) {
+        const isVisible = messageInputContainer.querySelector('.gif-picker').style.display === 'block';
+        if (isVisible) {
+          gifPicker.hide();
+        } else {
+          gifPicker.show();
+        }
+      }
+    });
+
+    // Close GIF picker when clicking outside
+    document.addEventListener('click', (e) => {
+      if (gifPicker && !e.target.closest('.gif-picker') && !e.target.closest('.gif-button')) {
+        gifPicker.hide();
+      }
+    });
   </script>
 </body>
 </html> 
