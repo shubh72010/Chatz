@@ -7,7 +7,6 @@ import {
   setPersistence
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getDatabase } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -22,9 +21,10 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-export const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
+const db = getDatabase(app);
 
 // Set persistence after auth initialization
 setPersistence(auth, browserLocalPersistence)
@@ -32,86 +32,26 @@ setPersistence(auth, browserLocalPersistence)
     console.error("Auth persistence error:", error);
   });
 
-const db = getDatabase(app);
-const storage = getStorage(app);
-
-// Configure database rules with proper indexes
+// Configure database rules
 const dbRules = {
   "rules": {
-    ".read": "auth != null",
-    ".write": "auth != null",
     "users": {
       "$uid": {
-        ".read": true,
-        ".write": "$uid === auth.uid",
-        "username": {
-          ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 20 && /^[a-zA-Z0-9_]+$/.test(newData.val())",
-          ".write": "$uid === auth.uid"
-        },
-        "online": {
-          ".read": true,
-          ".write": "$uid === auth.uid"
-        },
-        "lastSeen": {
-          ".read": true,
-          ".write": "$uid === auth.uid"
-        }
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
       }
     },
-    "global_messages": {
-      ".read": "auth != null",
-      ".write": "auth != null",
-      ".indexOn": "timestamp",
-      "$messageId": {
+    "dms": {
+      "$chatId": {
         ".read": "auth != null",
         ".write": "auth != null"
       }
     },
-    "chats": {
-      "$chatId": {
-        ".read": "auth != null && data.child('participants').child(auth.uid).exists()",
-        ".write": "auth != null && (data.child('participants').child(auth.uid).exists() || newData.child('participants').child(auth.uid).exists())",
-        "messages": {
-          ".indexOn": ["timestamp"],
-          ".read": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()",
-          ".write": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()"
-        },
-        "typing": {
-          ".read": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()",
-          ".write": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()"
-        },
-        "participants": {
-          ".indexOn": [".value"],
-          ".read": "auth != null && data.child(auth.uid).exists()",
-          ".write": "auth != null && (data.child(auth.uid).exists() || newData.child(auth.uid).exists())"
-        }
-      }
-    },
-    "friend_requests": {
-      "$uid": {
-        ".read": "$uid === auth.uid",
-        ".write": "auth != null",
-        ".indexOn": ["timestamp"]
-      }
-    },
-    "friends": {
-      "$uid": {
-        ".read": "$uid === auth.uid",
-        ".write": "$uid === auth.uid",
-        ".indexOn": ["timestamp"]
-      }
-    },
-    "usernames": {
-      ".read": true,
-      ".write": "auth != null",
-      ".indexOn": [".value"],
-      "$username": {
-        ".validate": "!data.exists() || data.val() === auth.uid",
-        ".write": "auth != null && (!data.exists() || data.val() === auth.uid)"
-      }
+    "globalMessages": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     }
   }
 };
 
-// Export initialized services
-export { analytics, auth, db, storage, dbRules }; 
+export { app, analytics, auth, db, dbRules }; 
