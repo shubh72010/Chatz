@@ -8,27 +8,18 @@
   <link rel="stylesheet" href="styles/global.css" />
   <link rel="stylesheet" href="styles/nothing-theme.css" />
   <link rel="stylesheet" href="styles/profileModal.css" />
-  <link rel="stylesheet" href="styles/giphy.css" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://js.giphy.com/v2/sdk.min.js"></script>
   <script src="js/theme.js" defer></script>
   <script type="module" src="js/globalChat.js"></script>
 </head>
 <body>
   <header>
-    <button class="back-btn" onclick="window.location.href='/Chatz/index.html'">&larr; Back</button>
-    <div class="header-stats">
-      <div class="chat-stats">
-        <div class="stat-item" title="Total Messages">
-          <i class="fas fa-message"></i>
-          <span id="message-count">0</span>
-        </div>
-        <div class="stat-item" title="Total Users">
-          <i class="fas fa-users"></i>
-          <span id="user-count">0</span>
-        </div>
-      </div>
-    </div>
+    <button class="back-btn" onclick="window.location.href='index.html'" title="Go back to main menu">&#8592;</button> <div id="user-info" style="position: absolute; left: 1rem; top: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+      <img id="user-pic" src="" alt="Profile" style="width: 32px; height: 32px; border-radius: 50%; display: none;" />
+      <span id="user-name" style="font-size: 0.9rem; font-weight: 600; display: none;"></span>
+    <button class="back-btn" onclick="window.location.href='index.html'">&larr; Back</button>
+    <span>Global Chat</span>
+    <div style="width: 100px;"></div>
   </header>
 
   <main class="main-container">
@@ -48,6 +39,263 @@
         <i class="fas fa-chevron-down"></i>
       </button>
 
+    const firebaseConfig = {
+      apiKey: "AIzaSyAv4mVF8Y8lEKNK1vhBTy2Nj2Ya3l7ZJyQ",
+      authDomain: "chatz-45df4.firebaseapp.com",
+      databaseURL: "https://chatz-45df4-default-rtdb.firebaseio.com",
+      projectId: "chatz-45df4",
+      storageBucket: "chatz-45df4.appspot.com",
+      messagingSenderId: "463847844545",
+      appId: "1:463847844545:web:5006247d061c3e0dc28240"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("chat-form");
+    const messageInput = document.getElementById("message");
+    const sendBtn = document.getElementById("send-btn");
+    const replyPreview = document.getElementById("reply-preview");
+    const replyText = document.getElementById("reply-text");
+    const cancelReplyBtn = document.getElementById("cancel-reply");
+    const signInBtn = document.getElementById("sign-in");
+    const signOutBtn = document.getElementById("sign-out");
+
+    // Get user info elements
+    const userInfoDiv = document.getElementById("user-info");
+    const userPic = document.getElementById("user-pic");
+    const userNameSpan = document.getElementById("user-name");
+
+    let replyTo = null;
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Initialize chat
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        
+        // Load messages
+        const messagesRef = ref(db, 'global_messages');
+        const messagesQuery = query(messagesRef, orderByChild('timestamp'));
+        
+        onValue(messagesQuery, (snapshot) => {
+          chatMessages.innerHTML = '';
+          snapshot.forEach((childSnapshot) => {
+            const message = childSnapshot.val();
+            renderMessage(message, childSnapshot.key);
+          });
+          scrollToBottom();
+        });
+
+        // Listen for typing status
+        onValue(ref(db, 'global_typing'), (snapshot) => {
+          const typingUsers = [];
+          snapshot.forEach((childSnapshot) => {
+            if (childSnapshot.key !== currentUser.uid && childSnapshot.val()) {
+              const userData = userDataCache[childSnapshot.key];
+              if (userData) {
+                typingUsers.push(userData.nickname || userData.displayName || "Anonymous");
+              }
+            }
+          });
+
+          if (typingUsers.length > 0) {
+            typingIndicator.classList.add('active');
+            typingText.textContent = typingUsers.length === 1 
+              ? `${typingUsers[0]} is typing...`
+              : `${typingUsers.length} people are typing...`;
+          } else {
+            typingIndicator.classList.remove('active');
+          }
+        });
+
+        // Cache user data
+        onValue(ref(db, 'users'), (snapshot) => {
+          snapshot.forEach((childSnapshot) => {
+            userDataCache[childSnapshot.key] = childSnapshot.val();
+          });
+        });
+      } else {
+        window.location.href = 'index.html';
+      }
+    });
+
+    // Send message
+    sendBtn.onclick = async () => {
+      const message = messageInput.value.trim();
+      if (!message || !currentUser) return;
+
+      try {
+        const messageRef = push(ref(db, 'global_messages'));
+        const messageData = {
+          text: message,
+          senderId: currentUser.uid,
+          timestamp: serverTimestamp()
+        };
+
+        if (replyTo) {
+          messageData.replyTo = {
+            messageId: replyTo.messageId,
+            senderId: replyTo.senderId,
+            text: replyTo.text,
+            senderName: replyTo.senderName
+          };
+        }
+
+        await set(messageRef, messageData);
+
+        messageInput.value = '';
+        cancelReply();
+        scrollToBottom();
+      } catch (error) {
+        console.error("Error sending message:", error);
+        alert("Failed to send message. Please try again.");
+      }
+    };
+
+    // Handle enter key
+    messageInput.onkeypress = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    };
+
+    // Typing indicator
+    messageInput.oninput = () => {
+      if (!currentUser) return;
+
+      // Set typing status
+      const typingRef = ref(db, `global_typing/${currentUser.uid}`);
+      set(typingRef, true);
+
+      // Clear previous timeout
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
+
+      // Set timeout to clear typing status
+      typingTimeout = setTimeout(() => {
+        set(typingRef, false);
+      }, 2000);
+    };
+
+    // Handle reply preview
+    function setReply(message, messageId) {
+      replyTo = {
+        messageId,
+        senderId: message.senderId,
+        text: message.text,
+        senderName: userDataCache[message.senderId]?.nickname || 
+                   userDataCache[message.senderId]?.displayName || 
+                   "Anonymous"
+      };
+      
+      replyText.textContent = `${replyTo.senderName}: ${truncate(replyTo.text, 50)}`;
+      replyPreview.style.display = "flex";
+      messageInput.focus();
+    }
+
+    function truncate(str, n) {
+      return str.length > n ? str.substr(0, n - 1) + "…" : str;
+    }
+
+    function cancelReply() {
+      replyTo = null;
+      replyPreview.style.display = "none";
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!auth.currentUser) return alert("You must be signed in to send messages.");
+      const msg = messageInput.value.trim();
+      if (!msg) return;
+      const newMsg = {
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || "Anonymous",
+        message: msg,
+        timestamp: Date.now(),
+      };
+      if (replyTo) newMsg.replyTo = replyTo;
+      push(messagesRef, newMsg)
+        .then(() => {
+          messageInput.value = "";
+          replyTo = null;
+          replyPreview.style.display = "none";
+        })
+        .catch((err) => {
+          console.error("Error sending message:", err);
+        });
+    });
+    signInBtn.addEventListener("click", () => {
+      signInWithPopup(auth, provider).catch((error) => {
+        console.error("Sign-in error:", error);
+      });
+    });
+    signOutBtn.addEventListener("click", () => {
+      signOut(auth).catch((error) => {
+        console.error("Sign-out error:", error);
+      });
+    });
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+        signInBtn.style.display = "none";
+        signOutBtn.style.display = "inline-block";
+        messageInput.placeholder = "Type a message...";
+        // Display user info at top left
+        userInfoDiv.style.display = "flex"; // Make sure the container is visible
+        userPic.src = user.photoURL || "https://via.placeholder.com/32/2c2045/f0eaff?text=U";
+        userPic.style.display = "inline-block"; // Show image
+        userNameSpan.textContent = user.displayName || "Anonymous";
+        userNameSpan.style.display = "inline-block"; // Show name
+      } else {
+        messageInput.value = "";
+        messageInput.placeholder = "Sign in to chat";
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
+        signInBtn.style.display = "inline-block";
+        signOutBtn.style.display = "none";
+        replyTo = null;
+        replyPreview.style.display = "none";
+        // Hide user info at top left
+        userInfoDiv.style.display = "none";
+        userPic.style.display = "none";
+        userNameSpan.style.display = "none";
+      }
+    });
+
+    // Handle DM parameters from index.html (if applicable)
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatType = urlParams.get('type');
+    const targetUid = urlParams.get('uid');
+
+    if (chatType === 'dm' && targetUid) {
+        // Here you would typically fetch the target user's info to display
+        // and set up a private chat reference. For this example, we'll just
+        // change the header text to indicate a DM, but a full DM implementation
+        // would involve more Firebase Realtime Database logic (e.g., messages/DM_UID1_UID2)
+        document.querySelector('header').childNodes[3].textContent = `DM with User ${targetUid.substring(0, 4)}...`; // Change "Chat" to "DM with User..."
+        // If you need to fetch target user's name:
+        // onValue(ref(db, `users/${targetUid}/displayName`), (snapshot) => {
+        //     const targetDisplayName = snapshot.val();
+        //     if (targetDisplayName) {
+        //         document.querySelector('header').childNodes[3].textContent = `DM with ${targetDisplayName}`;
+        //     }
+        // }, { onlyOnce: true });
+        // You would also change messagesRef to point to a DM path:
+        // const dmMessagesRef = ref(db, `dms/${myUid}_${targetUid}`); // Simplified, real DMs need careful pathing
+        // onChildAdded(dmMessagesRef, ...);
+    }
+  </script>
       <div class="reply-preview hidden" id="reply-preview">
         <div class="reply-preview-content">
           <div class="reply-preview-text">
@@ -81,4 +329,4 @@
     </div>
   </main>
 </body>
-</html> 
+</html>
