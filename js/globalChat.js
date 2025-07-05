@@ -97,10 +97,10 @@ async function sendMessage() {
     if (!text || !currentUser) return;
 
     try {
-        const messagesRef = ref(db, 'globalMessages');
+        const messagesRef = ref(db, 'messages'); // Use 'messages' to match security rules
         await push(messagesRef, {
             text,
-            senderId: currentUser.uid,
+            uid: currentUser.uid, // Use 'uid' field for security rule compliance
             senderName: currentUser.displayName || 'Anonymous',
             timestamp: Date.now()
         });
@@ -131,4 +131,4 @@ function scrollToBottom() {
 }
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', init); 
+document.addEventListener('DOMContentLoaded', init);
