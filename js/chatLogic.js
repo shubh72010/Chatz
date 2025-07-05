@@ -152,13 +152,13 @@ class ChatLogic {
     if (!currentUser || !this.currentChat || (!text && !fileData)) return null;
 
     try {
-      const messageRef = push(ref(db, `chats/${this.currentChat}/messages`));
+      const messageRef = push(ref(db, 'messages'));
       const messageId = messageRef.key;
 
       const messageData = {
         id: messageId,
         text: text || '',
-        sender: currentUser.uid,
+        uid: currentUser.uid, // Use 'uid' for security rule compliance
         senderName: currentUser.displayName,
         senderPhoto: currentUser.photoURL,
         timestamp: serverTimestamp(),
@@ -178,16 +178,8 @@ class ChatLogic {
         Object.assign(messageData, fileData);
       }
 
-      // Update messages and last message atomically
-      const updates = {};
-      updates[`chats/${this.currentChat}/messages/${messageId}`] = messageData;
-      updates[`chats/${this.currentChat}/lastMessage`] = {
-        text: fileData ? `Sent a ${fileData.type}` : text,
-        timestamp: serverTimestamp(),
-        sender: currentUser.uid
-      };
-
-      await update(ref(db), updates);
+      // Only update messages (not lastMessage) for security rule compliance
+      await set(messageRef, messageData);
       return messageId;
     } catch (error) {
       console.error('Error sending message:', error);
